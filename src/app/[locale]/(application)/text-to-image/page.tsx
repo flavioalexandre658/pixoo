@@ -10,7 +10,7 @@ import {
   PageContainerLeft,
   PageContainerRight,
 } from "@/components/ui/page-container/page-container";
-import Image from "next/image";
+// import Image from "next/image"; // Removido para não otimizar imagens
 import { Button } from "@/components/ui/button";
 import { Download, Eye } from "lucide-react";
 
@@ -74,11 +74,9 @@ export default function Home() {
                 </div>
               </div>
               <div className="relative w-full">
-                <Image
+                <img
                   src={generatedImage}
                   alt="Generated image"
-                  width={800}
-                  height={600}
                   className="w-full h-auto rounded-lg border shadow-lg"
                   style={{ objectFit: "contain" }}
                 />

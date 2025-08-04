@@ -8,16 +8,6 @@ const nextConfig = {
       allowedOrigins: ["localhost:3000", "192.168.0.120:3000"],
     },
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'delivery-eu4.bfl.ai',
-        port: '',
-        pathname: '/results/**',
-      },
-    ],
-  },
   // Add development origins for cross-origin requests
   async headers() {
     return [
