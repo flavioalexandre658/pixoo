@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Home,
   Search,
@@ -18,7 +18,7 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface SidebarProps {
   className?: string;
@@ -42,88 +42,88 @@ const getNavigationSections = (t: any): NavSection[] => [
     items: [
       {
         icon: Home,
-        label: t('home'),
-        href: '/',
+        label: t("home"),
+        href: "/",
         isActive: false,
       },
       {
         icon: Search,
-        label: t('explore'),
-        href: '/explore',
+        label: t("explore"),
+        href: "/explore",
         isActive: false,
       },
     ],
   },
   {
-    title: 'Image AI',
+    title: "Image AI",
     items: [
       {
         icon: Image,
-        label: t('textToImage'),
-        href: '/text-to-image',
+        label: t("textToImage"),
+        href: "/text-to-image",
         isActive: true,
       },
       {
         icon: ImageIcon,
-        label: t('imageToImage'),
-        href: '/image-to-image',
+        label: t("imageToImage"),
+        href: "/image-to-image",
         isActive: false,
       },
       {
         icon: MessageSquare,
-        label: t('imageToPrompt'),
-        href: '/image-to-prompt',
+        label: t("imageToPrompt"),
+        href: "/image-to-prompt",
         isActive: false,
       },
       {
         icon: Sparkles,
-        label: t('fluxLora'),
-        href: '/flux-lora',
+        label: t("fluxLora"),
+        href: "/flux-lora",
         isActive: false,
       },
       {
         icon: Wand2,
-        label: t('fluxTools'),
-        href: '/flux-tools',
+        label: t("fluxTools"),
+        href: "/flux-tools",
         isActive: false,
       },
     ],
   },
   {
-    title: 'Flux Designer',
+    title: "Flux Designer",
     items: [
       {
         icon: Sparkles,
-        label: t('fluxDesigner'),
-        href: '/flux-designer',
+        label: t("fluxDesigner"),
+        href: "/flux-designer",
         isActive: false,
       },
     ],
   },
   {
-    title: 'Video AI',
+    title: "Video AI",
     items: [
       {
         icon: Video,
-        label: t('textToVideo'),
-        href: '/text-to-video',
+        label: t("textToVideo"),
+        href: "/text-to-video",
         isActive: false,
       },
       {
         icon: Video,
-        label: t('imageToVideo'),
-        href: '/image-to-video',
+        label: t("imageToVideo"),
+        href: "/image-to-video",
         isActive: false,
       },
     ],
   },
   {
-    title: 'My Creations',
+    title: "My Creations",
     items: [
       {
         icon: History,
-        label: t('history'),
-        href: '/history',
+        label: t("history"),
+        href: "/history",
         isActive: false,
       },
     ],
@@ -132,11 +132,11 @@ const getNavigationSections = (t: any): NavSection[] => [
 
 export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const t = useTranslations('navigation');
+  const t = useTranslations("navigation");
   const navigationSections = getNavigationSections(t);
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export function Sidebar({ className }: SidebarProps) {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           {(!isCollapsed || isMobile) && (
-            <span className="font-semibold text-lg">Flux Pro AI</span>
+            <span className="font-semibold text-lg">Pixoo</span>
           )}
         </div>
         {!isMobile && (
@@ -178,11 +178,12 @@ export function Sidebar({ className }: SidebarProps) {
                 return (
                   <Button
                     key={itemIndex}
-                    variant={item.isActive ? 'default' : 'ghost'}
+                    variant={item.isActive ? "default" : "ghost"}
                     className={cn(
-                      'w-full justify-start gap-3 h-10',
-                      isCollapsed && !isMobile && 'px-2',
-                      item.isActive && 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      "w-full justify-start gap-3 h-10",
+                      isCollapsed && !isMobile && "px-2",
+                      item.isActive &&
+                        "bg-blue-100 text-blue-700 hover:bg-blue-200"
                     )}
                     asChild
                   >
@@ -208,7 +209,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Upgrade Button */}
       <div className="p-4 border-t">
         <Button className="w-full bg-blue-600 hover:bg-blue-700">
-          {(!isCollapsed || isMobile) ? t('upgradeToPro') : 'Pro'}
+          {!isCollapsed || isMobile ? t("upgradeToPro") : "Pro"}
         </Button>
       </div>
     </div>
@@ -219,8 +220,8 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          'hidden md:flex h-screen bg-background border-r transition-all duration-300',
-          isCollapsed ? 'w-16' : 'w-64'
+          "hidden md:flex h-screen bg-background border-r transition-all duration-300",
+          isCollapsed ? "w-16" : "w-64"
         )}
       >
         <SidebarContent />
