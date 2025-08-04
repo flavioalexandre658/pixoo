@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "../../../../db";
+import { generatedImages } from "../../../../db/schema";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const BFL_API_KEY = "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
-
 
 // Mapeamento dos modelos para os endpoints da BFL
 const MODEL_ENDPOINTS = {
@@ -25,15 +28,6 @@ interface TextToImageRequest {
   imagePublic?: boolean;
 }
 
-interface BFLResponse {
-  id: string;
-  status: string;
-  result?: {
-    sample: string;
-  };
-  progress?: number;
-}
-
 // Função para converter aspect ratio para o formato da BFL
 function convertAspectRatio(ratio: string): string {
   const ratioMap: { [key: string]: string } = {
@@ -49,6 +43,15 @@ function convertAspectRatio(ratio: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar autenticação
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body: TextToImageRequest = await request.json();
     const { prompt, model, aspectRatio = "1:1", seed, steps, guidance } = body;
 
@@ -67,6 +70,22 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Calcular créditos baseado no modelo
+    const getCreditsForModel = (modelName: string): number => {
+      const creditMap: { [key: string]: number } = {
+        "flux-schnell": 1,
+        "flux-dev": 5,
+        "flux-pro": 10,
+        "flux-pro-1.1": 15,
+        "flux-pro-1.1-ultra": 25,
+        "flux-realism": 10,
+        "flux-kontext-pro": 20,
+      };
+      return creditMap[modelName] || 5;
+    };
+
+    const creditsUsed = getCreditsForModel(model);
 
     // Prepara os parâmetros da requisição baseado no modelo
     const requestBody: any = {
@@ -95,7 +114,8 @@ export async function POST(request: NextRequest) {
     // Adicionar webhook URL e secret
     // IMPORTANTE: Para desenvolvimento local, você precisa usar ngrok ou similar
     // para expor o webhook publicamente, pois a BFL não consegue acessar localhost
-    const webhookUrl = process.env.WEBHOOK_URL || `${request.nextUrl.origin}/api/webhook/bfl`;
+    const webhookUrl =
+      process.env.WEBHOOK_URL || `${request.nextUrl.origin}/api/webhook/bfl`;
     const webhookSecret = process.env.BFL_WEBHOOK_SECRET || "default-secret";
     requestBody.webhook_url = webhookUrl;
     requestBody.webhook_secret = webhookSecret;
@@ -109,81 +129,97 @@ export async function POST(request: NextRequest) {
     });
 
     // Função para fazer requisição com retry e backoff exponencial
-     const makeRequestWithRetry = async (maxRetries = 3): Promise<Response | NextResponse> => {
-       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-         try {
-           const createResponse = await fetch(`${BFL_BASE_URL}${endpoint}`, {
-             method: "POST",
-             headers: {
-               "x-key": BFL_API_KEY,
-               "Content-Type": "application/json",
-               accept: "application/json",
-             },
-             body: JSON.stringify(requestBody),
-           });
- 
-           console.log(`BFL API Response Status (attempt ${attempt}):`, createResponse.status);
- 
-           if (createResponse.status === 402) {
-             return NextResponse.json(
-               {
-                 error:
-                   "Insufficient credits. Please add more credits to your BFL account.",
-               },
-               { status: 402 }
-             );
-           }
- 
-           if (createResponse.status === 429) {
-             return NextResponse.json(
-               { error: "Rate limit exceeded. Please try again later." },
-               { status: 429 }
-             );
-           }
- 
-           // Retry em caso de erro 502/503/504 (servidor temporariamente indisponível)
-           if ((createResponse.status === 502 || createResponse.status === 503 || createResponse.status === 504) && attempt < maxRetries) {
-             const waitTime = Math.pow(2, attempt) * 1000; // Backoff exponencial
-             console.log(`Server temporarily unavailable (${createResponse.status}). Retrying in ${waitTime}ms...`);
-             await new Promise(resolve => setTimeout(resolve, waitTime));
-             continue;
-           }
- 
-           if (!createResponse.ok) {
-             const errorText = await createResponse.text();
-             console.error("BFL API Error:", {
-               status: createResponse.status,
-               statusText: createResponse.statusText,
-               body: errorText,
-             });
- 
-             throw new Error(`Failed to create request: ${createResponse.statusText}`);
-           }
- 
-           return createResponse;
-         } catch (error) {
-           if (attempt === maxRetries) {
-             throw error;
-           }
-           const waitTime = Math.pow(2, attempt) * 1000;
-           console.log(`Request failed (attempt ${attempt}). Retrying in ${waitTime}ms...`);
-           await new Promise(resolve => setTimeout(resolve, waitTime));
-         }
-       }
-       
-       // Fallback se todas as tentativas falharam
-       throw new Error('All retry attempts failed');
-     };
+    const makeRequestWithRetry = async (
+      maxRetries = 3
+    ): Promise<Response | NextResponse> => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const createResponse = await fetch(`${BFL_BASE_URL}${endpoint}`, {
+            method: "POST",
+            headers: {
+              "x-key": BFL_API_KEY,
+              "Content-Type": "application/json",
+              accept: "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
 
-     const createResponse = await makeRequestWithRetry();
-     if (createResponse instanceof NextResponse) {
-       return createResponse; // Retorna erro direto se for 402 ou 429
-     }
-     
-     // Garantir que createResponse é uma Response válida
-     if (!(createResponse instanceof Response)) {
-       throw new Error('Invalid response received');
-     }
+          console.log(
+            `BFL API Response Status (attempt ${attempt}):`,
+            createResponse.status
+          );
+
+          if (createResponse.status === 402) {
+            return NextResponse.json(
+              {
+                error:
+                  "Insufficient credits. Please add more credits to your BFL account.",
+              },
+              { status: 402 }
+            );
+          }
+
+          if (createResponse.status === 429) {
+            return NextResponse.json(
+              { error: "Rate limit exceeded. Please try again later." },
+              { status: 429 }
+            );
+          }
+
+          // Retry em caso de erro 502/503/504 (servidor temporariamente indisponível)
+          if (
+            (createResponse.status === 502 ||
+              createResponse.status === 503 ||
+              createResponse.status === 504) &&
+            attempt < maxRetries
+          ) {
+            const waitTime = Math.pow(2, attempt) * 1000; // Backoff exponencial
+            console.log(
+              `Server temporarily unavailable (${createResponse.status}). Retrying in ${waitTime}ms...`
+            );
+            await new Promise((resolve) => setTimeout(resolve, waitTime));
+            continue;
+          }
+
+          if (!createResponse.ok) {
+            const errorText = await createResponse.text();
+            console.error("BFL API Error:", {
+              status: createResponse.status,
+              statusText: createResponse.statusText,
+              body: errorText,
+            });
+
+            throw new Error(
+              `Failed to create request: ${createResponse.statusText}`
+            );
+          }
+
+          return createResponse;
+        } catch (error) {
+          if (attempt === maxRetries) {
+            throw error;
+          }
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(
+            `Request failed (attempt ${attempt}). Retrying in ${waitTime}ms...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+        }
+      }
+
+      // Fallback se todas as tentativas falharam
+      throw new Error("All retry attempts failed");
+    };
+
+    const createResponse = await makeRequestWithRetry();
+    if (createResponse instanceof NextResponse) {
+      return createResponse; // Retorna erro direto se for 402 ou 429
+    }
+
+    // Garantir que createResponse é uma Response válida
+    if (!(createResponse instanceof Response)) {
+      throw new Error("Invalid response received");
+    }
 
     const createData = await createResponse.json();
     console.log("BFL Response:", createData);
@@ -203,6 +239,26 @@ export async function POST(request: NextRequest) {
         "Task created, use polling to check status...",
         createData.id
       );
+
+      // Salvar dados iniciais no banco
+      try {
+        await db.insert(generatedImages).values({
+          id: crypto.randomUUID(),
+          userId: session.user.id,
+          taskId: createData.id,
+          prompt,
+          model,
+          aspectRatio,
+          seed: seed || null,
+          steps: steps || null,
+          guidance: guidance ? guidance.toString() : null,
+          status: "pending",
+          creditsUsed,
+        });
+      } catch (dbError) {
+        console.error("Error saving to database:", dbError);
+        // Continuar mesmo se houver erro no banco
+      }
 
       return NextResponse.json({
         taskId: createData.id,

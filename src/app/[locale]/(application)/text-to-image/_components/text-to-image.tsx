@@ -58,15 +58,22 @@ const aspectRatios = [
 ];
 
 interface TextToImageProps {
-  onImageGenerated: (imageUrl: string | null) => void;
+  onImageGenerated: (imageUrl: string) => void;
+  onGenerationStart?: () => void;
+  onGenerationComplete?: (generationTime: number) => void;
+  isGenerating?: boolean;
 }
 
-export function TextToImage({ onImageGenerated }: TextToImageProps) {
+export function TextToImage({
+  onImageGenerated,
+  onGenerationStart,
+  onGenerationComplete,
+}: TextToImageProps) {
   const t = useTranslations("textToImage");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const form = useForm<TextToImageForm>({
     resolver: zodResolver(textToImageSchema),
@@ -79,10 +86,12 @@ export function TextToImage({ onImageGenerated }: TextToImageProps) {
   });
 
   const onSubmit = async (data: TextToImageForm) => {
+    const startTime = Date.now();
+    setStartTime(startTime);
     setIsGenerating(true);
     setGenerationProgress(0);
-    setGeneratedImage(null);
-    onImageGenerated(null);
+    onImageGenerated("");
+    onGenerationStart?.();
 
     try {
       toast.success("Starting image generation...");
@@ -122,7 +131,6 @@ export function TextToImage({ onImageGenerated }: TextToImageProps) {
         // Conectar ao SSE para receber atualizações em tempo real
         connectToSSE(result.taskId);
       } else if (result.success && result.imageUrl) {
-        setGeneratedImage(result.imageUrl);
         onImageGenerated(result.imageUrl);
         toast.success("Image generated successfully!");
       } else {
@@ -193,9 +201,13 @@ export function TextToImage({ onImageGenerated }: TextToImageProps) {
           case 'Ready':
             setGenerationProgress(100);
             if (data.imageUrl) {
-              setGeneratedImage(data.imageUrl);
               onImageGenerated(data.imageUrl);
               toast.success('Image generated successfully!');
+            }
+            // Calcular tempo de geração
+            if (startTime) {
+              const generationTimeMs = Date.now() - startTime;
+              onGenerationComplete?.(generationTimeMs);
             }
             setIsGenerating(false);
             eventSource.close();

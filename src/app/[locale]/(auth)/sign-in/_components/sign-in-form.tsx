@@ -3,10 +3,7 @@
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createSignInSchema,
-  type SignInFormData,
-} from "@/form-schemas/auth.schema";
+
 import { signIn } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
@@ -66,7 +63,7 @@ export function SignInForm() {
 
       toast.success(t("signInSuccess"));
       router.push(`/${locale}/dashboard`);
-    } catch (error) {
+    } catch {
       toast.error(t("signInError"));
     } finally {
       setIsLoading(false);
@@ -80,7 +77,7 @@ export function SignInForm() {
         provider: "google",
         callbackURL: `/${locale}/dashboard`,
       });
-    } catch (error) {
+    } catch {
       toast.error(t("signInError"));
       setIsGoogleLoading(false);
     }

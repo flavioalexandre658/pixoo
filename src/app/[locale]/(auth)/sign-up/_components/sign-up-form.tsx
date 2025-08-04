@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createSignUpSchema } from "@/form-schemas/auth.schema";
@@ -57,7 +57,7 @@ export function SignUpForm() {
 
       toast.success(t("signUpSuccess"));
       router.push(`/${locale}/dashboard`);
-    } catch (error) {
+    } catch {
       toast.error(t("signUpError"));
     } finally {
       setIsLoading(false);
@@ -71,7 +71,7 @@ export function SignUpForm() {
         provider: "google",
         callbackURL: `/${locale}/dashboard`,
       });
-    } catch (error) {
+    } catch {
       toast.error(t("signUpError"));
       setIsGoogleLoading(false);
     }

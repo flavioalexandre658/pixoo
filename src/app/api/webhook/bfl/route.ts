@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { notifyTaskUpdate } from "../../text-to-image/sse-utils";
+import { db } from "../../../../../db";
+import { generatedImages } from "../../../../../db/schema";
+import { eq } from "drizzle-orm";
 
 // Interface para o payload do webhook da BFL
 interface WebhookPayload {
@@ -25,12 +28,12 @@ export async function POST(request: NextRequest) {
     console.log("Webhook BFL received:", {
       headers: Object.fromEntries(request.headers.entries()),
       url: request.url,
-      method: request.method
+      method: request.method,
     });
-    
+
     const body = await request.text();
     console.log("Webhook body:", body);
-    
+
     const webhookSecret = request.headers.get("x-webhook-secret");
 
     // Verificar se o secret está presente
@@ -63,29 +66,59 @@ export async function POST(request: NextRequest) {
     });
 
     // Mapear status da BFL para nosso formato
-    const mappedStatus = payload.status === "SUCCESS" ? "Ready" : 
-                        payload.status === "FAILED" ? "Error" : 
-                        payload.status === "PENDING" ? "Pending" : "Error";
+    const mappedStatus =
+      payload.status === "SUCCESS"
+        ? "Ready"
+        : payload.status === "FAILED"
+        ? "Error"
+        : payload.status === "PENDING"
+        ? "Pending"
+        : "Error";
 
     // Armazenar o resultado
     webhookResults.set(payload.task_id, payload);
+
+    // Atualizar banco de dados
+    try {
+      const updateData: any = {
+        status: mappedStatus.toLowerCase(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (payload.result?.sample) {
+        updateData.imageUrl = payload.result.sample;
+        updateData.completedAt = new Date().toISOString();
+
+        // Calcular tempo de geração se disponível
+        if (payload.result.start_time && payload.result.end_time) {
+          updateData.generationTimeMs =
+            (payload.result.end_time - payload.result.start_time) * 1000;
+        } else if (payload.result.duration) {
+          updateData.generationTimeMs = payload.result.duration * 1000;
+        }
+      }
+
+      if (payload.error) {
+        updateData.error = payload.error;
+      }
+
+      await db
+        .update(generatedImages)
+        .set(updateData)
+        .where(eq(generatedImages.taskId, payload.task_id));
+
+      console.log(`Database updated for task ${payload.task_id}`);
+    } catch (dbError) {
+      console.error("Error updating database:", dbError);
+    }
 
     // Notificar o frontend via SSE
     notifyTaskUpdate(payload.task_id, {
       status: mappedStatus,
       imageUrl: payload.result?.sample,
       error: payload.error,
-      progress: payload.progress
+      progress: payload.progress,
     });
-
-    // Em uma implementação real, você salvaria no banco de dados
-    // await db.update(generations).set({
-    //   status: payload.status,
-    //   imageUrl: payload.result?.sample,
-    //   error: payload.error,
-    //   progress: payload.progress,
-    //   updatedAt: new Date()
-    // }).where(eq(generations.taskId, payload.id))
 
     return NextResponse.json({ success: true });
   } catch (error) {
