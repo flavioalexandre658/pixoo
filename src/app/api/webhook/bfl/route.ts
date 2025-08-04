@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { notifyTaskUpdate } from "../../text-to-image/sse-utils";
 
-// Interface para o payload do webhook
+// Interface para o payload do webhook da BFL
 interface WebhookPayload {
-  id: string;
-  status:
-    | "Task not found"
-    | "Pending"
-    | "Request Moderated"
-    | "Content Moderated"
-    | "Ready"
-    | "Error";
+  task_id: string;
+  status: "SUCCESS" | "FAILED" | "PENDING";
   result?: {
     sample: string; // URL da imagem gerada
+    seed?: number;
+    start_time?: number;
+    end_time?: number;
+    duration?: number;
+    pre_filtered?: boolean;
   };
   error?: string;
   progress?: number;
@@ -57,18 +56,23 @@ export async function POST(request: NextRequest) {
     const payload: WebhookPayload = JSON.parse(body);
 
     console.log("Webhook received:", {
-      id: payload.id,
+      task_id: payload.task_id,
       status: payload.status,
       hasResult: !!payload.result,
       error: payload.error,
     });
 
+    // Mapear status da BFL para nosso formato
+    const mappedStatus = payload.status === "SUCCESS" ? "Ready" : 
+                        payload.status === "FAILED" ? "Error" : 
+                        payload.status === "PENDING" ? "Pending" : "Error";
+
     // Armazenar o resultado
-    webhookResults.set(payload.id, payload);
+    webhookResults.set(payload.task_id, payload);
 
     // Notificar o frontend via SSE
-    notifyTaskUpdate(payload.id, {
-      status: payload.status,
+    notifyTaskUpdate(payload.task_id, {
+      status: mappedStatus,
       imageUrl: payload.result?.sample,
       error: payload.error,
       progress: payload.progress
