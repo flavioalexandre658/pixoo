@@ -43,6 +43,7 @@
     "changeLanguage": "Cambiar idioma"
   },
   "auth": {
+    "loading": "Cargando...",
     "login": "Iniciar Sesión",
     "register": "Registrarse",
     "email": "Correo Electrónico",

@@ -26,7 +26,7 @@ Tecnologias principais:
 - react-number-format para máscaras em inputs
 
 Padrões de codificação:
-- Todas as mensagens que o usuário poderão visualizar, precisam ter a versão [pt.json](mdc:messages/pt.json)
+- Todas as mensagens e/ou textos que os usuários poderão visualizar, precisam ter a versão [pt.json](mdc:messages/pt.json)
 - As messages traduziadas devem sempre serem adicionadas nos arquivos da pasta `messages` na raiz do projeto
 - Sempre escreva código em TypeScript.
 - Nomeie variáveis de forma descritiva (ex: isLoading, hasError).

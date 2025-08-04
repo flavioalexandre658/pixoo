@@ -43,6 +43,7 @@
     "changeLanguage": "Alterar idioma"
   },
   "auth": {
+    "loading": "Carregando...",
     "login": "Entrar",
     "register": "Cadastrar",
     "email": "E-mail",
@@ -86,7 +87,7 @@
     "registerTitle": "Crie sua conta",
     "passwordComplexity": "A senha deve conter pelo menos uma letra maiúscula, um número e um caractere especial"
   },
-  "imageGeneration": {
+  "textToImage": {
     "title": "Texto para Imagem",
     "prompt": "Prompt",
     "promptPlaceholder": "Descreva a imagem que deseja gerar...",

@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { toast } from "sonner";
 
-const imageGenerationSchema = z.object({
-  prompt: z.string().min(1, 'Prompt is required'),
+const textToImageSchema = z.object({
+  prompt: z.string().min(1, "Prompt is required"),
   model: z.string(),
   aspectRatio: z.string(),
   imagePublic: z.boolean(),
@@ -31,77 +31,82 @@ const imageGenerationSchema = z.object({
   guidance: z.number().min(1).max(20).optional(),
 });
 
-type ImageGenerationForm = z.infer<typeof imageGenerationSchema>;
+type TextToImageForm = z.infer<typeof textToImageSchema>;
 
 const models = [
-  { id: 'flux-schnell', name: 'Flux Schnell', credits: 0, badge: 'free unlimited' },
-  { id: 'flux-dev', name: 'Flux Dev', credits: 2 },
-  { id: 'flux-pro', name: 'Flux Pro', credits: 5 },
-  { id: 'flux-pro-1.1', name: 'Flux Pro 1.1', credits: 4 },
-  { id: 'flux-pro-1.1-ultra', name: 'Flux Pro 1.1 Ultra', credits: 6 },
-  { id: 'flux-realism', name: 'Flux Realism', credits: 3 },
+  {
+    id: "flux-schnell",
+    name: "Flux Schnell",
+    credits: 0,
+    badge: "free unlimited",
+  },
+  { id: "flux-dev", name: "Flux Dev", credits: 2 },
+  { id: "flux-pro", name: "Flux Pro", credits: 5 },
+  { id: "flux-pro-1.1", name: "Flux Pro 1.1", credits: 4 },
+  { id: "flux-pro-1.1-ultra", name: "Flux Pro 1.1 Ultra", credits: 6 },
+  { id: "flux-realism", name: "Flux Realism", credits: 3 },
 ];
 
 const aspectRatios = [
-  { value: '1:1', label: '1:1 (Square)' },
-  { value: '16:9', label: '16:9 (Landscape)' },
-  { value: '9:16', label: '9:16 (Portrait)' },
-  { value: '4:3', label: '4:3' },
-  { value: '3:4', label: '3:4' },
-  { value: '21:9', label: '21:9 (Ultra Wide)' },
+  { value: "1:1", label: "1:1 (Square)" },
+  { value: "16:9", label: "16:9 (Landscape)" },
+  { value: "9:16", label: "9:16 (Portrait)" },
+  { value: "4:3", label: "4:3" },
+  { value: "3:4", label: "3:4" },
+  { value: "21:9", label: "21:9 (Ultra Wide)" },
 ];
 
-export function ImageGeneratorForm() {
-  const t = useTranslations('imageGeneration');
+export function TextToImage() {
+  const t = useTranslations("textToImage");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const form = useForm<ImageGenerationForm>({
-    resolver: zodResolver(imageGenerationSchema),
+  const form = useForm<TextToImageForm>({
+    resolver: zodResolver(textToImageSchema),
     defaultValues: {
-      prompt: '',
-      model: 'flux-schnell',
-      aspectRatio: '1:1',
+      prompt: "",
+      model: "flux-schnell",
+      aspectRatio: "1:1",
       imagePublic: false,
     },
   });
 
-  const onSubmit = async (data: ImageGenerationForm) => {
+  const onSubmit = async (data: TextToImageForm) => {
     setIsGenerating(true);
     try {
       // TODO: Implement image generation logic
-      console.log('Generating image with data:', data);
-      toast.success('Image generation started!');
-      
+      console.log("Generating image with data:", data);
+      toast.success("Image generation started!");
+
       // Simulate generation time
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      toast.success('Image generated successfully!');
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      toast.success("Image generated successfully!");
     } catch (error) {
-      toast.error('Failed to generate image. Please try again.');
+      toast.error("Failed to generate image. Please try again.");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const selectedModel = models.find(m => m.id === form.watch('model'));
+  const selectedModel = models.find((m) => m.id === form.watch("model"));
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
-          {t('title')}
+          {t("title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Model Selection */}
           <div className="space-y-2">
-            <Label htmlFor="model">{t('modelSelection')}</Label>
+            <Label htmlFor="model">{t("modelSelection")}</Label>
             <Select
-              value={form.watch('model')}
-              onValueChange={(value) => form.setValue('model', value)}
+              value={form.watch("model")}
+              onValueChange={(value) => form.setValue("model", value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -137,12 +142,12 @@ export function ImageGeneratorForm() {
 
           {/* Prompt */}
           <div className="space-y-2">
-            <Label htmlFor="prompt">{t('prompt')}</Label>
+            <Label htmlFor="prompt">{t("prompt")}</Label>
             <Textarea
               id="prompt"
-              placeholder={t('promptPlaceholder')}
+              placeholder={t("promptPlaceholder")}
               className="min-h-[100px] resize-none"
-              {...form.register('prompt')}
+              {...form.register("prompt")}
             />
             {form.formState.errors.prompt && (
               <p className="text-sm text-destructive">
@@ -153,10 +158,10 @@ export function ImageGeneratorForm() {
 
           {/* Aspect Ratio */}
           <div className="space-y-2">
-            <Label htmlFor="aspectRatio">{t('aspectRatio')}</Label>
+            <Label htmlFor="aspectRatio">{t("aspectRatio")}</Label>
             <Select
-              value={form.watch('aspectRatio')}
-              onValueChange={(value) => form.setValue('aspectRatio', value)}
+              value={form.watch("aspectRatio")}
+              onValueChange={(value) => form.setValue("aspectRatio", value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -179,7 +184,7 @@ export function ImageGeneratorForm() {
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="flex items-center gap-2 p-0 h-auto font-normal"
             >
-              {t('advancedOptions')}
+              {t("advancedOptions")}
               {showAdvanced ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
@@ -196,7 +201,7 @@ export function ImageGeneratorForm() {
                     id="seed"
                     type="number"
                     placeholder="Random seed for reproducible results"
-                    {...form.register('seed', { valueAsNumber: true })}
+                    {...form.register("seed", { valueAsNumber: true })}
                   />
                 </div>
 
@@ -209,7 +214,7 @@ export function ImageGeneratorForm() {
                     min="1"
                     max="50"
                     defaultValue="20"
-                    {...form.register('steps', { valueAsNumber: true })}
+                    {...form.register("steps", { valueAsNumber: true })}
                   />
                 </div>
 
@@ -223,7 +228,7 @@ export function ImageGeneratorForm() {
                     max="20"
                     step="0.1"
                     defaultValue="7.5"
-                    {...form.register('guidance', { valueAsNumber: true })}
+                    {...form.register("guidance", { valueAsNumber: true })}
                   />
                 </div>
               </div>
@@ -233,15 +238,17 @@ export function ImageGeneratorForm() {
           {/* Image Public Toggle */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="imagePublic">{t('imagePublic')}</Label>
+              <Label htmlFor="imagePublic">{t("imagePublic")}</Label>
               <p className="text-sm text-muted-foreground">
                 Make this image visible to other users
               </p>
             </div>
             <Switch
               id="imagePublic"
-              checked={form.watch('imagePublic')}
-              onCheckedChange={(checked) => form.setValue('imagePublic', checked)}
+              checked={form.watch("imagePublic")}
+              onCheckedChange={(checked) =>
+                form.setValue("imagePublic", checked)
+              }
             />
           </div>
 
@@ -260,7 +267,7 @@ export function ImageGeneratorForm() {
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-2" />
-                {t('generateImage')}
+                {t("generateImage")}
               </>
             )}
           </Button>

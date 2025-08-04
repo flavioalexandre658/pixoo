@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ImageGeneratorForm } from "./_components/image-generator-form";
+import { TextToImage } from "./_components/text-to-image";
 import {
   PageContainer,
   PageContainerContent,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/page-container/page-container";
 
 export default function Home() {
-  const t = useTranslations("imageGeneration");
+  const t = useTranslations("textToImage");
 
   return (
     <PageContainer>
@@ -24,7 +24,7 @@ export default function Home() {
       <PageContainerContent>
         {/* Left side - Form */}
         <PageContainerLeft>
-          <ImageGeneratorForm />
+          <TextToImage />
         </PageContainerLeft>
 
         {/* Right side - Preview */}
