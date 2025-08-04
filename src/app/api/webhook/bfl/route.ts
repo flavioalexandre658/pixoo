@@ -110,9 +110,3 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(result);
 }
-
-// Função helper para limpar resultados antigos (opcional)
-export function cleanupOldResults() {
-  // Implementar lógica para limpar resultados antigos
-  // Por exemplo, remover resultados com mais de 1 hora
-}
