@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// Store para conexões SSE ativas
-const activeConnections = new Map<string, ReadableStreamDefaultController>();
+import { activeConnections } from "../sse-utils";
 
 // Endpoint para Server-Sent Events
 export async function GET(request: NextRequest) {
@@ -38,27 +36,3 @@ export async function GET(request: NextRequest) {
     },
   });
 }
-
-// Função para notificar clientes sobre atualizações
-export function notifyTaskUpdate(taskId: string, data: any) {
-  const controller = activeConnections.get(taskId);
-  if (controller) {
-    try {
-      controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
-      
-      // Se a tarefa estiver completa, fechar a conexão
-      if (data.status === 'Ready' || data.status === 'Error' || data.status === 'Content Moderated') {
-        setTimeout(() => {
-          activeConnections.delete(taskId);
-          controller.close();
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Error sending SSE update:', error);
-      activeConnections.delete(taskId);
-    }
-  }
-}
-
-// Exportar para uso em outros módulos
-export { activeConnections };

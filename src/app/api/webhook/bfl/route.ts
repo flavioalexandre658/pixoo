@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { notifyTaskUpdate } from "../../text-to-image/status/route";
+import { notifyTaskUpdate } from "../../text-to-image/sse-utils";
 
 // Interface para o payload do webhook
 interface WebhookPayload {
