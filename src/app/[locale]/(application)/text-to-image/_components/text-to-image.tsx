@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,6 +45,7 @@ const models = [
   { id: "flux-pro-1.1", name: "Flux Pro 1.1", credits: 4 },
   { id: "flux-pro-1.1-ultra", name: "Flux Pro 1.1 Ultra", credits: 6 },
   { id: "flux-realism", name: "Flux Realism", credits: 3 },
+  { id: "flux-kontext-pro", name: "Flux Kontext Pro", credits: 4 },
 ];
 
 const aspectRatios = [
@@ -56,11 +57,17 @@ const aspectRatios = [
   { value: "21:9", label: "21:9 (Ultra Wide)" },
 ];
 
-export function TextToImage() {
+interface TextToImageProps {
+  onImageGenerated: (imageUrl: string | null) => void;
+}
+
+export function TextToImage({ onImageGenerated }: TextToImageProps) {
   const t = useTranslations("textToImage");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const form = useForm<TextToImageForm>({
     resolver: zodResolver(textToImageSchema),
     defaultValues: {
@@ -73,20 +80,146 @@ export function TextToImage() {
 
   const onSubmit = async (data: TextToImageForm) => {
     setIsGenerating(true);
+    setGenerationProgress(0);
+    setGeneratedImage(null);
+    onImageGenerated(null);
+
     try {
-      // TODO: Implement image generation logic
-      console.log("Generating image with data:", data);
-      toast.success("Image generation started!");
+      toast.success("Starting image generation...");
 
-      // Simulate generation time
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const response = await fetch("/api/text-to-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: data.prompt,
+          model: data.model,
+          aspectRatio: data.aspectRatio,
+          seed: data.seed,
+          steps: data.steps,
+          guidance: data.guidance,
+          imagePublic: data.imagePublic,
+        }),
+      });
 
-      toast.success("Image generated successfully!");
-    } catch (error) {
-      toast.error("Failed to generate image. Please try again.");
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error("Rate limit exceeded. Please try again later.");
+        } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+           toast.error("Service temporarily unavailable. The system is automatically retrying...");
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate image");
+        }
+        return;
+      }
+
+      const result = await response.json();
+
+      if (result.taskId) {
+        toast.info("Generation started. Waiting for webhook result...");
+        // Conectar ao SSE para receber atualizações em tempo real
+        connectToSSE(result.taskId);
+      } else if (result.success && result.imageUrl) {
+        setGeneratedImage(result.imageUrl);
+        onImageGenerated(result.imageUrl);
+        toast.success("Image generated successfully!");
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error: any) {
+      console.error("Generation error:", error);
+
+      if (error.message.includes("credits")) {
+        toast.error(
+          "Insufficient credits. Please add more credits to continue."
+        );
+      } else if (error.message.includes("rate limit")) {
+        toast.error("Rate limit exceeded. Please try again in a few minutes.");
+      } else {
+        toast.error(
+          error.message || "Failed to generate image. Please try again."
+        );
+      }
     } finally {
       setIsGenerating(false);
+      setGenerationProgress(0);
     }
+  };
+
+  // Cleanup da conexão SSE quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
+
+  // Conectar ao Server-Sent Events para receber atualizações em tempo real
+  const connectToSSE = (taskId: string) => {
+    // Fechar conexão anterior se existir
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+    
+    const eventSource = new EventSource(`/api/text-to-image/status?taskId=${taskId}`);
+    eventSourceRef.current = eventSource;
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('SSE update:', data);
+        
+        // Atualizar progresso baseado no status
+        switch (data.status) {
+          case 'connected':
+            console.log('Connected to SSE for task:', data.taskId);
+            break;
+          case 'Pending':
+            setGenerationProgress(25);
+            break;
+          case 'Request Moderated':
+            setGenerationProgress(50);
+            toast.info('Request is being moderated...');
+            break;
+          case 'Content Moderated':
+            toast.error('Content was moderated and rejected');
+            setIsGenerating(false);
+            eventSource.close();
+            eventSourceRef.current = null;
+            break;
+          case 'Ready':
+            setGenerationProgress(100);
+            if (data.imageUrl) {
+              setGeneratedImage(data.imageUrl);
+              onImageGenerated(data.imageUrl);
+              toast.success('Image generated successfully!');
+            }
+            setIsGenerating(false);
+            eventSource.close();
+            eventSourceRef.current = null;
+            break;
+          case 'Error':
+            toast.error(data.error || 'Image generation failed');
+            setIsGenerating(false);
+            eventSource.close();
+            eventSourceRef.current = null;
+            break;
+        }
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('SSE error:', error);
+      toast.error('Connection error. Please try again.');
+      setIsGenerating(false);
+      eventSource.close();
+      eventSourceRef.current = null;
+    };
   };
 
   const selectedModel = models.find((m) => m.id === form.watch("model"));
@@ -240,7 +373,7 @@ export function TextToImage() {
             <div className="space-y-0.5">
               <Label htmlFor="imagePublic">{t("imagePublic")}</Label>
               <p className="text-sm text-muted-foreground">
-                Make this image visible to other users
+                {t("imagePublicDescription")}
               </p>
             </div>
             <Switch
@@ -262,7 +395,8 @@ export function TextToImage() {
             {isGenerating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Generating...
+                Generating...{" "}
+                {generationProgress > 0 && `${generationProgress}%`}
               </>
             ) : (
               <>
@@ -271,7 +405,19 @@ export function TextToImage() {
               </>
             )}
           </Button>
+
+          {/* Progress Bar */}
+          {isGenerating && generationProgress > 0 && (
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${generationProgress}%` }}
+              />
+            </div>
+          )}
         </form>
+
+
       </CardContent>
     </Card>
   );

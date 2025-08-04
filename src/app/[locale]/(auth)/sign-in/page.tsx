@@ -11,9 +11,7 @@ export default function SignInPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           {t("welcomeBack")}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          {t("signIn")}
-        </p>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">{t("signIn")}</p>
       </div>
 
       <SignInForm />

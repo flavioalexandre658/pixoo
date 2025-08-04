@@ -5,15 +5,18 @@ Este projeto utiliza Drizzle ORM com NeonDB (PostgreSQL).
 ## Configuração
 
 1. **Instalar dependências:**
+
    ```bash
    npm install
    ```
 
 2. **Configurar variáveis de ambiente:**
+
    - Copie `.env.example` para `.env.local`
    - Configure a `DATABASE_URL` com suas credenciais do NeonDB
 
 3. **Gerar migrations:**
+
    ```bash
    npm run db:generate
    ```
@@ -47,15 +50,18 @@ Este projeto utiliza Drizzle ORM com NeonDB (PostgreSQL).
 ## Uso
 
 ```typescript
-import { db } from '@/db';
-import { users, plans, subscriptions } from '@/db/schema';
+import { db } from "@/db";
+import { users, plans, subscriptions } from "@/db/schema";
 
 // Buscar usuários
 const allUsers = await db.select().from(users);
 
 // Criar usuário
-const newUser = await db.insert(users).values({
-  email: 'user@example.com',
-  name: 'John Doe'
-}).returning();
+const newUser = await db
+  .insert(users)
+  .values({
+    email: "user@example.com",
+    name: "John Doe",
+  })
+  .returning();
 ```

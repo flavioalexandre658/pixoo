@@ -42,6 +42,17 @@
     "language": "Idioma",
     "changeLanguage": "Cambiar idioma"
   },
+  "textToImage": {
+    "title": "Generación de Imagen con IA",
+    "modelSelection": "Selección del Modelo",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe la imagen que quieres generar...",
+    "aspectRatio": "Relación de Aspecto",
+    "advancedOptions": "Opciones Avanzadas",
+    "imagePublic": "Imagen Pública",
+    "imagePublicDescription": "Hacer esta imagen visible para otros usuarios",
+    "generateImage": "Generar Imagen"
+  },
   "auth": {
     "loading": "Cargando...",
     "login": "Iniciar Sesión",

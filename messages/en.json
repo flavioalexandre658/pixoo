@@ -38,9 +38,20 @@
     "profile": "Profile",
     "billing": "Billing",
     "settings": "Settings",
-    "logout": "Log out",
+    "logout": "Logout",
     "language": "Language",
     "changeLanguage": "Change language"
+  },
+  "textToImage": {
+    "title": "AI Image Generation",
+    "modelSelection": "Model Selection",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe the image you want to generate...",
+    "aspectRatio": "Aspect Ratio",
+    "advancedOptions": "Advanced Options",
+    "imagePublic": "Public Image",
+    "imagePublicDescription": "Make this image visible to other users",
+    "generateImage": "Generate Image"
   },
   "auth": {
     "loading": "Loading...",

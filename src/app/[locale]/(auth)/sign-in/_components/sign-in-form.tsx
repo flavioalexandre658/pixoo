@@ -3,7 +3,10 @@
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createSignInSchema, type SignInFormData } from "@/form-schemas/auth.schema";
+import {
+  createSignInSchema,
+  type SignInFormData,
+} from "@/form-schemas/auth.schema";
 import { signIn } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
@@ -26,22 +29,19 @@ export function SignInForm() {
   // Create schema with translations using useMemo to prevent recreation on every render
   const formSchema = useMemo(() => {
     return z.object({
-      email: z
-        .string()
-        .min(1, t('emailRequired'))
-        .email(t('invalidEmail')),
+      email: z.string().min(1, t("emailRequired")).email(t("invalidEmail")),
       password: z
         .string()
-        .min(1, t('passwordRequired'))
-        .min(8, t('passwordMinLength')),
+        .min(1, t("passwordRequired"))
+        .min(8, t("passwordMinLength")),
     });
   }, [t]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 

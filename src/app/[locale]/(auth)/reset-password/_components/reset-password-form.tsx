@@ -23,7 +23,7 @@ export function ResetPasswordForm() {
   const locale = params.locale as string;
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -43,13 +43,13 @@ export function ResetPasswordForm() {
     }
 
     setIsLoading(true);
-    
+
     try {
       await resetPassword({
         newPassword: data.password,
         token,
       });
-      
+
       toast.success(t("passwordResetSuccess"));
       router.push(`/${locale}/sign-in`);
     } catch (error) {
@@ -126,11 +126,7 @@ export function ResetPasswordForm() {
         )}
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading}
-      >
+      <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

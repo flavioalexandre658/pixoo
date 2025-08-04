@@ -42,6 +42,17 @@
     "language": "Idioma",
     "changeLanguage": "Alterar idioma"
   },
+  "textToImage": {
+    "title": "Geração de Imagem com IA",
+    "modelSelection": "Seleção do Modelo",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Descreva a imagem que você deseja gerar...",
+    "aspectRatio": "Proporção da Imagem",
+    "advancedOptions": "Opções Avançadas",
+    "imagePublic": "Imagem Pública",
+    "imagePublicDescription": "Tornar esta imagem visível para outros usuários",
+    "generateImage": "Gerar Imagem"
+  },
   "auth": {
     "loading": "Carregando...",
     "login": "Entrar",
@@ -86,19 +97,6 @@
     "loginTitle": "Entre na sua conta",
     "registerTitle": "Crie sua conta",
     "passwordComplexity": "A senha deve conter pelo menos uma letra maiúscula, um número e um caractere especial"
-  },
-  "textToImage": {
-    "title": "Texto para Imagem",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Descreva a imagem que deseja gerar...",
-    "modelSelection": "Seleção do Modelo",
-    "aspectRatio": "Proporção da Imagem: 1:1",
-    "advancedOptions": "Opções Avançadas",
-    "imagePublic": "Imagem Pública:",
-    "generateImage": "Gerar Imagem",
-    "generating": "Gerando imagem...",
-    "noImageGenerated": "Nenhuma imagem gerada",
-    "imageGenerated": "Imagem gerada com sucesso!"
   },
   "models": {
     "fluxSchnell": "Flux Schnell",
