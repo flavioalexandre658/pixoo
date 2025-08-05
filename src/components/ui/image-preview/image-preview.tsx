@@ -45,47 +45,46 @@ function ImagePreviewComponent({
             <div className="text-6xl font-mono font-bold text-primary">
               {(currentTime / 1000).toFixed(1)}
             </div>
-            <div className="text-lg text-muted-foreground mt-2">segundos</div>
+            <div className="text-lg text-muted-foreground mt-2">{t("seconds")}</div>
           </div>
           <div className="text-sm text-muted-foreground">
-            Gerando sua imagem...
+            {t("generating")}
           </div>
         </div>
       ) : generatedImage ? (
         <div className="space-y-4 py-4 px-4 sm:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 className="text-lg font-semibold">Generated Image</h3>
+            <h3 className="text-lg font-semibold">{t("generatedImage")}</h3>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleViewFullSize}
                 className="w-full sm:w-auto"
               >
                 <Eye className="h-4 w-4 mr-2" />
-                <span className="text-sm">View Full Size</span>
+                <span className="text-sm">{t("viewFullSize")}</span>
               </Button>
               {onDownload && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleDownload}
                   className="w-full sm:w-auto"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  <span className="text-sm">Download</span>
+                  <span className="text-sm">{t("download")}</span>
                 </Button>
               )}
             </div>
           </div>
-          <div className="relative w-full">
+          <div className="relative w-full aspect-square">
             <Image
               src={generatedImage}
-              alt="Generated image"
-              width={512}
-              height={512}
-              className="w-full h-auto rounded-lg border shadow-lg"
-              style={{ objectFit: "contain" }}
+              alt={t("generatedImageAlt")}
+              layout="fill"
+              objectFit="cover"
+              className="transition-transform duration-300"
               onLoad={() =>
                 console.log("✅ Image loaded successfully:", generatedImage)
               }

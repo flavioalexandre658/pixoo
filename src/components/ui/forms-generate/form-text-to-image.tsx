@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +67,7 @@ interface FormTextToImageProps {
   onImageGenerated: (imageUrl: string) => void;
   onGenerationStart?: () => void;
   onStartPolling?: (taskId: string) => void;
+  onGenerationComplete?: () => void;
   isGenerating?: boolean;
 }
 
@@ -74,12 +75,22 @@ export function FormTextToImage({
   onImageGenerated,
   onGenerationStart,
   onStartPolling,
+  onGenerationComplete,
   isGenerating,
 }: FormTextToImageProps) {
   const t = useTranslations("formTextToImage");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [startedGeneration, setStartedGeneration] = useState(isGenerating);
+
+  // Reset startedGeneration when generation is complete
+  useEffect(() => {
+    if (!isGenerating && startedGeneration) {
+      setStartedGeneration(false);
+      onGenerationComplete?.();
+    }
+  }, [isGenerating, startedGeneration, onGenerationComplete]);
   const [dimension, setDimension] = useState<Dimension>({
     aspectRatio: "1:1",
     width: 1024,
@@ -98,9 +109,15 @@ export function FormTextToImage({
   });
 
   const onSubmit = async (data: FormTextToImageForm) => {
+    if (startedGeneration || isGenerating) {
+      return false;
+    }
+    
+    // Desabilita o botão imediatamente para evitar spam de cliques
+    setStartedGeneration(true);
+    
     try {
-      toast.success("Starting image generation...");
-
+      toast.success(t("startingGeneration"));
       const response = await fetch("/api/text-to-image", {
         method: "POST",
         headers: {
@@ -120,6 +137,7 @@ export function FormTextToImage({
       });
 
       if (!response.ok) {
+        setStartedGeneration(false);
         if (response.status === 429) {
           toast.error("Rate limit exceeded. Please try again later.");
         } else if (
@@ -140,8 +158,7 @@ export function FormTextToImage({
       const result = await response.json();
 
       if (result.taskId) {
-        console.log("Received taskId from API:", result.taskId);
-        toast.info("Generation started. Checking status...");
+        toast.info(t("checkingStatus"));
 
         setGenerationProgress(25);
         onGenerationStart?.();
@@ -149,22 +166,23 @@ export function FormTextToImage({
         // Usar apenas polling - mais confiável que SSE
         onStartPolling?.(result.taskId);
       } else if (result.success && result.imageUrl) {
+        setStartedGeneration(false);
         onImageGenerated(result.imageUrl);
-        toast.success("Image generated successfully!");
+        toast.success(t("imageGeneratedSuccess"));
       } else {
+        setStartedGeneration(false);
         throw new Error("Invalid response from server");
       }
     } catch (error: any) {
+      setStartedGeneration(false);
       console.error("Generation error:", error);
       if (error.message.includes("credits")) {
-        toast.error(
-          "Insufficient credits. Please add more credits to continue."
-        );
+        toast.error(t("insufficientCredits"));
       } else if (error.message.includes("rate limit")) {
-        toast.error("Rate limit exceeded. Please try again in a few minutes.");
+        toast.error(t("rateLimitExceeded"));
       } else {
         toast.error(
-          error.message || "Failed to generate image. Please try again."
+          error.message || t("generationFailed")
         );
       }
     }
@@ -207,18 +225,18 @@ export function FormTextToImage({
           <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
             {/* Seed */}
             <div className="space-y-2">
-              <Label htmlFor="seed">Seed (Optional)</Label>
+              <Label htmlFor="seed">{t("seed")}</Label>
               <Input
                 id="seed"
                 type="number"
-                placeholder="Random seed for reproducible results"
+                placeholder={t("seedPlaceholder")}
                 {...form.register("seed", { valueAsNumber: true })}
               />
             </div>
 
             {/* Steps */}
             <div className="space-y-2">
-              <Label htmlFor="steps">Steps (1-50)</Label>
+              <Label htmlFor="steps">{t("steps")}</Label>
               <Input
                 id="steps"
                 type="number"
@@ -231,7 +249,7 @@ export function FormTextToImage({
 
             {/* Guidance */}
             <div className="space-y-2">
-              <Label htmlFor="guidance">Guidance Scale (1-20)</Label>
+              <Label htmlFor="guidance">{t("guidance")}</Label>
               <Input
                 id="guidance"
                 type="number"
@@ -358,7 +376,7 @@ export function FormTextToImage({
               </Select>
               {selectedModel && selectedModel.credits > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  This will cost {selectedModel.credits} credits
+                  {t("costCredits", { credits: selectedModel.credits })}
                 </p>
               )}
             </div>
@@ -386,12 +404,12 @@ export function FormTextToImage({
             type="submit"
             className="w-full"
             size="lg"
-            disabled={isGenerating}
+            disabled={isGenerating || startedGeneration}
           >
-            {isGenerating ? (
+            {isGenerating || startedGeneration ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Generating...
+                {t("generating")}
               </>
             ) : (
               <>

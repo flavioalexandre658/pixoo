@@ -232,6 +232,9 @@ export default function TextToImage() {
               const now = Date.now();
               startPolling(taskId, now);
             }}
+            onGenerationComplete={() => {
+              setIsGenerating(false);
+            }}
             isGenerating={isGenerating}
           />
         </PageContainerLeft>

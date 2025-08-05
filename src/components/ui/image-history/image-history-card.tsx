@@ -2,9 +2,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Clock, Zap, AlertTriangle } from "lucide-react";
+import { Download, Clock, Zap, AlertTriangle, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useTranslations } from "next-intl";
 
 interface ImageHistoryCardProps {
   image: {
@@ -21,12 +22,14 @@ interface ImageHistoryCardProps {
   getModelBadgeColor: (model: string) => string;
   formatTime: (ms: number | null) => string;
   onDownload: (url: string, prompt: string) => void;
+  onViewFull?: (url: string, prompt: string) => void;
   zoom: number;
   cropped: boolean;
 }
 
-export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDownload, zoom, cropped }: ImageHistoryCardProps) {
+export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDownload, onViewFull, zoom, cropped }: ImageHistoryCardProps) {
   const [imageError, setImageError] = useState(false);
+  const t = useTranslations("imageHistory");
 
   const handleImageError = () => {
     setImageError(true);
@@ -57,7 +60,7 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
           <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
             <AlertTriangle className="w-8 h-8 mb-2" />
             <span className="text-sm text-center">
-              {image.status === 'pending' ? 'Gerando...' : 'Falha ao carregar imagem'}
+              {image.status === 'pending' ? t("generating") : t("failedToLoad")}
             </span>
           </div>
         )}
@@ -83,7 +86,7 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
         </div>
         <div className="flex items-center gap-1">
           <Zap className="h-3 w-3" />
-          {image.creditsUsed} créditos
+          {image.creditsUsed} {t("credits")}
         </div>
       </div>
       {/* Data */}
@@ -96,6 +99,17 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
       {/* Ações */}
       {image.imageUrl && image.status === "ready" && (
         <div className="flex gap-2">
+          {onViewFull && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewFull(image.imageUrl!, image.prompt)}
+              className="flex-1"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {t("viewFull")}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -103,7 +117,7 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
             className="flex-1"
           >
             <Download className="h-3 w-3 mr-1" />
-            Download
+            {t("download")}
           </Button>
         </div>
       )}

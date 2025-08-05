@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { useTranslations } from "next-intl";
 
 // Função para arredondar para o múltiplo de 32 mais próximo
 const roundToMultipleOf32 = (value: number): number => {
@@ -92,6 +93,7 @@ const FILM_PRESETS = [
 ];
 
 export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
+  const t = useTranslations("dimensionSelector");
   const [selectedRatio, setSelectedRatio] = useState(
     value.aspectRatio || "1:1"
   );
@@ -167,7 +169,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
           className="flex-1 sm:flex-none"
         >
           <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5 mr-1" />
-          <span className="text-sm sm:text-base">Custom</span>
+          <span className="text-sm sm:text-base">{t("custom")}</span>
         </Button>
       </div>
       {selectedRatio !== "custom" && (
@@ -208,12 +210,12 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
       <Dialog open={customOpen} onOpenChange={setCustomOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-md md:max-w-lg mx-2 sm:mx-4 md:mx-auto max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg md:text-xl">Image Dimensions</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg md:text-xl">{t("imageDimensions")}</DialogTitle>
           </DialogHeader>
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-2">
               <Square className="w-5 h-5" />
-              <span className="font-medium">Aspect Ratio</span>
+              <span className="font-medium">{t("aspectRatio")}</span>
             </div>
             <div className="grid grid-cols-3 sm:flex gap-2 mb-2">
               <Button
@@ -295,7 +297,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
             {selectedRatio === "custom" && (
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <div className="flex flex-col gap-1">
-                  <Label htmlFor="custom-width" className="text-xs sm:text-sm">Width</Label>
+                  <Label htmlFor="custom-width" className="text-xs sm:text-sm">{t("width")}</Label>
                   <Input
                     id="custom-width"
                     type="number"
@@ -312,7 +314,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <Label htmlFor="custom-height" className="text-xs sm:text-sm">Height</Label>
+                  <Label htmlFor="custom-height" className="text-xs sm:text-sm">{t("height")}</Label>
                   <Input
                     id="custom-height"
                     type="number"
@@ -333,7 +335,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
           </div>
           <div className="mb-4 space-y-3">
             <div>
-              <div className="font-medium mb-2 text-sm sm:text-base">Socials</div>
+              <div className="font-medium mb-2 text-sm sm:text-base">{t("socials")}</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {SOCIAL_PRESETS.map((preset) => (
                   <Button
@@ -354,7 +356,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
               </div>
             </div>
             <div>
-              <div className="font-medium mb-2 text-sm sm:text-base">Devices</div>
+              <div className="font-medium mb-2 text-sm sm:text-base">{t("devices")}</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {DEVICE_PRESETS.map((preset) => (
                   <Button
@@ -375,7 +377,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
               </div>
             </div>
             <div>
-              <div className="font-medium mb-2 text-sm sm:text-base">Film</div>
+              <div className="font-medium mb-2 text-sm sm:text-base">{t("film")}</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {FILM_PRESETS.map((preset) => (
                   <Button
@@ -409,7 +411,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
               }}
               className="w-full sm:w-auto"
             >
-              Save
+              {t("save")}
             </Button>
           </div>
         </DialogContent>
