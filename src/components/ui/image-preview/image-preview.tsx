@@ -52,18 +52,28 @@ function ImagePreviewComponent({
           </div>
         </div>
       ) : generatedImage ? (
-        <div className="space-y-4 py-4 px-8">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4 py-4 px-4 sm:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <h3 className="text-lg font-semibold">Generated Image</h3>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleViewFullSize}>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleViewFullSize}
+                className="w-full sm:w-auto"
+              >
                 <Eye className="h-4 w-4 mr-2" />
-                View Full Size
+                <span className="text-sm">View Full Size</span>
               </Button>
               {onDownload && (
-                <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDownload}
+                  className="w-full sm:w-auto"
+                >
                   <Download className="h-4 w-4 mr-2" />
-                  Download
+                  <span className="text-sm">Download</span>
                 </Button>
               )}
             </div>

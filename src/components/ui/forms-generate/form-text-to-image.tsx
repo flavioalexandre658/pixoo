@@ -18,18 +18,32 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  WandSparkles,
+} from "lucide-react";
 import { toast } from "sonner";
-import { DimensionSelector, Dimension } from "@/components/ui/forms-generate/dimension-selector";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { DimensionSelector, Dimension } from "./dimension-selector";
 
 const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   model: z.string(),
-  aspectRatio: z.string(),
   imagePublic: z.boolean(),
   seed: z.number().optional(),
   steps: z.number().min(1).max(50).optional(),
   guidance: z.number().min(1).max(20).optional(),
+  width: z.number(),
+  height: z.number(),
 });
 
 type FormTextToImageForm = z.infer<typeof formTextToImageSchema>;
@@ -39,7 +53,7 @@ const models = [
     id: "flux-schnell",
     name: "Flux Schnell",
     credits: 0,
-    badge: "free unlimited",
+    badge: "free",
   },
   { id: "flux-dev", name: "Flux Dev", credits: 2 },
   { id: "flux-pro", name: "Flux Pro", credits: 5 },
@@ -47,15 +61,6 @@ const models = [
   { id: "flux-pro-1.1-ultra", name: "Flux Pro 1.1 Ultra", credits: 6 },
   { id: "flux-realism", name: "Flux Realism", credits: 3 },
   { id: "flux-kontext-pro", name: "Flux Kontext Pro", credits: 4 },
-];
-
-const aspectRatios = [
-  { value: "1:1", label: "1:1 (Square)" },
-  { value: "16:9", label: "16:9 (Landscape)", models: ["flux-kontext-pro"] },
-  { value: "9:16", label: "9:16 (Portrait)", models: ["flux-kontext-pro"] },
-  { value: "4:3", label: "4:3", models: ["flux-kontext-pro"] },
-  { value: "3:4", label: "3:4", models: ["flux-kontext-pro"] },
-  { value: "21:9", label: "21:9 (Ultra Wide)", models: ["flux-kontext-pro"] },
 ];
 
 interface FormTextToImageProps {
@@ -73,18 +78,25 @@ export function FormTextToImage({
 }: FormTextToImageProps) {
   const t = useTranslations("formTextToImage");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [dimension, setDimension] = useState<Dimension>({
+    aspectRatio: "1:1",
+    width: 1024,
+    height: 1024,
+  });
+
   const form = useForm<FormTextToImageForm>({
     resolver: zodResolver(formTextToImageSchema),
     defaultValues: {
       prompt: "",
       model: "flux-schnell",
-      aspectRatio: "1:1",
       imagePublic: false,
+      width: 1024,
+      height: 1024,
     },
   });
 
-  const [dimension, setDimension] = useState<Dimension>({ aspectRatio: "1:1", width: 1024, height: 1024 });
   const onSubmit = async (data: FormTextToImageForm) => {
     try {
       toast.success("Starting image generation...");
@@ -97,9 +109,9 @@ export function FormTextToImage({
         body: JSON.stringify({
           prompt: data.prompt,
           model: data.model,
-          aspectRatio: dimension.aspectRatio,
           width: dimension.width,
           height: dimension.height,
+          aspectRatio: dimension.aspectRatio,
           seed: data.seed,
           steps: data.steps,
           guidance: data.guidance,
@@ -160,6 +172,97 @@ export function FormTextToImage({
 
   const selectedModel = models.find((m) => m.id === form.watch("model"));
 
+  const settingsContent = (
+    <div className="space-y-6 pt-4">
+      {/* Dimension Selector */}
+      <div className="space-y-2">
+        <Label>{t("aspectRatio")}</Label>
+        <DimensionSelector
+          value={dimension}
+          onChange={(newDimension) => {
+            setDimension(newDimension);
+            form.setValue("width", newDimension.width);
+            form.setValue("height", newDimension.height);
+          }}
+        />
+      </div>
+
+      {/* Advanced Options */}
+      <div className="space-y-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 p-0 h-auto font-normal"
+        >
+          {t("advancedOptions")}
+          {showAdvanced ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+
+        {showAdvanced && (
+          <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+            {/* Seed */}
+            <div className="space-y-2">
+              <Label htmlFor="seed">Seed (Optional)</Label>
+              <Input
+                id="seed"
+                type="number"
+                placeholder="Random seed for reproducible results"
+                {...form.register("seed", { valueAsNumber: true })}
+              />
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-2">
+              <Label htmlFor="steps">Steps (1-50)</Label>
+              <Input
+                id="steps"
+                type="number"
+                min="1"
+                max="50"
+                defaultValue="20"
+                {...form.register("steps", { valueAsNumber: true })}
+              />
+            </div>
+
+            {/* Guidance */}
+            <div className="space-y-2">
+              <Label htmlFor="guidance">Guidance Scale (1-20)</Label>
+              <Input
+                id="guidance"
+                type="number"
+                min="1"
+                max="20"
+                step="0.1"
+                defaultValue="7.5"
+                {...form.register("guidance", { valueAsNumber: true })}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Image Public Toggle */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label htmlFor="imagePublic">{t("imagePublic")}</Label>
+          <p className="text-sm text-muted-foreground">
+            {t("imagePublicDescription")}
+          </p>
+        </div>
+        <Switch
+          id="imagePublic"
+          checked={form.watch("imagePublic")}
+          onCheckedChange={(checked) => form.setValue("imagePublic", checked)}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -168,48 +271,101 @@ export function FormTextToImage({
           {t("title")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Model Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="model">{t("modelSelection")}</Label>
-            <Select
-              value={form.watch("model")}
-              onValueChange={(value) => form.setValue("model", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {models.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{model.name}</span>
-                      <div className="flex items-center gap-2 ml-2">
-                        {model.badge && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {model.badge}
-                          </span>
-                        )}
-                        {model.credits > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {model.credits} credits
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedModel && selectedModel.credits > 0 && (
-              <p className="text-sm text-muted-foreground">
-                This will cost {selectedModel.credits} credits
-              </p>
-            )}
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4">
+            <div className="flex items-center gap-2">
+              <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("advancedOptions")}</DialogTitle>
+                  </DialogHeader>
+                  {settingsContent}
+                </DialogContent>
+              </Dialog>
+              <div className="flex-grow">
+                <Select
+                  value={form.watch("model")}
+                  onValueChange={(value) => form.setValue("model", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {models.map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{model.name}</span>
+                          <div className="flex items-center gap-2 ml-2">
+                            {model.badge && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                {model.badge}
+                              </span>
+                            )}
+                            {model.credits > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {model.credits} credits
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
-          {/* Prompt */}
+          {/* Desktop View */}
+          <div className="hidden md:block space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="model">{t("modelSelection")}</Label>
+              <Select
+                value={form.watch("model")}
+                onValueChange={(value) => form.setValue("model", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {models.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{model.name}</span>
+                        <div className="flex items-center gap-2 ml-2">
+                          {model.badge && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                              {model.badge}
+                            </span>
+                          )}
+                          {model.credits > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              {model.credits} credits
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedModel && selectedModel.credits > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  This will cost {selectedModel.credits} credits
+                </p>
+              )}
+            </div>
+            {settingsContent}
+          </div>
+
+          {/* Prompt (Common for both views) */}
           <div className="space-y-2">
             <Label htmlFor="prompt">{t("prompt")}</Label>
             <Textarea
@@ -225,118 +381,25 @@ export function FormTextToImage({
             )}
           </div>
 
-          {/* Image Dimensions */}
-          <div className="space-y-2">
-            <Label>Image Dimensions</Label>
-            <DimensionSelector value={dimension} onChange={setDimension} />
-          </div>
-          {/* Advanced Options */}
-          <div className="space-y-4">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 p-0 h-auto font-normal"
-            >
-              {t("advancedOptions")}
-              {showAdvanced ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-
-            {showAdvanced && (
-              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                {/* Seed */}
-                <div className="space-y-2">
-                  <Label htmlFor="seed">Seed (Optional)</Label>
-                  <Input
-                    id="seed"
-                    type="number"
-                    placeholder="Random seed for reproducible results"
-                    {...form.register("seed", { valueAsNumber: true })}
-                  />
-                </div>
-
-                {/* Steps */}
-                <div className="space-y-2">
-                  <Label htmlFor="steps">Steps (1-50)</Label>
-                  <Input
-                    id="steps"
-                    type="number"
-                    min="1"
-                    max="50"
-                    defaultValue="20"
-                    {...form.register("steps", { valueAsNumber: true })}
-                  />
-                </div>
-
-                {/* Guidance */}
-                <div className="space-y-2">
-                  <Label htmlFor="guidance">Guidance Scale (1-20)</Label>
-                  <Input
-                    id="guidance"
-                    type="number"
-                    min="1"
-                    max="20"
-                    step="0.1"
-                    defaultValue="7.5"
-                    {...form.register("guidance", { valueAsNumber: true })}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Image Public Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="imagePublic">{t("imagePublic")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("imagePublicDescription")}
-              </p>
-            </div>
-            <Switch
-              id="imagePublic"
-              checked={form.watch("imagePublic")}
-              onCheckedChange={(checked) =>
-                form.setValue("imagePublic", checked)
-              }
-            />
-          </div>
-
-          {/* Generate Button */}
+          {/* Generate Button (Common for both views) */}
           <Button
             type="submit"
             className="w-full"
             size="lg"
             disabled={isGenerating}
-            aria-disabled={isGenerating}
           >
             {isGenerating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Generating...{" "}
-                {generationProgress > 0 && `${generationProgress}%`}
+                Generating...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4 mr-2" />
+                <WandSparkles className="mr-2" />
                 {t("generateImage")}
               </>
             )}
           </Button>
-
-          {/* Progress Bar */}
-          {isGenerating && generationProgress > 0 && (
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${generationProgress}%` }}
-              />
-            </div>
-          )}
         </form>
       </CardContent>
     </Card>

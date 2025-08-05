@@ -30,6 +30,19 @@ interface TextToImageRequest {
   imagePublic?: boolean;
 }
 
+// Função para converter aspect ratio para o formato da BFL
+function convertAspectRatio(ratio: string): string {
+  const ratioMap: { [key: string]: string } = {
+    "1:1": "1:1",
+    "16:9": "16:9",
+    "9:16": "9:16",
+    "4:3": "4:3",
+    "3:4": "3:4",
+    "21:9": "21:9",
+  };
+  return ratioMap[ratio] || "1:1";
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticação
@@ -42,16 +55,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body: TextToImageRequest = await request.json();
-    const {
-      prompt,
-      model,
-      aspectRatio = "1:1",
-      width,
-      height,
-      seed,
-      steps,
-      guidance,
-    } = body;
+    const { prompt, model, aspectRatio = "1:1", width, height, seed, steps, guidance } = body;
+
+    console.log("📐 Received dimensions:", { width, height, aspectRatio });
 
     if (!prompt || !model) {
       return NextResponse.json(
@@ -88,16 +94,19 @@ export async function POST(request: NextRequest) {
     // Prepara os parâmetros da requisição baseado no modelo
     const requestBody: any = {
       prompt,
+      aspect_ratio: convertAspectRatio(aspectRatio),
       output_format: "jpeg",
       safety_tolerance: 2,
       prompt_upsampling: false,
     };
 
-    if (width && height) {
+    // Adiciona dimensões customizadas se fornecidas
+    if (width !== undefined && height !== undefined) {
       requestBody.width = width;
       requestBody.height = height;
+      console.log("✅ Added custom dimensions to request:", { width, height });
     } else {
-      requestBody.aspect_ratio = aspectRatio;
+      console.log("⚠️ No custom dimensions provided, using aspect_ratio only:", aspectRatio);
     }
 
     // Adiciona parâmetros opcionais se fornecidos

@@ -1,7 +1,8 @@
 import Image from "next/image";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Clock, Zap } from "lucide-react";
+import { Download, Clock, Zap, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,35 +18,50 @@ interface ImageHistoryCardProps {
     generationTimeMs: number | null;
     createdAt: string;
   };
-  zoom: number;
-  cropped: boolean;
   getModelBadgeColor: (model: string) => string;
   formatTime: (ms: number | null) => string;
   onDownload: (url: string, prompt: string) => void;
+  zoom: number;
+  cropped: boolean;
 }
 
-export function ImageHistoryCard({ image, zoom, cropped, getModelBadgeColor, formatTime, onDownload }: ImageHistoryCardProps) {
+export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDownload, zoom, cropped }: ImageHistoryCardProps) {
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
-    <div className="border rounded-lg p-4 space-y-3">
-      {/* Imagem */}
-      {image.imageUrl && image.status === "ready" ? (
-        <div className="relative aspect-square">
+    <div className="border rounded-lg p-4 flex flex-col space-y-3 group relative overflow-hidden">
+      <div 
+        className="relative w-full aspect-square bg-muted rounded-md"
+        style={{
+          overflow: cropped ? 'hidden' : 'visible',
+        }}
+      >
+        {image.imageUrl && image.status === "ready" && !imageError ? (
           <Image
             src={image.imageUrl}
             alt={image.prompt}
-            width={200 * zoom}
-            height={450 * zoom}
-            className={`w-full ${cropped ? 'h-32 object-cover' : 'h-auto object-contain'} rounded-md transition-all`}
-            style={{ transform: `scale(${zoom})` }}
+            layout="fill"
+            objectFit="cover"
+            className="transition-transform duration-300"
+            style={{
+              transform: `scale(${zoom})`,
+              objectFit: cropped ? 'cover' : 'contain',
+            }}
+            onError={handleImageError}
           />
-        </div>
-      ) : (
-        <div className="aspect-square bg-gray-100 rounded-md flex items-center justify-center">
-          <div className="text-gray-400 text-sm">
-            {image.status === "pending" ? "Gerando..." : "Erro"}
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+            <AlertTriangle className="w-8 h-8 mb-2" />
+            <span className="text-sm text-center">
+              {image.status === 'pending' ? 'Gerando...' : 'Falha ao carregar imagem'}
+            </span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       {/* Prompt */}
       <div>
         <p className="text-sm font-medium line-clamp-2">

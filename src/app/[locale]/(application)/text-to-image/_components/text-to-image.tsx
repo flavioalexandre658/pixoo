@@ -70,10 +70,30 @@ export default function TextToImage() {
   };
 
   const downloadImage = async () => {
-    if (!generatedImage) return;
+    if (!generatedImage) {
+      toast.error("No image to download");
+      return;
+    }
 
     try {
-      const response = await fetch(generatedImage);
+      toast.loading("Preparing download...", { id: "download" });
+      
+      // Tentar fetch direto primeiro
+      let response;
+      try {
+        response = await fetch(generatedImage, {
+          mode: 'cors',
+          credentials: 'omit'
+        });
+      } catch (corsError) {
+        // Se falhar por CORS, tentar através de proxy
+        response = await fetch(`/api/proxy-image?url=${encodeURIComponent(generatedImage)}`);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -82,10 +102,17 @@ export default function TextToImage() {
       a.download = `generated-image-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      
+      toast.success("Image downloaded successfully!", { id: "download" });
     } catch (error) {
       console.error("Error downloading image:", error);
+      toast.error("Failed to download image. Please try again.", { id: "download" });
     }
   };
 

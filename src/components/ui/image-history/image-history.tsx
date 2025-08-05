@@ -7,6 +7,7 @@ import { Filter } from "lucide-react";
 import { SearchBar } from "./search-bar";
 import { FilterSelect } from "./filter-select";
 import { ZoomControls } from "./zoom-controls";
+
 import { ImageHistoryCard } from "./image-history-card";
 
 interface GeneratedImage {
@@ -125,20 +126,12 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
       <CardHeader>
         <CardTitle>Histórico de Imagens</CardTitle>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
-          <div className="flex gap-2 flex-1">
+          <div className="flex flex-wrap gap-2 flex-1">
             <SearchBar
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por prompt ou similaridade"
             />
-            <Button
-              variant={modelFilter ? "default" : "outline"}
-              size="sm"
-              onClick={() => setModelFilter("")}
-            >
-              Modelos
-              <Filter className="ml-1 h-4 w-4" />
-            </Button>
             <FilterSelect
               options={[...new Set(images.map((img) => img.model))].map(
                 (model) => ({ label: model, value: model })
@@ -157,13 +150,13 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
               onChange={setStatusFilter}
               placeholder="Todos Status"
             />
+            <ZoomControls
+              zoom={zoom}
+              setZoom={setZoom}
+              cropped={cropped}
+              setCropped={setCropped}
+            />
           </div>
-          <ZoomControls
-            zoom={zoom}
-            setZoom={setZoom}
-            cropped={cropped}
-            setCropped={setCropped}
-          />
         </div>
         <p className="text-sm text-muted-foreground mt-2">
           Suas últimas imagens geradas com detalhes de tempo e créditos
@@ -180,11 +173,11 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
               <ImageHistoryCard
                 key={image.id}
                 image={image}
-                zoom={zoom}
-                cropped={cropped}
                 getModelBadgeColor={getModelBadgeColor}
                 formatTime={formatTime}
                 onDownload={downloadImage}
+                zoom={zoom}
+                cropped={cropped}
               />
             ))}
           </div>
