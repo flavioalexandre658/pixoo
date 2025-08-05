@@ -140,6 +140,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
     <div>
       <div className="grid grid-cols-2 sm:flex gap-2 mb-4">
         <Button
+          type="button"
           variant={selectedRatio === "2:3" ? "default" : "outline"}
           onClick={() => handleRatioSelect("2:3")}
           className="flex-1 sm:flex-none"
@@ -148,6 +149,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
           <span className="text-sm sm:text-base">2:3</span>
         </Button>
         <Button
+          type="button"
           variant={selectedRatio === "1:1" ? "default" : "outline"}
           onClick={() => handleRatioSelect("1:1")}
           className="flex-1 sm:flex-none"
@@ -156,6 +158,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
           <span className="text-sm sm:text-base">1:1</span>
         </Button>
         <Button
+          type="button"
           variant={selectedRatio === "16:9" ? "default" : "outline"}
           onClick={() => handleRatioSelect("16:9")}
           className="flex-1 sm:flex-none"
@@ -164,6 +167,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
           <span className="text-sm sm:text-base">16:9</span>
         </Button>
         <Button
+          type="button"
           variant={selectedRatio === "custom" ? "default" : "outline"}
           onClick={handleCustom}
           className="flex-1 sm:flex-none"
@@ -178,6 +182,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
             (preset) => (
               <Button
                 key={preset.label}
+                type="button"
                 variant={
                   selectedPreset === preset.label ? "default" : "outline"
                 }
@@ -219,6 +224,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
             </div>
             <div className="grid grid-cols-3 sm:flex gap-2 mb-2">
               <Button
+                type="button"
                 size="sm"
                 variant={selectedRatio === "1:1" ? "default" : "outline"}
                 onClick={() => {
@@ -232,6 +238,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 1:1
               </Button>
               <Button
+                type="button"
                 size="sm"
                 variant={selectedRatio === "16:9" ? "default" : "outline"}
                 onClick={() => {
@@ -245,6 +252,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 16:9
               </Button>
               <Button
+                type="button"
                 size="sm"
                 variant={selectedRatio === "9:16" ? "default" : "outline"}
                 onClick={() => {
@@ -258,6 +266,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 9:16
               </Button>
               <Button
+                type="button"
                 size="sm"
                 variant={selectedRatio === "4:3" ? "default" : "outline"}
                 onClick={() => {
@@ -271,6 +280,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 4:3
               </Button>
               <Button
+                type="button"
                 size="sm"
                 variant={selectedRatio === "3:4" ? "default" : "outline"}
                 onClick={() => {
@@ -340,6 +350,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 {SOCIAL_PRESETS.map((preset) => (
                   <Button
                     key={preset.label}
+                    type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => {
@@ -361,6 +372,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 {DEVICE_PRESETS.map((preset) => (
                   <Button
                     key={preset.label}
+                    type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => {
@@ -382,6 +394,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 {FILM_PRESETS.map((preset) => (
                   <Button
                     key={preset.label}
+                    type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => {
@@ -400,6 +413,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
           </div>
           <div className="flex justify-end pt-4 border-t">
             <Button
+              type="button"
               onClick={() => {
                 setCustomOpen(false);
                 const validated = validateDimensions(customWidth, customHeight);

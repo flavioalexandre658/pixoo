@@ -68,6 +68,7 @@ interface FormTextToImageProps {
   onGenerationStart?: () => void;
   onStartPolling?: (taskId: string) => void;
   onGenerationComplete?: () => void;
+  onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
 }
 
@@ -76,6 +77,7 @@ export function FormTextToImage({
   onGenerationStart,
   onStartPolling,
   onGenerationComplete,
+  onGenerationButtonClick,
   isGenerating,
 }: FormTextToImageProps) {
   const t = useTranslations("formTextToImage");
@@ -115,6 +117,7 @@ export function FormTextToImage({
     
     // Desabilita o botão imediatamente para evitar spam de cliques
     setStartedGeneration(true);
+    onGenerationButtonClick?.();
     
     try {
       toast.success(t("startingGeneration"));
@@ -150,6 +153,7 @@ export function FormTextToImage({
           );
         } else {
           const errorData = await response.json();
+          onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
           throw new Error(errorData.error || "Failed to generate image");
         }
         return;
@@ -171,10 +175,12 @@ export function FormTextToImage({
         toast.success(t("imageGeneratedSuccess"));
       } else {
         setStartedGeneration(false);
+        onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
         throw new Error("Invalid response from server");
       }
     } catch (error: any) {
       setStartedGeneration(false);
+      onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
       console.error("Generation error:", error);
       if (error.message.includes("credits")) {
         toast.error(t("insufficientCredits"));

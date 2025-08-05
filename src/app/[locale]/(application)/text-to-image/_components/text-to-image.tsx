@@ -39,12 +39,14 @@ export default function TextToImage() {
       interval = setInterval(() => {
         setCurrentTime(Date.now() - (generationStartTimeRef.current as number));
       }, 100); // Atualiza a cada 100ms para suavidade
+    } else {
+      setCurrentTime(0);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isGenerating, generationStartTimeRef]);
+  }, [isGenerating]);
 
   // Cleanup das conexões quando o componente for desmontado
   useEffect(() => {
@@ -172,6 +174,7 @@ export default function TextToImage() {
             }
 
             toast.error(data.error || "Image generation failed");
+            setIsGenerating(false);
             setCurrentTaskId(null);
           } else if (data.status === "processing") {
             console.log("🔄 Task still processing...");
@@ -188,6 +191,14 @@ export default function TextToImage() {
         }
       } catch (error) {
         console.error("Polling error:", error);
+        // Em caso de erro de rede ou outro erro crítico, parar polling e resetar estado
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+          toast.error("Network error during generation. Please try again.");
+          setIsGenerating(false);
+          setCurrentTaskId(null);
+        }
       }
     };
 
@@ -204,6 +215,7 @@ export default function TextToImage() {
         pollingIntervalRef.current = null;
         if (currentTaskId === taskId) {
           toast.error("Generation timeout. Please try again.");
+          setIsGenerating(false);
           setCurrentTaskId(null);
         }
       }
@@ -234,6 +246,11 @@ export default function TextToImage() {
             }}
             onGenerationComplete={() => {
               setIsGenerating(false);
+            }}
+            onGenerationButtonClick={() => {
+              const now = Date.now();
+              setIsGenerating(true);
+              handleGenerationStart(now);
             }}
             isGenerating={isGenerating}
           />
