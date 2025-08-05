@@ -1,0 +1,8 @@
+version: "2"
+authtoken: # Adicione seu token do ngrok aqui (opcional)
+tunnels:
+  pixoo:
+    proto: http
+    addr: 3000
+    subdomain: # Adicione um subdomínio personalizado aqui (requer conta paga)
+    bind_tls: true

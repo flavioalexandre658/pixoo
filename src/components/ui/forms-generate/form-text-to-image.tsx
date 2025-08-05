@@ -1,0 +1,344 @@
+"use client";
+
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { toast } from "sonner";
+import { DimensionSelector, Dimension } from "@/components/ui/forms-generate/dimension-selector";
+
+const formTextToImageSchema = z.object({
+  prompt: z.string().min(1, "Prompt is required"),
+  model: z.string(),
+  aspectRatio: z.string(),
+  imagePublic: z.boolean(),
+  seed: z.number().optional(),
+  steps: z.number().min(1).max(50).optional(),
+  guidance: z.number().min(1).max(20).optional(),
+});
+
+type FormTextToImageForm = z.infer<typeof formTextToImageSchema>;
+
+const models = [
+  {
+    id: "flux-schnell",
+    name: "Flux Schnell",
+    credits: 0,
+    badge: "free unlimited",
+  },
+  { id: "flux-dev", name: "Flux Dev", credits: 2 },
+  { id: "flux-pro", name: "Flux Pro", credits: 5 },
+  { id: "flux-pro-1.1", name: "Flux Pro 1.1", credits: 4 },
+  { id: "flux-pro-1.1-ultra", name: "Flux Pro 1.1 Ultra", credits: 6 },
+  { id: "flux-realism", name: "Flux Realism", credits: 3 },
+  { id: "flux-kontext-pro", name: "Flux Kontext Pro", credits: 4 },
+];
+
+const aspectRatios = [
+  { value: "1:1", label: "1:1 (Square)" },
+  { value: "16:9", label: "16:9 (Landscape)", models: ["flux-kontext-pro"] },
+  { value: "9:16", label: "9:16 (Portrait)", models: ["flux-kontext-pro"] },
+  { value: "4:3", label: "4:3", models: ["flux-kontext-pro"] },
+  { value: "3:4", label: "3:4", models: ["flux-kontext-pro"] },
+  { value: "21:9", label: "21:9 (Ultra Wide)", models: ["flux-kontext-pro"] },
+];
+
+interface FormTextToImageProps {
+  onImageGenerated: (imageUrl: string) => void;
+  onGenerationStart?: () => void;
+  onStartPolling?: (taskId: string) => void;
+  isGenerating?: boolean;
+}
+
+export function FormTextToImage({
+  onImageGenerated,
+  onGenerationStart,
+  onStartPolling,
+  isGenerating,
+}: FormTextToImageProps) {
+  const t = useTranslations("formTextToImage");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const form = useForm<FormTextToImageForm>({
+    resolver: zodResolver(formTextToImageSchema),
+    defaultValues: {
+      prompt: "",
+      model: "flux-schnell",
+      aspectRatio: "1:1",
+      imagePublic: false,
+    },
+  });
+
+  const [dimension, setDimension] = useState<Dimension>({ aspectRatio: "1:1", width: 1024, height: 1024 });
+  const onSubmit = async (data: FormTextToImageForm) => {
+    try {
+      toast.success("Starting image generation...");
+
+      const response = await fetch("/api/text-to-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: data.prompt,
+          model: data.model,
+          aspectRatio: dimension.aspectRatio,
+          width: dimension.width,
+          height: dimension.height,
+          seed: data.seed,
+          steps: data.steps,
+          guidance: data.guidance,
+          imagePublic: data.imagePublic,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error("Rate limit exceeded. Please try again later.");
+        } else if (
+          response.status === 502 ||
+          response.status === 503 ||
+          response.status === 504
+        ) {
+          toast.error(
+            "Service temporarily unavailable. The system is automatically retrying..."
+          );
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate image");
+        }
+        return;
+      }
+
+      const result = await response.json();
+
+      if (result.taskId) {
+        console.log("Received taskId from API:", result.taskId);
+        toast.info("Generation started. Checking status...");
+
+        setGenerationProgress(25);
+        onGenerationStart?.();
+
+        // Usar apenas polling - mais confiável que SSE
+        onStartPolling?.(result.taskId);
+      } else if (result.success && result.imageUrl) {
+        onImageGenerated(result.imageUrl);
+        toast.success("Image generated successfully!");
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error: any) {
+      console.error("Generation error:", error);
+      if (error.message.includes("credits")) {
+        toast.error(
+          "Insufficient credits. Please add more credits to continue."
+        );
+      } else if (error.message.includes("rate limit")) {
+        toast.error("Rate limit exceeded. Please try again in a few minutes.");
+      } else {
+        toast.error(
+          error.message || "Failed to generate image. Please try again."
+        );
+      }
+    }
+  };
+
+  const selectedModel = models.find((m) => m.id === form.watch("model"));
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          {t("title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Model Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="model">{t("modelSelection")}</Label>
+            <Select
+              value={form.watch("model")}
+              onValueChange={(value) => form.setValue("model", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{model.name}</span>
+                      <div className="flex items-center gap-2 ml-2">
+                        {model.badge && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {model.badge}
+                          </span>
+                        )}
+                        {model.credits > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {model.credits} credits
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedModel && selectedModel.credits > 0 && (
+              <p className="text-sm text-muted-foreground">
+                This will cost {selectedModel.credits} credits
+              </p>
+            )}
+          </div>
+
+          {/* Prompt */}
+          <div className="space-y-2">
+            <Label htmlFor="prompt">{t("prompt")}</Label>
+            <Textarea
+              id="prompt"
+              placeholder={t("promptPlaceholder")}
+              className="min-h-[100px] resize-none"
+              {...form.register("prompt")}
+            />
+            {form.formState.errors.prompt && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.prompt.message}
+              </p>
+            )}
+          </div>
+
+          {/* Image Dimensions */}
+          <div className="space-y-2">
+            <Label>Image Dimensions</Label>
+            <DimensionSelector value={dimension} onChange={setDimension} />
+          </div>
+          {/* Advanced Options */}
+          <div className="space-y-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center gap-2 p-0 h-auto font-normal"
+            >
+              {t("advancedOptions")}
+              {showAdvanced ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+
+            {showAdvanced && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                {/* Seed */}
+                <div className="space-y-2">
+                  <Label htmlFor="seed">Seed (Optional)</Label>
+                  <Input
+                    id="seed"
+                    type="number"
+                    placeholder="Random seed for reproducible results"
+                    {...form.register("seed", { valueAsNumber: true })}
+                  />
+                </div>
+
+                {/* Steps */}
+                <div className="space-y-2">
+                  <Label htmlFor="steps">Steps (1-50)</Label>
+                  <Input
+                    id="steps"
+                    type="number"
+                    min="1"
+                    max="50"
+                    defaultValue="20"
+                    {...form.register("steps", { valueAsNumber: true })}
+                  />
+                </div>
+
+                {/* Guidance */}
+                <div className="space-y-2">
+                  <Label htmlFor="guidance">Guidance Scale (1-20)</Label>
+                  <Input
+                    id="guidance"
+                    type="number"
+                    min="1"
+                    max="20"
+                    step="0.1"
+                    defaultValue="7.5"
+                    {...form.register("guidance", { valueAsNumber: true })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Image Public Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="imagePublic">{t("imagePublic")}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t("imagePublicDescription")}
+              </p>
+            </div>
+            <Switch
+              id="imagePublic"
+              checked={form.watch("imagePublic")}
+              onCheckedChange={(checked) =>
+                form.setValue("imagePublic", checked)
+              }
+            />
+          </div>
+
+          {/* Generate Button */}
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={isGenerating}
+            aria-disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Generating...{" "}
+                {generationProgress > 0 && `${generationProgress}%`}
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                {t("generateImage")}
+              </>
+            )}
+          </Button>
+
+          {/* Progress Bar */}
+          {isGenerating && generationProgress > 0 && (
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${generationProgress}%` }}
+              />
+            </div>
+          )}
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

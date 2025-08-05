@@ -22,23 +22,12 @@ interface TextToImageRequest {
   prompt: string;
   model: string;
   aspectRatio?: string;
+  width?: number;
+  height?: number;
   seed?: number;
   steps?: number;
   guidance?: number;
   imagePublic?: boolean;
-}
-
-// Função para converter aspect ratio para o formato da BFL
-function convertAspectRatio(ratio: string): string {
-  const ratioMap: { [key: string]: string } = {
-    "1:1": "1:1",
-    "16:9": "16:9",
-    "9:16": "9:16",
-    "4:3": "4:3",
-    "3:4": "3:4",
-    "21:9": "21:9",
-  };
-  return ratioMap[ratio] || "1:1";
 }
 
 export async function POST(request: NextRequest) {
@@ -53,7 +42,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body: TextToImageRequest = await request.json();
-    const { prompt, model, aspectRatio = "1:1", seed, steps, guidance } = body;
+    const {
+      prompt,
+      model,
+      aspectRatio = "1:1",
+      width,
+      height,
+      seed,
+      steps,
+      guidance,
+    } = body;
 
     if (!prompt || !model) {
       return NextResponse.json(
@@ -90,11 +88,17 @@ export async function POST(request: NextRequest) {
     // Prepara os parâmetros da requisição baseado no modelo
     const requestBody: any = {
       prompt,
-      aspect_ratio: convertAspectRatio(aspectRatio),
       output_format: "jpeg",
       safety_tolerance: 2,
       prompt_upsampling: false,
     };
+
+    if (width && height) {
+      requestBody.width = width;
+      requestBody.height = height;
+    } else {
+      requestBody.aspect_ratio = aspectRatio;
+    }
 
     // Adiciona parâmetros opcionais se fornecidos
     if (seed !== undefined) {

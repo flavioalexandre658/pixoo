@@ -34,6 +34,8 @@ Padrões de codificação:
 - Nunca duplique código; prefira componentes ou funções reutilizáveis (DRY).
 - Sempre estilize com Tailwind.
 - Sempre que possível, use componentes da biblioteca shadcn/ui (https://ui.shadcn.com/docs/components).
+- Sempre remova variaveis e importaçoes que nao estao sendo utilizadas, mantendo um componente clean
+- Sempre revise os erros de Eslint no componente e corrija-os
 
 Organização de arquivos:
 - Sempre use o useAction da lib next-safe-action/hooks para usar as actions da pasta actions

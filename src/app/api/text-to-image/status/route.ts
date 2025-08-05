@@ -1,38 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { activeConnections } from "../sse-utils";
+import { db } from "../../../../../db";
+import { generatedImages } from "../../../../../db/schema";
+import { eq } from "drizzle-orm";
 
-// Endpoint para Server-Sent Events
+// Endpoint para polling de status da tarefa
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const taskId = searchParams.get('taskId');
-
   if (!taskId) {
     return NextResponse.json({ error: 'Task ID required' }, { status: 400 });
   }
-
-  const stream = new ReadableStream({
-    start(controller) {
-      // Armazenar a conexão
-      activeConnections.set(taskId, controller);
-      
-      // Enviar mensagem inicial
-      controller.enqueue(`data: ${JSON.stringify({ status: 'connected', taskId })}\n\n`);
-      
-      // Cleanup quando a conexão for fechada
-      request.signal.addEventListener('abort', () => {
-        activeConnections.delete(taskId);
-        controller.close();
-      });
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control',
-    },
-  });
+  try {
+    const [task] = await db.select().from(generatedImages).where(eq(generatedImages.taskId, taskId));
+    if (!task) {
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    }
+    let frontendStatus = task.status;
+    if (task.status === 'pending') frontendStatus = 'Pending';
+    else if (task.status === 'ready') frontendStatus = 'Ready';
+    else if (task.status === 'error') frontendStatus = 'Error';
+    const statusData = {
+      status: frontendStatus,
+      taskId: taskId,
+      imageUrl: task.imageUrl || null
+    };
+    return NextResponse.json(statusData);
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

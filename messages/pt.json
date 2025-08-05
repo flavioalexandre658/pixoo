@@ -43,6 +43,9 @@
     "changeLanguage": "Alterar idioma"
   },
   "textToImage": {
+    "title": "Texto para Imagem"
+  },
+  "formTextToImage": {
     "title": "Geração de Imagem com IA",
     "modelSelection": "Seleção do Modelo",
     "prompt": "Prompt",
@@ -51,7 +54,11 @@
     "advancedOptions": "Opções Avançadas",
     "imagePublic": "Imagem Pública",
     "imagePublicDescription": "Tornar esta imagem visível para outros usuários",
-    "generateImage": "Gerar Imagem"
+    "generateImage": "Gerar Imagem",
+    "noImageGenerated": "Nenhuma imagem gerada"
+  },
+  "imagePreview": {
+    "noImageGenerated": "Nenhuma imagem gerada"
   },
   "auth": {
     "loading": "Carregando...",

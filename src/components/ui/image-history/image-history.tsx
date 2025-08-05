@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Clock, Zap } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Filter } from "lucide-react";
+import { SearchBar } from "./search-bar";
+import { FilterSelect } from "./filter-select";
+import { ZoomControls } from "./zoom-controls";
+import { ImageHistoryCard } from "./image-history-card";
 
 interface GeneratedImage {
   id: string;
@@ -30,6 +30,11 @@ interface ImageHistoryProps {
 export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const [cropped, setCropped] = useState(false);
 
   const fetchImages = async () => {
     try {
@@ -106,94 +111,81 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
     );
   }
 
+  const filteredImages = images.filter((img) => {
+    const matchesSearch = img.prompt
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesModel = !modelFilter || img.model === modelFilter;
+    const matchesStatus = !statusFilter || img.status === statusFilter;
+    return matchesSearch && matchesModel && matchesStatus;
+  });
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Histórico de Imagens</CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
+          <div className="flex gap-2 flex-1">
+            <SearchBar
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por prompt ou similaridade"
+            />
+            <Button
+              variant={modelFilter ? "default" : "outline"}
+              size="sm"
+              onClick={() => setModelFilter("")}
+            >
+              Modelos
+              <Filter className="ml-1 h-4 w-4" />
+            </Button>
+            <FilterSelect
+              options={[...new Set(images.map((img) => img.model))].map(
+                (model) => ({ label: model, value: model })
+              )}
+              value={modelFilter}
+              onChange={setModelFilter}
+              placeholder="Todos"
+            />
+            <FilterSelect
+              options={[
+                { label: "Pronto", value: "ready" },
+                { label: "Pendente", value: "pending" },
+                { label: "Erro", value: "error" },
+              ]}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              placeholder="Todos Status"
+            />
+          </div>
+          <ZoomControls
+            zoom={zoom}
+            setZoom={setZoom}
+            cropped={cropped}
+            setCropped={setCropped}
+          />
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">
           Suas últimas imagens geradas com detalhes de tempo e créditos
         </p>
       </CardHeader>
       <CardContent>
-        {images.length === 0 ? (
+        {filteredImages.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>Nenhuma imagem gerada ainda</p>
+            <p>Nenhuma imagem encontrada</p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {images.map((image) => (
-              <div key={image.id} className="border rounded-lg p-4 space-y-3">
-                {/* Imagem */}
-                {image.imageUrl && image.status === "ready" ? (
-                  <div className="relative aspect-square">
-                    <Image
-                      src={image.imageUrl}
-                      alt={image.prompt}
-                      width={200}
-                      height={128}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-square bg-gray-100 rounded-md flex items-center justify-center">
-                    <div className="text-gray-400 text-sm">
-                      {image.status === "pending" ? "Gerando..." : "Erro"}
-                    </div>
-                  </div>
-                )}
-
-                {/* Prompt */}
-                <div>
-                  <p className="text-sm font-medium line-clamp-2">
-                    {image.prompt}
-                  </p>
-                </div>
-
-                {/* Badges e informações */}
-                <div className="flex flex-wrap gap-2">
-                  <Badge className={getModelBadgeColor(image.model)}>
-                    {image.model}
-                  </Badge>
-                  <Badge variant="outline">{image.aspectRatio}</Badge>
-                </div>
-
-                {/* Métricas */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatTime(image.generationTimeMs)}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3" />
-                    {image.creditsUsed} créditos
-                  </div>
-                </div>
-
-                {/* Data */}
-                <div className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(image.createdAt), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </div>
-
-                {/* Ações */}
-                {image.imageUrl && image.status === "ready" && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        downloadImage(image.imageUrl!, image.prompt)
-                      }
-                      className="flex-1"
-                    >
-                      <Download className="h-3 w-3 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                )}
-              </div>
+            {filteredImages.map((image) => (
+              <ImageHistoryCard
+                key={image.id}
+                image={image}
+                zoom={zoom}
+                cropped={cropped}
+                getModelBadgeColor={getModelBadgeColor}
+                formatTime={formatTime}
+                onDownload={downloadImage}
+              />
             ))}
           </div>
         )}

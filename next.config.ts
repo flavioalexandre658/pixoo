@@ -8,6 +8,18 @@ const nextConfig = {
       allowedOrigins: ["localhost:3000", "192.168.0.120:3000"],
     },
   },
+
+  images: {
+    //domains: ['api.convitede.com'],  // Adicione seu domínio aqui
+    remotePatterns: [
+      {
+        protocol: "https" as const,
+        hostname: "delivery-us1.bfl.ai",
+        pathname: "/**",
+      },
+    ],
+    unoptimized: true,
+  },
   // Add development origins for cross-origin requests
   async headers() {
     return [

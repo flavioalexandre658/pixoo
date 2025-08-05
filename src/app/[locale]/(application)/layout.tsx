@@ -19,9 +19,9 @@ export default function ApplicationLayout({ children }: Props) {
   const t = useTranslations("auth");
 
   useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.push(`/${locale}/sign-in`);
-    }
+    // if (!isPending && !session?.user) {
+    //  router.push(`/${locale}/sign-in`);
+    // }
   }, [session, isPending, router, locale]);
 
   // Mostrar loading enquanto verifica a sessão
