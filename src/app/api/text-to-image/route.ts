@@ -3,6 +3,8 @@ import { db } from "../../../../db";
 import { generatedImages } from "../../../../db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { CreditsService } from "@/services/credits/credits.service";
+import { CreditsMiddleware } from "@/lib/credits-middleware";
 
 const BFL_API_KEY = "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
@@ -75,21 +77,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calcular créditos baseado no modelo
-    const getCreditsForModel = (modelName: string): number => {
-      const creditMap: { [key: string]: number } = {
-        "flux-schnell": 1,
-        "flux-dev": 5,
-        "flux-pro": 10,
-        "flux-pro-1.1": 15,
-        "flux-pro-1.1-ultra": 25,
-        "flux-realism": 10,
-        "flux-kontext-pro": 20,
-      };
-      return creditMap[modelName] || 5;
-    };
+    // Verificar custo do modelo e créditos do usuário
+    const modelCost = await CreditsService.getModelCost(model);
+    if (!modelCost) {
+      return NextResponse.json(
+        { error: `Modelo ${model} não encontrado no sistema de créditos` },
+        { status: 400 }
+      );
+    }
 
-    const creditsUsed = getCreditsForModel(model);
+    // Garantir que o usuário tem créditos iniciais e verificar se tem créditos suficientes
+    if (modelCost.credits > 0) {
+      await CreditsMiddleware.ensureUserCredits(session.user.id);
+      
+      const creditsValidation = await CreditsMiddleware.validateCredits(session.user.id, modelCost.credits);
+      if (!creditsValidation.valid) {
+        return NextResponse.json(
+          { error: creditsValidation.message },
+          { status: 402 }
+        );
+      }
+    }
 
     // Prepara os parâmetros da requisição baseado no modelo
     const requestBody: any = {
@@ -266,7 +274,7 @@ export async function POST(request: NextRequest) {
           steps: steps || null,
           guidance: guidance ? guidance.toString() : null,
           status: "pending",
-          creditsUsed,
+          creditsUsed: modelCost.credits,
         });
       } catch (dbError) {
         console.error("Error saving to database:", dbError);

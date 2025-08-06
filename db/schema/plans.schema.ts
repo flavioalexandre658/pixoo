@@ -15,6 +15,7 @@ export const plans = pgTable("plans", {
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   interval: varchar("interval", { length: 20 }).notNull(), // monthly, yearly, etc
   intervalCount: integer("interval_count").notNull().default(1),
+  credits: integer("credits").notNull().default(0), // Créditos inclusos no plano
   features: varchar("features", { length: 1000 }), // JSON string of features
   maxUsers: integer("max_users"),
   maxProjects: integer("max_projects"),

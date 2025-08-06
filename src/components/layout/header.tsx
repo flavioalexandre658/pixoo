@@ -15,6 +15,7 @@ import {
 import { Bell, Settings, User, LogOut, CreditCard, Globe } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter, useParams } from "next/navigation";
+import { CreditsDisplay } from "@/components/ui/credits-display";
 
 interface HeaderProps {
   className?: string;
@@ -73,6 +74,11 @@ export function Header({ className }: HeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Credits Display */}
+          {session?.user && (
+            <CreditsDisplay variant="compact" />
+          )}
 
           {/* Notifications */}
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 relative">

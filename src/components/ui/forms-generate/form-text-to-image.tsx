@@ -24,6 +24,7 @@ import {
   ChevronUp,
   Settings,
   WandSparkles,
+  Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,6 +35,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DimensionSelector, Dimension } from "./dimension-selector";
+import { useCredits } from "@/hooks/use-credits";
 
 const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
@@ -81,6 +83,7 @@ export function FormTextToImage({
   isGenerating,
 }: FormTextToImageProps) {
   const t = useTranslations("formTextToImage");
+  const { credits, hasEnoughCredits, spendCredits, isLoading: creditsLoading } = useCredits();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -112,6 +115,19 @@ export function FormTextToImage({
 
   const onSubmit = async (data: FormTextToImageForm) => {
     if (startedGeneration || isGenerating) {
+      return false;
+    }
+    
+    // Verificar se o modelo selecionado requer créditos
+    const selectedModel = models.find((m) => m.id === data.model);
+    if (!selectedModel) {
+      toast.error("Modelo não encontrado");
+      return false;
+    }
+    
+    // Verificar se tem créditos suficientes
+    if (selectedModel.credits > 0 && !hasEnoughCredits(selectedModel.credits)) {
+      toast.error(`Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`);
       return false;
     }
     
@@ -163,6 +179,11 @@ export function FormTextToImage({
 
       if (result.taskId) {
         toast.info(t("checkingStatus"));
+
+        // Descontar créditos após confirmação do taskId
+        if (selectedModel.credits > 0) {
+          await spendCredits(selectedModel.id, result.taskId);
+        }
 
         setGenerationProgress(25);
         onGenerationStart?.();
@@ -406,24 +427,54 @@ export function FormTextToImage({
           </div>
 
           {/* Generate Button (Common for both views) */}
-          <Button
-            type="submit"
-            className="w-full"
-            size="lg"
-            disabled={isGenerating || startedGeneration}
-          >
-            {isGenerating || startedGeneration ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                {t("generating")}
-              </>
-            ) : (
-              <>
-                <WandSparkles className="mr-2" />
-                {t("generateImage")}
-              </>
+          <div className="space-y-2">
+            {selectedModel && selectedModel.credits > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Custo:</span>
+                <div className="flex items-center gap-1">
+                  <Coins className="h-4 w-4" />
+                  <span className={hasEnoughCredits(selectedModel.credits) ? "text-green-600" : "text-red-600"}>
+                    {selectedModel.credits} créditos
+                  </span>
+                </div>
+              </div>
             )}
-          </Button>
+            {credits && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Saldo:</span>
+                <div className="flex items-center gap-1">
+                  <Coins className="h-4 w-4" />
+                  <span>{credits.balance} créditos</span>
+                </div>
+              </div>
+            )}
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={isGenerating || startedGeneration || creditsLoading || (selectedModel && selectedModel.credits > 0 && !hasEnoughCredits(selectedModel.credits))}
+            >
+              {isGenerating || startedGeneration ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  {t("generating")}
+                </>
+              ) : selectedModel && selectedModel.credits > 0 && !hasEnoughCredits(selectedModel.credits) ? (
+                <>
+                  <Coins className="mr-2" />
+                  Créditos insuficientes
+                </>
+              ) : (
+                <>
+                  <WandSparkles className="mr-2" />
+                  {t("generateImage")}
+                  {selectedModel && selectedModel.credits > 0 && (
+                    <span className="ml-2 opacity-75">(-{selectedModel.credits})</span>
+                  )}
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>
