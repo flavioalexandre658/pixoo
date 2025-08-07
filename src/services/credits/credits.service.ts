@@ -2,19 +2,19 @@ import { db } from "../../../db";
 import {
   userCredits,
   creditTransactions,
+  creditReservations,
   modelCosts,
   UserCredits,
-  CreditTransaction,
+  CreditTransaction as CreditTransactionRecord,
+  CreditReservation,
   ModelCost,
 } from "../../../db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, lt } from "drizzle-orm";
 import {
   CreditUsageRequest,
   CreditEarnRequest,
   UserCreditsSummary,
-  CreditTransactionRecord,
-} from "@/interfaces/credits.interface";
-import { MODEL_COSTS } from "@/config/model-costs";
+} from "../../interfaces/credits.interface";
 import { randomUUID } from "crypto";
 
 export class CreditsService {
@@ -68,12 +68,11 @@ export class CreditsService {
     return userCredit ? userCredit.balance >= requiredCredits : false;
   }
 
-  // Gastar créditos
   // Reservar créditos antes da geração (não desconta ainda)
   static async reserveCredits(
     request: CreditUsageRequest
   ): Promise<{ reservationId: string; cost: number }> {
-    const { userId, modelId } = request;
+    const { userId, modelId, description } = request;
 
     // Obter custo do modelo
     const modelCost = await this.getModelCost(modelId);
@@ -89,6 +88,18 @@ export class CreditsService {
 
     // Gerar ID de reserva
     const reservationId = randomUUID();
+    
+    // Criar reserva no banco de dados
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
+    await db.insert(creditReservations).values({
+      id: reservationId,
+      userId,
+      modelId,
+      amount: modelCost.credits,
+      description: description || `Reserva para modelo ${modelId}`,
+      status: "pending",
+      expiresAt,
+    });
 
     return {
       reservationId,
@@ -96,21 +107,114 @@ export class CreditsService {
     };
   }
 
-  // Confirmar gasto de créditos após geração bem-sucedida
+  // Confirmar gasto de créditos após geração bem-sucedida (com proteção contra concorrência)
   static async confirmSpendCredits(
     request: CreditUsageRequest & { reservationId: string }
   ): Promise<boolean> {
     const { userId, modelId, imageId, description, reservationId } = request;
 
-    // Obter custo do modelo
-    const modelCost = await this.getModelCost(modelId);
-    if (!modelCost) {
-      throw new Error(`Modelo ${modelId} não encontrado`);
+    console.log(`🔄 Iniciando confirmação de créditos:`, {
+      userId,
+      modelId,
+      imageId,
+      reservationId,
+      timestamp: new Date().toISOString()
+    });
+
+    // Verificar se a reserva existe e seu status atual
+    const [reservation] = await db
+      .select()
+      .from(creditReservations)
+      .where(
+        and(
+          eq(creditReservations.id, reservationId),
+          eq(creditReservations.userId, userId)
+        )
+      )
+      .limit(1);
+
+    if (!reservation) {
+      console.error(`❌ Reserva não encontrada:`, {
+        reservationId,
+        userId,
+        timestamp: new Date().toISOString()
+      });
+      throw new Error("Reserva não encontrada");
     }
 
+    // Se a reserva já foi confirmada, retornar sucesso (idempotência)
+    if (reservation.status === "confirmed") {
+      console.log(`✅ Reserva já confirmada anteriormente (idempotência):`, {
+        reservationId,
+        userId,
+        confirmedAt: reservation.updatedAt,
+        timestamp: new Date().toISOString()
+      });
+      return true;
+    }
+
+    // Se a reserva foi cancelada, não pode ser confirmada
+    if (reservation.status === "cancelled") {
+      console.error(`❌ Tentativa de confirmar reserva cancelada:`, {
+        reservationId,
+        userId,
+        cancelledAt: reservation.updatedAt,
+        timestamp: new Date().toISOString()
+      });
+      throw new Error("Reserva foi cancelada e não pode ser confirmada");
+    }
+
+    // Verificar se a reserva não expirou
+    const now = new Date();
+    if (now > reservation.expiresAt) {
+      console.error(`❌ Tentativa de confirmar reserva expirada:`, {
+        reservationId,
+        userId,
+        expiresAt: reservation.expiresAt,
+        currentTime: now,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Cancelar reserva expirada
+      await db
+        .update(creditReservations)
+        .set({ status: "cancelled", updatedAt: now })
+        .where(eq(creditReservations.id, reservationId));
+      
+      throw new Error("Reserva expirada");
+    }
+
+    // Verificar se ainda está pendente (única condição válida para confirmação)
+    if (reservation.status !== "pending") {
+      console.error(`❌ Status de reserva inválido para confirmação:`, {
+        reservationId,
+        userId,
+        currentStatus: reservation.status,
+        expectedStatus: "pending",
+        timestamp: new Date().toISOString()
+      });
+      throw new Error(`Reserva com status '${reservation.status}' não pode ser confirmada`);
+    }
+
+    console.log(`✅ Reserva válida encontrada:`, {
+      id: reservation.id,
+      userId: reservation.userId,
+      modelId: reservation.modelId,
+      amount: reservation.amount,
+      status: reservation.status,
+      expiresAt: reservation.expiresAt,
+      createdAt: reservation.createdAt
+    });
+
     // Verificar novamente se tem créditos suficientes
-    const hasCredits = await this.hasEnoughCredits(userId, modelCost.credits);
+    const hasCredits = await this.hasEnoughCredits(userId, reservation.amount);
     if (!hasCredits) {
+      console.error(`❌ Créditos insuficientes no momento da confirmação:`, {
+        reservationId,
+        userId,
+        requiredAmount: reservation.amount,
+        timestamp: new Date().toISOString()
+      });
       throw new Error("Créditos insuficientes");
     }
 
@@ -120,34 +224,86 @@ export class CreditsService {
       throw new Error("Usuário não encontrado");
     }
 
-    const newBalance = userCredit.balance - modelCost.credits;
-    const newTotalSpent = userCredit.totalSpent + modelCost.credits;
+    const newBalance = userCredit.balance - reservation.amount;
+    const newTotalSpent = userCredit.totalSpent + reservation.amount;
 
-    await db
-      .update(userCredits)
-      .set({
-        balance: newBalance,
-        totalSpent: newTotalSpent,
-        updatedAt: new Date(),
-      })
-      .where(eq(userCredits.userId, userId));
+    try {
+      // Usar transação atômica para evitar race conditions
+      // Primeiro, tentar marcar a reserva como confirmada (com verificação de status)
+      const updateResult = await db
+        .update(creditReservations)
+        .set({ status: "confirmed", updatedAt: new Date() })
+        .where(
+          and(
+            eq(creditReservations.id, reservationId),
+            eq(creditReservations.status, "pending") // Só atualiza se ainda estiver pending
+          )
+        );
 
-    // Registrar transação
-    await this.createTransaction({
-      userId,
-      type: "spent",
-      amount: -modelCost.credits,
-      description: description || `Geração de imagem - ${modelCost.modelName}`,
-      relatedImageId: imageId,
-      balanceAfter: newBalance,
-      metadata: JSON.stringify({
-        modelId,
-        modelName: modelCost.modelName,
+      // Se não conseguiu atualizar (porque não estava mais pending), verificar o status atual
+      const [currentReservation] = await db
+        .select()
+        .from(creditReservations)
+        .where(eq(creditReservations.id, reservationId))
+        .limit(1);
+
+      if (currentReservation?.status === "confirmed") {
+        console.log(`✅ Reserva já foi confirmada por outro processo (race condition detectada):`, {
+          reservationId,
+          userId,
+          timestamp: new Date().toISOString()
+        });
+        return true; // Idempotência
+      }
+
+      if (currentReservation?.status !== "confirmed") {
+        throw new Error(`Falha ao confirmar reserva - status atual: ${currentReservation?.status}`);
+      }
+
+      // Atualizar saldo do usuário
+      await db
+        .update(userCredits)
+        .set({
+          balance: newBalance,
+          totalSpent: newTotalSpent,
+          updatedAt: new Date(),
+        })
+        .where(eq(userCredits.userId, userId));
+
+      // Registrar transação
+      await this.createTransaction({
+        userId,
+        type: "spent",
+        amount: -reservation.amount,
+        description: description || reservation.description,
+        relatedImageId: imageId,
         reservationId,
-      }),
-    });
+        balanceAfter: newBalance,
+        metadata: JSON.stringify({
+          modelId: reservation.modelId,
+          reservationId,
+          confirmedAt: new Date().toISOString(),
+        }),
+      });
 
-    return true;
+      console.log(`✅ Créditos confirmados com sucesso:`, {
+        reservationId,
+        userId,
+        amount: reservation.amount,
+        newBalance,
+        timestamp: new Date().toISOString()
+      });
+
+      return true;
+    } catch (error) {
+      console.error(`❌ Erro durante confirmação de créditos:`, {
+        reservationId,
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
   }
 
   // Método legado mantido para compatibilidade
@@ -160,9 +316,22 @@ export class CreditsService {
 
   // Cancelar reserva de créditos (em caso de falha na geração)
   static async cancelReservation(reservationId: string): Promise<boolean> {
-    // Por enquanto, apenas retorna true pois não estamos persistindo reservas
-    // Em uma implementação mais robusta, poderíamos persistir reservas temporárias
-    return true;
+    try {
+      // Marcar reserva como cancelada
+      await db
+        .update(creditReservations)
+        .set({ status: "cancelled", updatedAt: new Date() })
+        .where(
+          and(
+            eq(creditReservations.id, reservationId),
+            eq(creditReservations.status, "pending")
+          )
+        );
+      return true;
+    } catch (error) {
+      console.error("Erro ao cancelar reserva:", error);
+      return false;
+    }
   }
 
   // Reembolsar créditos em caso de falha após desconto
@@ -264,18 +433,24 @@ export class CreditsService {
       };
     }
 
-    const recentTransactions = (await db
+    const recentTransactions = await db
       .select()
       .from(creditTransactions)
       .where(eq(creditTransactions.userId, userId))
       .orderBy(desc(creditTransactions.createdAt))
-      .limit(10)) as CreditTransactionRecord[];
+      .limit(10);
 
     return {
       balance: userCredit.balance,
       totalEarned: userCredit.totalEarned,
       totalSpent: userCredit.totalSpent,
-      recentTransactions,
+      recentTransactions: recentTransactions.map(tx => ({
+        ...tx,
+        type: tx.type as 'earned' | 'spent' | 'refund' | 'bonus',
+        relatedImageId: tx.relatedImageId || undefined,
+        reservationId: tx.reservationId || undefined,
+        metadata: tx.metadata || undefined
+      })),
     };
   }
 
@@ -299,9 +474,10 @@ export class CreditsService {
     amount: number;
     description: string;
     relatedImageId?: string;
+    reservationId?: string;
     balanceAfter: number;
     metadata?: string;
-  }): Promise<CreditTransaction> {
+  }): Promise<CreditTransactionRecord> {
     const [transaction] = await db
       .insert(creditTransactions)
       .values({

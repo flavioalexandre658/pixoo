@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../../db";
-import { generatedImages, creditTransactions } from "../../../../../db/schema";
-import { eq, and } from "drizzle-orm";
+import { generatedImages, creditReservations } from "../../../../../db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { CreditsService } from "@/services/credits/credits.service";
 
 // Interface para o payload do webhook da BFL
@@ -84,35 +84,16 @@ export async function POST(request: NextRequest) {
           .where(eq(generatedImages.taskId, payload.task_id));
 
         // Confirmar créditos se houver uma reserva pendente
-        if (imageRecord?.userId && imageRecord?.model) {
+        if (imageRecord?.reservationId) {
           try {
-            // Buscar reserva pendente para este usuário e modelo
-            const [reservation] = await db
-              .select()
-              .from(creditTransactions)
-              .where(
-                and(
-                  eq(creditTransactions.userId, imageRecord.userId),
-                  eq(creditTransactions.type, "reserved"),
-                  eq(creditTransactions.description, `Reserva para geração de imagem - ${imageRecord.model}`)
-                )
-              )
-              .orderBy(creditTransactions.createdAt)
-              .limit(1);
-
-            if (reservation?.metadata) {
-              const metadata = JSON.parse(reservation.metadata);
-              if (metadata.reservationId) {
-                await CreditsService.confirmSpendCredits({
-                  userId: imageRecord.userId,
-                  modelId: imageRecord.model,
-                  imageId: payload.task_id,
-                  description: `Geração de imagem via webhook - ${imageRecord.model}`,
-                  reservationId: metadata.reservationId
-                });
-                console.log(`✅ Credits confirmed via webhook for task: ${payload.task_id}`);
-              }
-            }
+            await CreditsService.confirmSpendCredits({
+              userId: imageRecord.userId,
+              modelId: imageRecord.model,
+              imageId: imageRecord.id,
+              description: `Geração de imagem via webhook - ${imageRecord.model}`,
+              reservationId: imageRecord.reservationId
+            });
+            console.log(`✅ Credits confirmed via webhook for task: ${payload.task_id}`);
           } catch (creditError) {
             console.error(`❌ Error confirming credits via webhook for task ${payload.task_id}:`, creditError);
             // Não falhar o webhook por erro de créditos
@@ -123,24 +104,19 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({ success: true });
     } else if (mappedStatus === "Error") {
-      // Reembolsar créditos em caso de falha via webhook
+      // Cancelar reserva em caso de falha via webhook
       try {
         const [imageRecord] = await db
           .select()
           .from(generatedImages)
           .where(eq(generatedImages.taskId, payload.task_id));
 
-        if (imageRecord?.userId && imageRecord?.model && imageRecord?.creditsUsed) {
+        if (imageRecord?.reservationId) {
           try {
-            await CreditsService.refundCredits({
-              userId: imageRecord.userId,
-              amount: imageRecord.creditsUsed,
-              description: `Falha na geração via webhook - ${imageRecord.model}`,
-              relatedImageId: payload.task_id
-            });
-            console.log(`✅ Credits refunded via webhook for failed task: ${payload.task_id}`);
+            await CreditsService.cancelReservation(imageRecord.reservationId);
+            console.log(`✅ Reservation cancelled via webhook for failed task: ${payload.task_id}`);
           } catch (creditError) {
-            console.error(`❌ Error refunding credits via webhook for task ${payload.task_id}:`, creditError);
+            console.error(`❌ Error cancelling reservation via webhook for task ${payload.task_id}:`, creditError);
           }
         }
 

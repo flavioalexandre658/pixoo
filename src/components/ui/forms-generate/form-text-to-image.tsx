@@ -68,7 +68,10 @@ const models = [
 interface FormTextToImageProps {
   onImageGenerated: (imageUrl: string) => void;
   onGenerationStart?: () => void;
-  onStartPolling?: (taskId: string, reservationData?: { reservationId: string; modelId: string }) => void;
+  onStartPolling?: (
+    taskId: string,
+    reservationData?: { reservationId: string; modelId: string }
+  ) => void;
   onGenerationComplete?: () => void;
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
@@ -83,8 +86,17 @@ export function FormTextToImage({
   isGenerating,
 }: FormTextToImageProps) {
   const t = useTranslations("formTextToImage");
-  const { credits, hasEnoughCredits, spendCredits, reserveCredits, confirmSpendCredits, refundCredits, isLoading: creditsLoading } = useCredits();
-  const [currentReservation, setCurrentReservation] = useState<{ reservationId: string; cost: number } | null>(null);
+  const {
+    credits,
+    hasEnoughCredits,
+    reserveCredits,
+    refundCredits,
+    isLoading: creditsLoading,
+  } = useCredits();
+  const [currentReservation, setCurrentReservation] = useState<{
+    reservationId: string;
+    cost: number;
+  } | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -118,29 +130,33 @@ export function FormTextToImage({
     if (startedGeneration || isGenerating) {
       return false;
     }
-    
+
+    // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
+    setStartedGeneration(true);
+    onGenerationButtonClick?.();
+
     // Verificar se o modelo selecionado requer créditos
     const selectedModel = models.find((m) => m.id === data.model);
     if (!selectedModel) {
       toast.error("Modelo não encontrado");
+      setStartedGeneration(false);
       return false;
     }
-    
+
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
     if (selectedModel.credits > 0) {
       reservation = await reserveCredits(selectedModel.id);
       if (!reservation) {
-        toast.error(`Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`);
+        toast.error(
+          `Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`
+        );
+        setStartedGeneration(false);
         return false;
       }
       setCurrentReservation(reservation);
     }
-    
-    // Desabilita o botão imediatamente para evitar spam de cliques
-    setStartedGeneration(true);
-    onGenerationButtonClick?.();
-    
+
     try {
       toast.success(t("startingGeneration"));
       const response = await fetch("/api/text-to-image", {
@@ -163,7 +179,7 @@ export function FormTextToImage({
 
       if (!response.ok) {
         setStartedGeneration(false);
-        
+
         // Reembolsar créditos em caso de erro na API
         if (reservation) {
           await refundCredits(
@@ -173,7 +189,7 @@ export function FormTextToImage({
           );
           setCurrentReservation(null);
         }
-        
+
         if (response.status === 429) {
           toast.error("Rate limit exceeded. Please try again later.");
         } else if (
@@ -200,24 +216,32 @@ export function FormTextToImage({
         onGenerationStart?.();
 
         // Usar apenas polling - mais confiável que SSE
-        onStartPolling?.(result.taskId, reservation ? {
-          reservationId: reservation.reservationId,
-          modelId: selectedModel.id
-        } : undefined);
+        onStartPolling?.(
+          result.taskId,
+          reservation
+            ? {
+                reservationId: reservation.reservationId,
+                modelId: selectedModel.id,
+              }
+            : undefined
+        );
       } else if (result.success && result.imageUrl) {
         setStartedGeneration(false);
-        
-        // Confirmar gasto de créditos após geração bem-sucedida
+
+        // Nota: A confirmação de créditos será feita automaticamente via webhook
+        // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
-          await confirmSpendCredits(reservation.reservationId, selectedModel.id, result.taskId);
+          console.log(
+            `✅ Imagem iniciada com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
+          );
           setCurrentReservation(null);
         }
-        
+
         onImageGenerated(result.imageUrl);
         toast.success(t("imageGeneratedSuccess"));
       } else {
         setStartedGeneration(false);
-        
+
         // Reembolsar créditos em caso de resposta inválida
         if (reservation) {
           await refundCredits(
@@ -227,13 +251,13 @@ export function FormTextToImage({
           );
           setCurrentReservation(null);
         }
-        
+
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
         throw new Error("Invalid response from server");
       }
     } catch (error: any) {
       setStartedGeneration(false);
-      
+
       // Reembolsar créditos em caso de erro
       if (currentReservation) {
         await refundCredits(
@@ -243,7 +267,7 @@ export function FormTextToImage({
         );
         setCurrentReservation(null);
       }
-      
+
       onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
       console.error("Generation error:", error);
       if (error.message.includes("credits")) {
@@ -251,9 +275,7 @@ export function FormTextToImage({
       } else if (error.message.includes("rate limit")) {
         toast.error(t("rateLimitExceeded"));
       } else {
-        toast.error(
-          error.message || t("generationFailed")
-        );
+        toast.error(error.message || t("generationFailed"));
       }
     }
   };
@@ -476,7 +498,13 @@ export function FormTextToImage({
                 <span className="text-muted-foreground">Custo:</span>
                 <div className="flex items-center gap-1">
                   <Coins className="h-4 w-4" />
-                  <span className={hasEnoughCredits(selectedModel.credits) ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={
+                      hasEnoughCredits(selectedModel.credits)
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
                     {selectedModel.credits} créditos
                   </span>
                 </div>
@@ -495,14 +523,23 @@ export function FormTextToImage({
               type="submit"
               className="w-full"
               size="lg"
-              disabled={isGenerating || startedGeneration || creditsLoading || (selectedModel && selectedModel.credits > 0 && !hasEnoughCredits(selectedModel.credits))}
+              disabled={
+                isGenerating ||
+                startedGeneration ||
+                creditsLoading ||
+                (selectedModel &&
+                  selectedModel.credits > 0 &&
+                  !hasEnoughCredits(selectedModel.credits))
+              }
             >
               {isGenerating || startedGeneration ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   {t("generating")}
                 </>
-              ) : selectedModel && selectedModel.credits > 0 && !hasEnoughCredits(selectedModel.credits) ? (
+              ) : selectedModel &&
+                selectedModel.credits > 0 &&
+                !hasEnoughCredits(selectedModel.credits) ? (
                 <>
                   <Coins className="mr-2" />
                   Créditos insuficientes
@@ -512,7 +549,9 @@ export function FormTextToImage({
                   <WandSparkles className="mr-2" />
                   {t("generateImage")}
                   {selectedModel && selectedModel.credits > 0 && (
-                    <span className="ml-2 opacity-75">(-{selectedModel.credits})</span>
+                    <span className="ml-2 opacity-75">
+                      (-{selectedModel.credits})
+                    </span>
                   )}
                 </>
               )}

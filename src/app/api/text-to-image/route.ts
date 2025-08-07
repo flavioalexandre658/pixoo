@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar custo do modelo e créditos do usuário
+    // Verificar custo do modelo e reservar créditos
     const modelCost = await CreditsService.getModelCost(model);
     if (!modelCost) {
       return NextResponse.json(
@@ -86,14 +86,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Garantir que o usuário tem créditos iniciais e verificar se tem créditos suficientes
+    // Reservar créditos se necessário
+    let reservationId: string | null = null;
     if (modelCost.credits > 0) {
       await CreditsMiddleware.ensureUserCredits(session.user.id);
       
-      const creditsValidation = await CreditsMiddleware.validateCredits(session.user.id, modelCost.credits);
-      if (!creditsValidation.valid) {
+      try {
+        const reservation = await CreditsService.reserveCredits({
+          userId: session.user.id,
+          modelId: model,
+          description: `Geração de imagem - ${model}`,
+        });
+        reservationId = reservation.reservationId;
+        console.log(`✅ Créditos reservados: ${reservation.cost} (ID: ${reservationId})`);
+      } catch (error) {
+        console.error("❌ Erro ao reservar créditos:", error);
         return NextResponse.json(
-          { error: creditsValidation.message },
+          { error: error instanceof Error ? error.message : "Erro ao reservar créditos" },
           { status: 402 }
         );
       }
@@ -247,6 +256,22 @@ export async function POST(request: NextRequest) {
 
     // Se a resposta já contém o resultado (para modelos rápidos como flux-schnell)
     if (createData.result && createData.result.sample) {
+      // Confirmar créditos se houve reserva
+      if (reservationId) {
+        try {
+          await CreditsService.confirmSpendCredits({
+            userId: session.user.id,
+            modelId: model,
+            reservationId: reservationId,
+            description: `Geração de imagem concluída - ${model}`,
+          });
+          console.log(`✅ Créditos confirmados para reserva: ${reservationId}`);
+        } catch (error) {
+          console.error("❌ Erro ao confirmar créditos:", error);
+          // Não falhar a resposta por erro de créditos, mas logar
+        }
+      }
+      
       return NextResponse.json({
         success: true,
         imageUrl: createData.result.sample,
@@ -275,10 +300,23 @@ export async function POST(request: NextRequest) {
           guidance: guidance ? guidance.toString() : null,
           status: "pending",
           creditsUsed: modelCost.credits,
+          reservationId: reservationId, // Incluir ID da reserva
         });
       } catch (dbError) {
         console.error("Error saving to database:", dbError);
-        // Continuar mesmo se houver erro no banco
+        // Se falhar ao salvar no banco e há reserva, reembolsar
+        if (reservationId) {
+          try {
+            await CreditsService.cancelReservation(reservationId);
+            console.log(`🔄 Reserva cancelada devido a erro no banco: ${reservationId}`);
+          } catch (cancelError) {
+            console.error("❌ Erro ao cancelar reserva:", cancelError);
+          }
+        }
+        return NextResponse.json(
+          { error: "Erro interno ao salvar dados" },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({

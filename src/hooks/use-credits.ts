@@ -225,6 +225,34 @@ export function useCredits() {
     }
   }, [session?.user?.id]);
 
+  // Atualizar créditos periodicamente e quando a aba volta ao foco
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    // Polling a cada 30 segundos
+    const interval = setInterval(() => {
+      fetchCredits();
+    }, 30000);
+
+    // Atualizar quando a aba volta ao foco
+    const handleFocus = () => {
+      fetchCredits();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        fetchCredits();
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [session?.user?.id]);
+
   return {
     credits,
     isLoading,

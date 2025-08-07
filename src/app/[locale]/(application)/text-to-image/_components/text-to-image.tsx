@@ -29,10 +29,12 @@ export default function TextToImage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [currentReservation, setCurrentReservation] = useState<{ reservationId: string; modelId: string } | null>(null);
-  const { confirmSpendCredits, refundCredits } = useCredits();
+  const [currentReservation, setCurrentReservation] = useState<{
+    reservationId: string;
+    modelId: string;
+  } | null>(null);
+  const { refundCredits, fetchCredits } = useCredits();
 
   // Contador de tempo em tempo real
   useEffect(() => {
@@ -82,23 +84,25 @@ export default function TextToImage() {
 
     try {
       toast.loading("Preparing download...", { id: "download" });
-      
+
       // Tentar fetch direto primeiro
       let response;
       try {
         response = await fetch(generatedImage, {
-          mode: 'cors',
-          credentials: 'omit'
+          mode: "cors",
+          credentials: "omit",
         });
       } catch (corsError) {
         // Se falhar por CORS, tentar através de proxy
-        response = await fetch(`/api/proxy-image?url=${encodeURIComponent(generatedImage)}`);
+        response = await fetch(
+          `/api/proxy-image?url=${encodeURIComponent(generatedImage)}`
+        );
       }
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -107,22 +111,27 @@ export default function TextToImage() {
       a.download = `generated-image-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       }, 100);
-      
+
       toast.success("Image downloaded successfully!", { id: "download" });
     } catch (error) {
       console.error("Error downloading image:", error);
-      toast.error("Failed to download image. Please try again.", { id: "download" });
+      toast.error("Failed to download image. Please try again.", {
+        id: "download",
+      });
     }
   };
 
   // Função para fazer polling do status da tarefa
-  const startPolling = (taskId: string, startTime?: number, reservationData?: { reservationId: string; modelId: string }) => {
+  const startPolling = (
+    taskId: string,
+    reservationData?: { reservationId: string; modelId: string }
+  ) => {
     console.log("Starting polling for task:", taskId);
     setCurrentTaskId(taskId);
     if (reservationData) {
@@ -151,15 +160,15 @@ export default function TextToImage() {
           if (data.status === "ready" && data.imageUrl) {
             console.log("✅ Task completed successfully via polling!");
 
-            // Confirmar gasto de créditos se houver reserva
+            // Nota: A confirmação de créditos será feita automaticamente via webhook
+            // quando a imagem for processada. Apenas atualizamos a UI aqui.
             if (currentReservation) {
-              try {
-                await confirmSpendCredits(currentReservation.reservationId, currentReservation.modelId, taskId);
-                console.log("✅ Credits confirmed successfully!");
-              } catch (error) {
-                console.error("❌ Error confirming credits:", error);
-                toast.error("Erro ao confirmar créditos, mas imagem foi gerada");
-              }
+              console.log(
+                `✅ Imagem concluída via polling. Créditos serão confirmados via webhook para reserva: ${currentReservation.reservationId}`
+              );
+              // Atualizar saldo na UI (pode ter sido atualizado pelo webhook)
+              await fetchCredits();
+              console.log("✅ Credits balance updated in UI!");
               setCurrentReservation(null);
             }
 
@@ -176,7 +185,8 @@ export default function TextToImage() {
             console.log(generationStartTimeRef.current);
             // Calcular tempo de geração
             if (generationStartTimeRef.current) {
-              const generationTimeMs = Date.now() - (generationStartTimeRef.current as number);
+              const generationTimeMs =
+                Date.now() - (generationStartTimeRef.current as number);
               console.log(`Generation completed in ${generationTimeMs}ms`);
               handleGenerationComplete?.(generationTimeMs);
             }
@@ -193,11 +203,21 @@ export default function TextToImage() {
                   "flux-schnell": 1,
                   "flux-dev": 10,
                   "flux-pro": 25,
-                  "flux-pro-1.1": 40
+                  "flux-pro-1.1": 40,
                 };
-                const cost = modelCosts[currentReservation.modelId as keyof typeof modelCosts] || 10;
-                await refundCredits(cost, `Falha na geração - ${currentReservation.modelId}`, taskId);
+                const cost =
+                  modelCosts[
+                    currentReservation.modelId as keyof typeof modelCosts
+                  ] || 10;
+                await refundCredits(
+                  cost,
+                  `Falha na geração - ${currentReservation.modelId}`,
+                  taskId
+                );
                 console.log("✅ Credits refunded successfully!");
+                // Atualizar saldo na UI
+                await fetchCredits();
+                console.log("✅ Credits balance updated in UI after refund!");
               } catch (error) {
                 console.error("❌ Error refunding credits:", error);
               }
@@ -232,7 +252,7 @@ export default function TextToImage() {
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
-          
+
           // Reembolsar créditos se houver reserva
           if (currentReservation) {
             try {
@@ -240,17 +260,28 @@ export default function TextToImage() {
                 "flux-schnell": 1,
                 "flux-dev": 10,
                 "flux-pro": 25,
-                "flux-pro-1.1": 40
+                "flux-pro-1.1": 40,
               };
-              const cost = modelCosts[currentReservation.modelId as keyof typeof modelCosts] || 10;
-              await refundCredits(cost, `Erro de rede na geração - ${currentReservation.modelId}`);
+              const cost =
+                modelCosts[
+                  currentReservation.modelId as keyof typeof modelCosts
+                ] || 10;
+              await refundCredits(
+                cost,
+                `Erro de rede na geração - ${currentReservation.modelId}`
+              );
               console.log("✅ Credits refunded due to network error!");
+              // Atualizar saldo na UI
+              await fetchCredits();
+              console.log(
+                "✅ Credits balance updated in UI after network error refund!"
+              );
             } catch (error) {
               console.error("❌ Error refunding credits:", error);
             }
             setCurrentReservation(null);
           }
-          
+
           toast.error("Network error during generation. Please try again.");
           setIsGenerating(false);
           setCurrentTaskId(null);
@@ -276,15 +307,30 @@ export default function TextToImage() {
               "flux-schnell": 1,
               "flux-dev": 10,
               "flux-pro": 25,
-              "flux-pro-1.1": 40
+              "flux-pro-1.1": 40,
             };
-            const cost = modelCosts[currentReservation.modelId as keyof typeof modelCosts] || 10;
-            refundCredits(cost, `Timeout na geração - ${currentReservation.modelId}`, taskId)
-              .then(() => console.log("✅ Credits refunded due to timeout!"))
-              .catch(error => console.error("❌ Error refunding credits:", error));
+            const cost =
+              modelCosts[
+                currentReservation.modelId as keyof typeof modelCosts
+              ] || 10;
+            refundCredits(
+              cost,
+              `Timeout na geração - ${currentReservation.modelId}`,
+              taskId
+            )
+              .then(async () => {
+                console.log("✅ Credits refunded due to timeout!");
+                await fetchCredits();
+                console.log(
+                  "✅ Credits balance updated in UI after timeout refund!"
+                );
+              })
+              .catch((error) =>
+                console.error("❌ Error refunding credits:", error)
+              );
             setCurrentReservation(null);
           }
-          
+
           toast.error("Generation timeout. Please try again.");
           setIsGenerating(false);
           setCurrentTaskId(null);
@@ -311,9 +357,11 @@ export default function TextToImage() {
               handleGenerationStart(now);
               return now;
             }}
-            onStartPolling={(taskId: string, reservationData?: { reservationId: string; modelId: string }) => {
-              const now = Date.now();
-              startPolling(taskId, now, reservationData);
+            onStartPolling={(
+              taskId: string,
+              reservationData?: { reservationId: string; modelId: string }
+            ) => {
+              startPolling(taskId, reservationData);
             }}
             onGenerationComplete={() => {
               setIsGenerating(false);

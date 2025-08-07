@@ -20,6 +20,7 @@ export const generatedImages = pgTable("generated_images", {
   imageUrl: text("image_url"),
   status: text("status").notNull().default("pending"), // pending, ready, error
   creditsUsed: integer("credits_used").notNull().default(0),
+  reservationId: text("reservation_id"), // ID da reserva de créditos
   generationTimeMs: integer("generation_time_ms"), // tempo em milissegundos
   seed: integer("seed"),
   steps: integer("steps"),

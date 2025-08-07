@@ -23,6 +23,22 @@ export const userCredits = pgTable("user_credits", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Tabela para reservas de créditos temporárias
+export const creditReservations = pgTable("credit_reservations", {
+  id: text("id").primaryKey(), // Este é o reservationId
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  modelId: varchar("model_id", { length: 50 }).notNull(),
+  amount: integer("amount").notNull(), // Quantidade de créditos reservados
+  description: text("description").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending', 'confirmed', 'cancelled'
+  taskId: text("task_id"), // ID da tarefa de geração (quando disponível)
+  expiresAt: timestamp("expires_at").notNull(), // Reserva expira em 30 minutos
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Tabela para histórico de transações de créditos
 export const creditTransactions = pgTable("credit_transactions", {
   id: text("id").primaryKey(),
@@ -33,6 +49,7 @@ export const creditTransactions = pgTable("credit_transactions", {
   amount: integer("amount").notNull(), // Quantidade de créditos (positivo para ganho, negativo para gasto)
   description: text("description").notNull(), // Descrição da transação
   relatedImageId: text("related_image_id").references(() => generatedImages.id), // Referência para imagem gerada (se aplicável)
+  reservationId: text("reservation_id").references(() => creditReservations.id), // Referência para reserva (se aplicável)
   metadata: text("metadata"), // JSON com dados adicionais (modelo usado, etc.)
   balanceAfter: integer("balance_after").notNull(), // Saldo após a transação
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -51,6 +68,9 @@ export const modelCosts = pgTable("model_costs", {
 
 export type UserCredits = typeof userCredits.$inferSelect;
 export type NewUserCredits = typeof userCredits.$inferInsert;
+
+export type CreditReservation = typeof creditReservations.$inferSelect;
+export type NewCreditReservation = typeof creditReservations.$inferInsert;
 
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
