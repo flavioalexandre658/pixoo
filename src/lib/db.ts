@@ -1,5 +1,5 @@
-import { db } from "../../db";
-import { users, plans, subscriptions } from "../../db/schema";
+import { db } from "../db";
+import { users, plans, subscriptions } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import type { ICreateUser, IUpdateUser } from "../interfaces/user.interface";
 import type { ICreatePlan, IUpdatePlan } from "../interfaces/plan.interface";

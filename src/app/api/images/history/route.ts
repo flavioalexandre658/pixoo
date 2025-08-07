@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../../../db";
-import { generatedImages } from "../../../../../db/schema";
+import { db } from "../../../../db";
+import { generatedImages } from "../../../../db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { desc, eq } from "drizzle-orm";

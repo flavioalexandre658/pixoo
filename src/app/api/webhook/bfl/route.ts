@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../../../../db";
-import { generatedImages, creditReservations } from "../../../../../db/schema";
+import { db } from "../../../../db";
+import { generatedImages, creditReservations } from "../../../../db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { CreditsService } from "@/services/credits/credits.service";
 
@@ -45,12 +45,12 @@ export async function POST(request: NextRequest) {
       payload.status === "SUCCESS"
         ? "Ready"
         : payload.status === "FAILED"
-        ? "Error"
-        : payload.status === "PENDING"
-        ? "Pending"
-        : payload.status === "processing"
-        ? "Processing"
-        : "Error";
+          ? "Error"
+          : payload.status === "PENDING"
+            ? "Pending"
+            : payload.status === "processing"
+              ? "Processing"
+              : "Error";
     if (mappedStatus === "Ready") {
       webhookResults.set(payload.task_id, payload);
       try {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
             );
           }
         }
-        
+
         // Atualizar registro da imagem
         await db
           .update(generatedImages)

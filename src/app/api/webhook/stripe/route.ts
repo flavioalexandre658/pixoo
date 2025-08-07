@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-import { db } from "../../../../../db";
-import { subscriptions, plans } from "../../../../../db/schema";
+import { db } from "../../../../db";
+import { subscriptions, plans } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 import { CreditsService } from "../../../../services/credits/credits.service";
 

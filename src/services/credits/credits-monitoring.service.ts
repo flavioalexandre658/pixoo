@@ -1,10 +1,10 @@
-import { db } from "../../../db";
+import { db } from "../../db";
 import {
   userCredits,
   creditTransactions,
   creditReservations,
   modelCosts
-} from "../../../db/schema";
+} from "../../db/schema";
 import { eq, desc, and, gte, lte, count, sum, avg, sql } from "drizzle-orm";
 import { ReservationStatus, TransactionType } from "@/interfaces/credits.interface";
 
@@ -252,7 +252,7 @@ export class CreditsMonitoringService {
 
     // Determinar status geral
     let status: 'healthy' | 'warning' | 'critical' = 'healthy';
-    
+
     if (negativeBalanceUsers.count > 0 || inconsistentBalances.length > 0) {
       status = 'critical';
     } else if (issues.length > 0) {
@@ -359,10 +359,10 @@ export class CreditsMonitoringService {
       if (!acc[date]) {
         acc[date] = { date, spent: 0, earned: 0, refunded: 0, count: 0 };
       }
-      
+
       const amount = Number(item.amount) || 0;
       const count = item.count;
-      
+
       switch (item.type) {
         case 'spent':
           acc[date].spent += amount;
@@ -375,7 +375,7 @@ export class CreditsMonitoringService {
           acc[date].refunded += amount;
           break;
       }
-      
+
       acc[date].count += count;
       return acc;
     }, {} as Record<string, any>);
@@ -386,9 +386,9 @@ export class CreditsMonitoringService {
       if (!acc[date]) {
         acc[date] = { date, created: 0, confirmed: 0, cancelled: 0 };
       }
-      
+
       const count = item.count;
-      
+
       switch (item.status) {
         case 'pending':
           acc[date].created += count;
@@ -400,7 +400,7 @@ export class CreditsMonitoringService {
           acc[date].cancelled += count;
           break;
       }
-      
+
       return acc;
     }, {} as Record<string, any>);
 

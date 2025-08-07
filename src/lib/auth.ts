@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "../../db";
-import * as schemas from "../../db/schema";
+import { db } from "../db";
+import * as schemas from "../db/schema";
 export const auth = betterAuth({
   trustedOrigins: ["http://localhost:3000", "http://localhost:3000"],
   database: drizzleAdapter(db, {

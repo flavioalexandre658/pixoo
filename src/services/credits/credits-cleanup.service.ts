@@ -1,5 +1,5 @@
-import { db } from "../../../db";
-import { creditReservations } from "../../../db/schema";
+import { db } from "../../db";
+import { creditReservations } from "../../db/schema";
 import { eq, and, lt } from "drizzle-orm";
 
 /**
@@ -49,12 +49,12 @@ export class CreditsCleanupService {
 
         // Cancelar este lote
         const reservationIds = expiredReservations.map(r => r.id);
-        
+
         try {
           await db
             .update(creditReservations)
-            .set({ 
-              status: "cancelled", 
+            .set({
+              status: "cancelled",
               updatedAt: now,
               description: `${expiredReservations[0]?.description || 'Reserva'} (cancelada por expiração)`
             })
@@ -74,7 +74,7 @@ export class CreditsCleanupService {
         }
 
         offset += this.BATCH_SIZE;
-        
+
         // Evitar loops infinitos
         if (offset > 10000) {
           errors.push("Limite de segurança atingido (10000 registros)");
@@ -83,9 +83,9 @@ export class CreditsCleanupService {
       }
 
       this.lastCleanup = now;
-      
+
       console.log(`✅ Limpeza concluída: ${totalCancelled} reservas canceladas, ${errors.length} erros`);
-      
+
       return {
         cancelled: totalCancelled,
         errors
@@ -94,7 +94,7 @@ export class CreditsCleanupService {
       const errorMsg = `Erro geral na limpeza: ${error instanceof Error ? error.message : String(error)}`;
       errors.push(errorMsg);
       console.error(`❌ ${errorMsg}`);
-      
+
       return {
         cancelled: totalCancelled,
         errors
@@ -139,11 +139,11 @@ export class CreditsCleanupService {
 
         // Deletar este lote (apenas reservas não-pending)
         const nonPendingReservations = oldReservations.filter(r => r.status !== "pending");
-        
+
         if (nonPendingReservations.length > 0) {
           try {
             const idsToDelete = nonPendingReservations.map(r => r.id);
-            
+
             for (const id of idsToDelete) {
               await db
                 .delete(creditReservations)
@@ -160,16 +160,16 @@ export class CreditsCleanupService {
         }
 
         offset += this.BATCH_SIZE;
-        
+
         // Evitar loops infinitos
         if (offset > 10000) {
           errors.push("Limite de segurança atingido (10000 registros)");
           break;
         }
       }
-      
+
       console.log(`✅ Limpeza de antigas concluída: ${totalDeleted} reservas deletadas, ${errors.length} erros`);
-      
+
       return {
         deleted: totalDeleted,
         errors
@@ -178,7 +178,7 @@ export class CreditsCleanupService {
       const errorMsg = `Erro geral na limpeza de antigas: ${error instanceof Error ? error.message : String(error)}`;
       errors.push(errorMsg);
       console.error(`❌ ${errorMsg}`);
-      
+
       return {
         deleted: totalDeleted,
         errors
@@ -195,18 +195,18 @@ export class CreditsCleanupService {
     errors: string[];
   }> {
     console.log(`🔄 Iniciando limpeza completa do sistema de créditos`);
-    
+
     const expiredResult = await this.cleanupExpiredReservations();
     const deletedResult = await this.cleanupOldReservations();
-    
+
     const allErrors = [...expiredResult.errors, ...deletedResult.errors];
-    
+
     console.log(`✅ Limpeza completa finalizada:`, {
       expired: expiredResult.cancelled,
       deleted: deletedResult.deleted,
       totalErrors: allErrors.length
     });
-    
+
     return {
       expired: expiredResult.cancelled,
       deleted: deletedResult.deleted,
@@ -219,7 +219,7 @@ export class CreditsCleanupService {
    */
   static shouldRunCleanup(): boolean {
     if (!this.lastCleanup) return true;
-    
+
     const timeSinceLastCleanup = Date.now() - this.lastCleanup.getTime();
     return timeSinceLastCleanup >= this.CLEANUP_INTERVAL_MS;
   }
@@ -257,7 +257,7 @@ export class CreditsCleanupService {
     expired: number;
   }> {
     const now = new Date();
-    
+
     const [pending, confirmed, cancelled, expired] = await Promise.all([
       db.select().from(creditReservations).where(eq(creditReservations.status, "pending")),
       db.select().from(creditReservations).where(eq(creditReservations.status, "confirmed")),

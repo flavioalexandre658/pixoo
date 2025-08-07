@@ -1,4 +1,4 @@
-import { db } from "../../../db";
+import { db } from "../../db";
 import {
   userCredits,
   creditTransactions,
@@ -8,7 +8,7 @@ import {
   CreditTransaction as CreditTransactionRecord,
   CreditReservation,
   ModelCost,
-} from "../../../db/schema";
+} from "../../db/schema";
 import { eq, desc, and, lt } from "drizzle-orm";
 import {
   CreditUsageRequest,
@@ -88,7 +88,7 @@ export class CreditsService {
 
     // Gerar ID de reserva
     const reservationId = randomUUID();
-    
+
     // Criar reserva no banco de dados
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
     await db.insert(creditReservations).values({
@@ -174,13 +174,13 @@ export class CreditsService {
         currentTime: now,
         timestamp: new Date().toISOString()
       });
-      
+
       // Cancelar reserva expirada
       await db
         .update(creditReservations)
         .set({ status: "cancelled", updatedAt: now })
         .where(eq(creditReservations.id, reservationId));
-      
+
       throw new Error("Reserva expirada");
     }
 

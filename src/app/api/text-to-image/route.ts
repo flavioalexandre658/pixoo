@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../../../db";
-import { generatedImages } from "../../../../db/schema";
+import { db } from "../../../db";
+import { generatedImages } from "../../../db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { CreditsService } from "@/services/credits/credits.service";
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     let reservationId: string | null = null;
     if (modelCost.credits > 0) {
       await CreditsMiddleware.ensureUserCredits(session.user.id);
-      
+
       try {
         const reservation = await CreditsService.reserveCredits({
           userId: session.user.id,
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
           // Não falhar a resposta por erro de créditos, mas logar
         }
       }
-      
+
       return NextResponse.json({
         success: true,
         imageUrl: createData.result.sample,

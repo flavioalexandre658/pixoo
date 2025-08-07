@@ -1,5 +1,5 @@
-import { db } from "../../../db";
-import { creditReservations } from "../../../db/schema";
+import { db } from "../../db";
+import { creditReservations } from "../../db/schema";
 import { and, eq, lt } from "drizzle-orm";
 
 /**
@@ -14,7 +14,7 @@ export class ReservationCleanupService {
   static async cleanupExpiredReservations(): Promise<number> {
     try {
       const now = new Date();
-      
+
       // Buscar reservas expiradas que ainda estão pendentes
       const expiredReservations = await db
         .select()
@@ -34,9 +34,9 @@ export class ReservationCleanupService {
       // Cancelar reservas expiradas
       const result = await db
         .update(creditReservations)
-        .set({ 
-          status: "cancelled", 
-          updatedAt: now 
+        .set({
+          status: "cancelled",
+          updatedAt: now
         })
         .where(
           and(
@@ -62,7 +62,7 @@ export class ReservationCleanupService {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-      
+
       // Buscar reservas antigas que não estão pendentes
       const oldReservations = await db
         .select()
@@ -84,9 +84,9 @@ export class ReservationCleanupService {
       // Em vez de deletar, para manter auditoria
       const result = await db
         .update(creditReservations)
-        .set({ 
-          status: "cancelled", 
-          updatedAt: new Date() 
+        .set({
+          status: "cancelled",
+          updatedAt: new Date()
         })
         .where(
           and(
@@ -109,7 +109,7 @@ export class ReservationCleanupService {
   static async fullCleanup(): Promise<{ expired: number; old: number }> {
     const expired = await this.cleanupExpiredReservations();
     const old = await this.removeOldReservations();
-    
+
     return { expired, old };
   }
 }
