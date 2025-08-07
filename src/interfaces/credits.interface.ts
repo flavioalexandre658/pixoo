@@ -34,7 +34,7 @@ export interface CreditUsageRequest {
   userId: string;
   modelId: string;
   imageId?: string;
-  description: string;
+  description?: string;
 }
 
 export interface CreditEarnRequest {

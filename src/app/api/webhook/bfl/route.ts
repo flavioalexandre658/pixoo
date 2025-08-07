@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../../db";
-import { generatedImages } from "../../../../../db/schema";
-import { eq } from "drizzle-orm";
+import { generatedImages, creditTransactions } from "../../../../../db/schema";
+import { eq, and } from "drizzle-orm";
+import { CreditsService } from "@/services/credits/credits.service";
 
 // Interface para o payload do webhook da BFL
 interface WebhookPayload {
@@ -53,6 +54,12 @@ export async function POST(request: NextRequest) {
     if (mappedStatus === "Ready") {
       webhookResults.set(payload.task_id, payload);
       try {
+        // Buscar informações da imagem para confirmar créditos
+        const [imageRecord] = await db
+          .select()
+          .from(generatedImages)
+          .where(eq(generatedImages.taskId, payload.task_id));
+
         const updateData: any = {
           status: mappedStatus.toLowerCase(),
         };
@@ -69,11 +76,82 @@ export async function POST(request: NextRequest) {
             );
           }
         }
+        
+        // Atualizar registro da imagem
         await db
           .update(generatedImages)
           .set(updateData)
           .where(eq(generatedImages.taskId, payload.task_id));
-      } catch (dbError) {}
+
+        // Confirmar créditos se houver uma reserva pendente
+        if (imageRecord?.userId && imageRecord?.model) {
+          try {
+            // Buscar reserva pendente para este usuário e modelo
+            const [reservation] = await db
+              .select()
+              .from(creditTransactions)
+              .where(
+                and(
+                  eq(creditTransactions.userId, imageRecord.userId),
+                  eq(creditTransactions.type, "reserved"),
+                  eq(creditTransactions.description, `Reserva para geração de imagem - ${imageRecord.model}`)
+                )
+              )
+              .orderBy(creditTransactions.createdAt)
+              .limit(1);
+
+            if (reservation?.metadata) {
+              const metadata = JSON.parse(reservation.metadata);
+              if (metadata.reservationId) {
+                await CreditsService.confirmSpendCredits({
+                  userId: imageRecord.userId,
+                  modelId: imageRecord.model,
+                  imageId: payload.task_id,
+                  description: `Geração de imagem via webhook - ${imageRecord.model}`,
+                  reservationId: metadata.reservationId
+                });
+                console.log(`✅ Credits confirmed via webhook for task: ${payload.task_id}`);
+              }
+            }
+          } catch (creditError) {
+            console.error(`❌ Error confirming credits via webhook for task ${payload.task_id}:`, creditError);
+            // Não falhar o webhook por erro de créditos
+          }
+        }
+      } catch (dbError) {
+        console.error(`❌ Error processing webhook for task ${payload.task_id}:`, dbError);
+      }
+      return NextResponse.json({ success: true });
+    } else if (mappedStatus === "Error") {
+      // Reembolsar créditos em caso de falha via webhook
+      try {
+        const [imageRecord] = await db
+          .select()
+          .from(generatedImages)
+          .where(eq(generatedImages.taskId, payload.task_id));
+
+        if (imageRecord?.userId && imageRecord?.model && imageRecord?.creditsUsed) {
+          try {
+            await CreditsService.refundCredits({
+              userId: imageRecord.userId,
+              amount: imageRecord.creditsUsed,
+              description: `Falha na geração via webhook - ${imageRecord.model}`,
+              relatedImageId: payload.task_id
+            });
+            console.log(`✅ Credits refunded via webhook for failed task: ${payload.task_id}`);
+          } catch (creditError) {
+            console.error(`❌ Error refunding credits via webhook for task ${payload.task_id}:`, creditError);
+          }
+        }
+
+        // Atualizar status para erro
+        await db
+          .update(generatedImages)
+          .set({ status: "error" })
+          .where(eq(generatedImages.taskId, payload.task_id));
+      } catch (dbError) {
+        console.error(`❌ Error processing failed webhook for task ${payload.task_id}:`, dbError);
+      }
       return NextResponse.json({ success: true });
     } else {
       return NextResponse.json({ success: true });

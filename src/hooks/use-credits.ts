@@ -38,7 +38,112 @@ export function useCredits() {
     return credits ? credits.balance >= requiredCredits : false;
   };
 
-  // Gastar créditos
+  // Reservar créditos antes da geração
+  const reserveCredits = async (modelId: string): Promise<{ reservationId: string; cost: number } | null> => {
+    if (!session?.user?.id) {
+      toast.error("Usuário não autenticado");
+      return null;
+    }
+
+    try {
+      const response = await fetch("/api/credits/reserve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          modelId,
+          description: `Reserva para geração de imagem - ${modelId}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao reservar créditos");
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao reservar créditos";
+      toast.error(errorMessage);
+      return null;
+    }
+  };
+
+  // Confirmar gasto de créditos após geração bem-sucedida
+  const confirmSpendCredits = async (reservationId: string, modelId: string, imageId?: string): Promise<boolean> => {
+    if (!session?.user?.id) {
+      toast.error("Usuário não autenticado");
+      return false;
+    }
+
+    try {
+      const response = await fetch("/api/credits/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reservationId,
+          modelId,
+          imageId,
+          description: `Geração de imagem - ${modelId}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao confirmar gasto de créditos");
+      }
+
+      // Atualizar créditos após confirmação
+      await fetchCredits();
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao confirmar gasto de créditos";
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
+  // Reembolsar créditos em caso de falha
+  const refundCredits = async (amount: number, description: string, relatedImageId?: string): Promise<boolean> => {
+    if (!session?.user?.id) {
+      toast.error("Usuário não autenticado");
+      return false;
+    }
+
+    try {
+      const response = await fetch("/api/credits/refund", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount,
+          description,
+          relatedImageId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao reembolsar créditos");
+      }
+
+      // Atualizar créditos após reembolso
+      await fetchCredits();
+      toast.success("Créditos reembolsados com sucesso");
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao reembolsar créditos";
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
+  // Método legado mantido para compatibilidade
   const spendCredits = async (modelId: string, imageId?: string): Promise<boolean> => {
     if (!session?.user?.id) {
       toast.error("Usuário não autenticado");
@@ -132,5 +237,9 @@ export function useCredits() {
     totalEarned: credits?.totalEarned || 0,
     totalSpent: credits?.totalSpent || 0,
     recentTransactions: credits?.recentTransactions || [],
+    // Novos métodos para sistema de reserva
+    reserveCredits,
+    confirmSpendCredits,
+    refundCredits,
   };
 }

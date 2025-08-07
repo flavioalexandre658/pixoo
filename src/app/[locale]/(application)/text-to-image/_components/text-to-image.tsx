@@ -12,6 +12,7 @@ import {
   PageContainerRight,
 } from "@/components/ui/page-container/page-container";
 import { ImagePreview } from "@/components/ui/image-preview/image-preview";
+import { useCredits } from "@/hooks/use-credits";
 import toast from "react-hot-toast";
 
 export default function TextToImage() {
@@ -30,6 +31,8 @@ export default function TextToImage() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentReservation, setCurrentReservation] = useState<{ reservationId: string; modelId: string } | null>(null);
+  const { confirmSpendCredits, refundCredits } = useCredits();
 
   // Contador de tempo em tempo real
   useEffect(() => {
@@ -119,9 +122,12 @@ export default function TextToImage() {
   };
 
   // Função para fazer polling do status da tarefa
-  const startPolling = (taskId: string, startTime?: number) => {
+  const startPolling = (taskId: string, startTime?: number, reservationData?: { reservationId: string; modelId: string }) => {
     console.log("Starting polling for task:", taskId);
     setCurrentTaskId(taskId);
+    if (reservationData) {
+      setCurrentReservation(reservationData);
+    }
 
     // Limpar polling anterior se existir
     if (pollingIntervalRef.current) {
@@ -145,6 +151,18 @@ export default function TextToImage() {
           if (data.status === "ready" && data.imageUrl) {
             console.log("✅ Task completed successfully via polling!");
 
+            // Confirmar gasto de créditos se houver reserva
+            if (currentReservation) {
+              try {
+                await confirmSpendCredits(currentReservation.reservationId, currentReservation.modelId, taskId);
+                console.log("✅ Credits confirmed successfully!");
+              } catch (error) {
+                console.error("❌ Error confirming credits:", error);
+                toast.error("Erro ao confirmar créditos, mas imagem foi gerada");
+              }
+              setCurrentReservation(null);
+            }
+
             // Parar polling
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
@@ -166,6 +184,25 @@ export default function TextToImage() {
             setCurrentTaskId(null);
           } else if (data.status === "error") {
             console.log("❌ Task failed via polling:", data.error);
+
+            // Reembolsar créditos se houver reserva
+            if (currentReservation) {
+              try {
+                // Buscar custo do modelo para reembolso
+                const modelCosts = {
+                  "flux-schnell": 1,
+                  "flux-dev": 10,
+                  "flux-pro": 25,
+                  "flux-pro-1.1": 40
+                };
+                const cost = modelCosts[currentReservation.modelId as keyof typeof modelCosts] || 10;
+                await refundCredits(cost, `Falha na geração - ${currentReservation.modelId}`, taskId);
+                console.log("✅ Credits refunded successfully!");
+              } catch (error) {
+                console.error("❌ Error refunding credits:", error);
+              }
+              setCurrentReservation(null);
+            }
 
             // Parar polling
             if (pollingIntervalRef.current) {
@@ -195,6 +232,25 @@ export default function TextToImage() {
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
+          
+          // Reembolsar créditos se houver reserva
+          if (currentReservation) {
+            try {
+              const modelCosts = {
+                "flux-schnell": 1,
+                "flux-dev": 10,
+                "flux-pro": 25,
+                "flux-pro-1.1": 40
+              };
+              const cost = modelCosts[currentReservation.modelId as keyof typeof modelCosts] || 10;
+              await refundCredits(cost, `Erro de rede na geração - ${currentReservation.modelId}`);
+              console.log("✅ Credits refunded due to network error!");
+            } catch (error) {
+              console.error("❌ Error refunding credits:", error);
+            }
+            setCurrentReservation(null);
+          }
+          
           toast.error("Network error during generation. Please try again.");
           setIsGenerating(false);
           setCurrentTaskId(null);
@@ -214,6 +270,21 @@ export default function TextToImage() {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
         if (currentTaskId === taskId) {
+          // Reembolsar créditos em caso de timeout
+          if (currentReservation) {
+            const modelCosts = {
+              "flux-schnell": 1,
+              "flux-dev": 10,
+              "flux-pro": 25,
+              "flux-pro-1.1": 40
+            };
+            const cost = modelCosts[currentReservation.modelId as keyof typeof modelCosts] || 10;
+            refundCredits(cost, `Timeout na geração - ${currentReservation.modelId}`, taskId)
+              .then(() => console.log("✅ Credits refunded due to timeout!"))
+              .catch(error => console.error("❌ Error refunding credits:", error));
+            setCurrentReservation(null);
+          }
+          
           toast.error("Generation timeout. Please try again.");
           setIsGenerating(false);
           setCurrentTaskId(null);
@@ -240,9 +311,9 @@ export default function TextToImage() {
               handleGenerationStart(now);
               return now;
             }}
-            onStartPolling={(taskId: string) => {
+            onStartPolling={(taskId: string, reservationData?: { reservationId: string; modelId: string }) => {
               const now = Date.now();
-              startPolling(taskId, now);
+              startPolling(taskId, now, reservationData);
             }}
             onGenerationComplete={() => {
               setIsGenerating(false);

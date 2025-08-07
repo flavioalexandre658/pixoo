@@ -68,7 +68,7 @@ const models = [
 interface FormTextToImageProps {
   onImageGenerated: (imageUrl: string) => void;
   onGenerationStart?: () => void;
-  onStartPolling?: (taskId: string) => void;
+  onStartPolling?: (taskId: string, reservationData?: { reservationId: string; modelId: string }) => void;
   onGenerationComplete?: () => void;
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
@@ -83,7 +83,8 @@ export function FormTextToImage({
   isGenerating,
 }: FormTextToImageProps) {
   const t = useTranslations("formTextToImage");
-  const { credits, hasEnoughCredits, spendCredits, isLoading: creditsLoading } = useCredits();
+  const { credits, hasEnoughCredits, spendCredits, reserveCredits, confirmSpendCredits, refundCredits, isLoading: creditsLoading } = useCredits();
+  const [currentReservation, setCurrentReservation] = useState<{ reservationId: string; cost: number } | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -125,10 +126,15 @@ export function FormTextToImage({
       return false;
     }
     
-    // Verificar se tem créditos suficientes
-    if (selectedModel.credits > 0 && !hasEnoughCredits(selectedModel.credits)) {
-      toast.error(`Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`);
-      return false;
+    // Reservar créditos antes da geração (se necessário)
+    let reservation = null;
+    if (selectedModel.credits > 0) {
+      reservation = await reserveCredits(selectedModel.id);
+      if (!reservation) {
+        toast.error(`Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`);
+        return false;
+      }
+      setCurrentReservation(reservation);
     }
     
     // Desabilita o botão imediatamente para evitar spam de cliques
@@ -157,6 +163,17 @@ export function FormTextToImage({
 
       if (!response.ok) {
         setStartedGeneration(false);
+        
+        // Reembolsar créditos em caso de erro na API
+        if (reservation) {
+          await refundCredits(
+            reservation.cost,
+            `Falha na API de geração - Status ${response.status}`,
+            undefined
+          );
+          setCurrentReservation(null);
+        }
+        
         if (response.status === 429) {
           toast.error("Rate limit exceeded. Please try again later.");
         } else if (
@@ -179,28 +196,54 @@ export function FormTextToImage({
 
       if (result.taskId) {
         toast.info(t("checkingStatus"));
-
-        // Descontar créditos após confirmação do taskId
-        if (selectedModel.credits > 0) {
-          await spendCredits(selectedModel.id, result.taskId);
-        }
-
         setGenerationProgress(25);
         onGenerationStart?.();
 
         // Usar apenas polling - mais confiável que SSE
-        onStartPolling?.(result.taskId);
+        onStartPolling?.(result.taskId, reservation ? {
+          reservationId: reservation.reservationId,
+          modelId: selectedModel.id
+        } : undefined);
       } else if (result.success && result.imageUrl) {
         setStartedGeneration(false);
+        
+        // Confirmar gasto de créditos após geração bem-sucedida
+        if (reservation) {
+          await confirmSpendCredits(reservation.reservationId, selectedModel.id, result.taskId);
+          setCurrentReservation(null);
+        }
+        
         onImageGenerated(result.imageUrl);
         toast.success(t("imageGeneratedSuccess"));
       } else {
         setStartedGeneration(false);
+        
+        // Reembolsar créditos em caso de resposta inválida
+        if (reservation) {
+          await refundCredits(
+            reservation.cost,
+            "Resposta inválida do servidor",
+            undefined
+          );
+          setCurrentReservation(null);
+        }
+        
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
         throw new Error("Invalid response from server");
       }
     } catch (error: any) {
       setStartedGeneration(false);
+      
+      // Reembolsar créditos em caso de erro
+      if (currentReservation) {
+        await refundCredits(
+          currentReservation.cost,
+          `Erro na geração: ${error.message}`,
+          undefined
+        );
+        setCurrentReservation(null);
+      }
+      
       onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
       console.error("Generation error:", error);
       if (error.message.includes("credits")) {

@@ -3,17 +3,18 @@ import {
   userCredits,
   creditTransactions,
   modelCosts,
-  type UserCredits,
-  type CreditTransaction,
-  type ModelCost,
-} from "@/db/schema";
+  UserCredits,
+  CreditTransaction,
+  ModelCost,
+} from "../../../db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import {
   CreditUsageRequest,
   CreditEarnRequest,
   UserCreditsSummary,
   CreditTransactionRecord,
 } from "@/interfaces/credits.interface";
-import { eq, desc, and } from "drizzle-orm";
+import { MODEL_COSTS } from "@/config/model-costs";
 import { randomUUID } from "crypto";
 
 export class CreditsService {
@@ -68,8 +69,11 @@ export class CreditsService {
   }
 
   // Gastar créditos
-  static async spendCredits(request: CreditUsageRequest): Promise<boolean> {
-    const { userId, modelId, imageId, description } = request;
+  // Reservar créditos antes da geração (não desconta ainda)
+  static async reserveCredits(
+    request: CreditUsageRequest
+  ): Promise<{ reservationId: string; cost: number }> {
+    const { userId, modelId } = request;
 
     // Obter custo do modelo
     const modelCost = await this.getModelCost(modelId);
@@ -78,6 +82,33 @@ export class CreditsService {
     }
 
     // Verificar se tem créditos suficientes
+    const hasCredits = await this.hasEnoughCredits(userId, modelCost.credits);
+    if (!hasCredits) {
+      throw new Error("Créditos insuficientes");
+    }
+
+    // Gerar ID de reserva
+    const reservationId = randomUUID();
+
+    return {
+      reservationId,
+      cost: modelCost.credits,
+    };
+  }
+
+  // Confirmar gasto de créditos após geração bem-sucedida
+  static async confirmSpendCredits(
+    request: CreditUsageRequest & { reservationId: string }
+  ): Promise<boolean> {
+    const { userId, modelId, imageId, description, reservationId } = request;
+
+    // Obter custo do modelo
+    const modelCost = await this.getModelCost(modelId);
+    if (!modelCost) {
+      throw new Error(`Modelo ${modelId} não encontrado`);
+    }
+
+    // Verificar novamente se tem créditos suficientes
     const hasCredits = await this.hasEnoughCredits(userId, modelCost.credits);
     if (!hasCredits) {
       throw new Error("Créditos insuficientes");
@@ -109,7 +140,76 @@ export class CreditsService {
       description: description || `Geração de imagem - ${modelCost.modelName}`,
       relatedImageId: imageId,
       balanceAfter: newBalance,
-      metadata: JSON.stringify({ modelId, modelName: modelCost.modelName }),
+      metadata: JSON.stringify({
+        modelId,
+        modelName: modelCost.modelName,
+        reservationId,
+      }),
+    });
+
+    return true;
+  }
+
+  // Método legado mantido para compatibilidade
+  static async spendCredits(request: CreditUsageRequest): Promise<boolean> {
+    return this.confirmSpendCredits({
+      ...request,
+      reservationId: randomUUID(),
+    });
+  }
+
+  // Cancelar reserva de créditos (em caso de falha na geração)
+  static async cancelReservation(reservationId: string): Promise<boolean> {
+    // Por enquanto, apenas retorna true pois não estamos persistindo reservas
+    // Em uma implementação mais robusta, poderíamos persistir reservas temporárias
+    return true;
+  }
+
+  // Reembolsar créditos em caso de falha após desconto
+  static async refundCredits(request: {
+    userId: string;
+    amount: number;
+    description: string;
+    relatedImageId?: string;
+    originalTransactionId?: string;
+  }): Promise<boolean> {
+    const {
+      userId,
+      amount,
+      description,
+      relatedImageId,
+      originalTransactionId,
+    } = request;
+
+    // Obter saldo atual
+    const userCredit = await this.getUserCredits(userId);
+    if (!userCredit) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    const newBalance = userCredit.balance + amount;
+    const newTotalSpent = Math.max(0, userCredit.totalSpent - amount);
+
+    await db
+      .update(userCredits)
+      .set({
+        balance: newBalance,
+        totalSpent: newTotalSpent,
+        updatedAt: new Date(),
+      })
+      .where(eq(userCredits.userId, userId));
+
+    // Registrar transação de reembolso
+    await this.createTransaction({
+      userId,
+      type: "refund",
+      amount,
+      description,
+      relatedImageId,
+      balanceAfter: newBalance,
+      metadata: originalTransactionId
+        ? JSON.stringify({ originalTransactionId })
+        : undefined,
     });
 
     return true;
@@ -164,12 +264,12 @@ export class CreditsService {
       };
     }
 
-    const recentTransactions = await db
+    const recentTransactions = (await db
       .select()
       .from(creditTransactions)
       .where(eq(creditTransactions.userId, userId))
       .orderBy(desc(creditTransactions.createdAt))
-      .limit(10) as CreditTransactionRecord[];
+      .limit(10)) as CreditTransactionRecord[];
 
     return {
       balance: userCredit.balance,
