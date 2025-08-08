@@ -21,6 +21,8 @@ export function useCredits() {
   const { executeAsync: executeRefundCreditsAction } = useAction(refundCreditsAction);
   const { executeAsync: executeEarnCreditsAction } = useAction(earnCreditsAction);
   const { executeAsync: executeSpendCreditsAction } = useAction(spendCreditsAction);
+  const { executeAsync: executeGetUserCreditsAction } = useAction(getUserCredits);
+
 
 
 
@@ -33,7 +35,7 @@ export function useCredits() {
     setError(null);
 
     try {
-      const result = await getUserCredits({});
+      const result = await executeGetUserCreditsAction({});
 
       if (result?.data?.success) {
         setCredits(result.data?.data || null);
