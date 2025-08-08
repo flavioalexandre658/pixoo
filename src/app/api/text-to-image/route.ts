@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../db";
-import { generatedImages } from "../../../db/schema";
+import { generatedImages, creditReservations, creditTransactions } from "../../../db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { CreditsService } from "@/services/credits/credits.service";
+import { getModelCost } from "@/config/model-costs";
 import { CreditsMiddleware } from "@/lib/credits-middleware";
+import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action";
+import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
+import { eq } from "drizzle-orm";
 
 const BFL_API_KEY = "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar custo do modelo e reservar créditos
-    const modelCost = await CreditsService.getModelCost(model);
+    const modelCost = getModelCost(model);
     if (!modelCost) {
       return NextResponse.json(
         { error: `Modelo ${model} não encontrado no sistema de créditos` },
@@ -92,13 +95,20 @@ export async function POST(request: NextRequest) {
       await CreditsMiddleware.ensureUserCredits(session.user.id);
 
       try {
-        const reservation = await CreditsService.reserveCredits({
-          userId: session.user.id,
+        const reservationResult = await reserveCredits({
           modelId: model,
           description: `Geração de imagem - ${model}`,
         });
-        reservationId = reservation.reservationId;
-        console.log(`✅ Créditos reservados: ${reservation.cost} (ID: ${reservationId})`);
+        
+        if (!reservationResult?.data?.success) {
+          return NextResponse.json(
+            { error: reservationResult?.data?.errors?._form?.[0] || "Erro ao reservar créditos" },
+            { status: 402 }
+          );
+        }
+        
+        reservationId = reservationResult.data?.data?.reservationId || null;
+        console.log(`✅ Créditos reservados: ${modelCost.credits} (ID: ${reservationId})`);
       } catch (error) {
         console.error("❌ Erro ao reservar créditos:", error);
         return NextResponse.json(
@@ -259,13 +269,17 @@ export async function POST(request: NextRequest) {
       // Confirmar créditos se houve reserva
       if (reservationId) {
         try {
-          await CreditsService.confirmSpendCredits({
-            userId: session.user.id,
-            modelId: model,
+          const confirmResult = await confirmCredits({
             reservationId: reservationId,
+            modelId: model,
             description: `Geração de imagem concluída - ${model}`,
           });
-          console.log(`✅ Créditos confirmados para reserva: ${reservationId}`);
+          
+          if (confirmResult?.data?.success) {
+            console.log(`✅ Créditos confirmados para reserva: ${reservationId}`);
+          } else {
+            console.error("❌ Erro ao confirmar créditos:", confirmResult?.data?.errors);
+          }
         } catch (error) {
           console.error("❌ Erro ao confirmar créditos:", error);
           // Não falhar a resposta por erro de créditos, mas logar
@@ -304,10 +318,16 @@ export async function POST(request: NextRequest) {
         });
       } catch (dbError) {
         console.error("Error saving to database:", dbError);
-        // Se falhar ao salvar no banco e há reserva, reembolsar
+        // Se falhar ao salvar no banco e há reserva, cancelar
         if (reservationId) {
           try {
-            await CreditsService.cancelReservation(reservationId);
+            await db
+              .update(creditReservations)
+              .set({ 
+                status: 'cancelled',
+                updatedAt: new Date()
+              })
+              .where(eq(creditReservations.id, reservationId));
             console.log(`🔄 Reserva cancelada devido a erro no banco: ${reservationId}`);
           } catch (cancelError) {
             console.error("❌ Erro ao cancelar reserva:", cancelError);

@@ -1,13 +1,29 @@
+"use client"
 import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { UserCreditsSummary } from "@/interfaces/credits.interface";
 import { toast } from "sonner";
+import { getUserCredits } from "@/actions/credits/get/get-user-credits.action";
+import { earnCredits as earnCreditsAction } from "@/actions/credits/earn/earn-credits.action";
+import { spendCredits as spendCreditsAction } from "@/actions/credits/spend/spend-credits.action";
+import { reserveCredits as reserveCreditsAction } from "@/actions/credits/reserve/reserve-credits.action";
+import { confirmCredits as confirmCreditsAction } from "@/actions/credits/confirm/confirm-credits.action";
+import { refundCredits as refundCreditsAction } from "@/actions/credits/refund/refund-credits.action";
+import { useAction } from 'next-safe-action/hooks';
 
 export function useCredits() {
   const { data: session } = useSession();
   const [credits, setCredits] = useState<UserCreditsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { executeAsync: executeReserveCreditsAction } = useAction(reserveCreditsAction);
+  const { executeAsync: executeConfirmCreditsAction } = useAction(confirmCreditsAction);
+  const { executeAsync: executeRefundCreditsAction } = useAction(refundCreditsAction);
+  const { executeAsync: executeEarnCreditsAction } = useAction(earnCreditsAction);
+  const { executeAsync: executeSpendCreditsAction } = useAction(spendCreditsAction);
+
+
+
 
   // Buscar créditos do usuário
   const fetchCredits = async () => {
@@ -17,13 +33,15 @@ export function useCredits() {
     setError(null);
 
     try {
-      const response = await fetch("/api/credits");
-      if (!response.ok) {
-        throw new Error("Erro ao buscar créditos");
-      }
+      const result = await getUserCredits({});
 
-      const data = await response.json();
-      setCredits(data);
+      if (result?.data?.success) {
+        setCredits(result.data?.data || null);
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao buscar créditos";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
@@ -46,24 +64,19 @@ export function useCredits() {
     }
 
     try {
-      const response = await fetch("/api/credits/reserve", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          modelId,
-          description: `Reserva para geração de imagem - ${modelId}`,
-        }),
+
+      const result = await executeReserveCreditsAction({
+        modelId,
+        description: `Reserva para geração de imagem - ${modelId}`,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao reservar créditos");
+      if (result?.data?.success) {
+        return result.data?.data || null;
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao reservar créditos";
+        toast.error(errorMessage);
+        return null;
       }
-
-      const result = await response.json();
-      return result.data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao reservar créditos";
       toast.error(errorMessage);
@@ -79,27 +92,22 @@ export function useCredits() {
     }
 
     try {
-      const response = await fetch("/api/credits/confirm", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reservationId,
-          modelId,
-          imageId,
-          description: `Geração de imagem - ${modelId}`,
-        }),
+      const result = await executeConfirmCreditsAction({
+        reservationId,
+        modelId,
+        imageId,
+        description: `Geração de imagem - ${modelId}`,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao confirmar gasto de créditos");
+      if (result?.data?.success) {
+        // Atualizar créditos após confirmação
+        await fetchCredits();
+        return true;
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao confirmar gasto de créditos";
+        toast.error(errorMessage);
+        return false;
       }
-
-      // Atualizar créditos após confirmação
-      await fetchCredits();
-      return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao confirmar gasto de créditos";
       toast.error(errorMessage);
@@ -115,27 +123,22 @@ export function useCredits() {
     }
 
     try {
-      const response = await fetch("/api/credits/refund", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount,
-          description,
-          relatedImageId,
-        }),
+      const result = await executeRefundCreditsAction({
+        amount,
+        description,
+        relatedImageId,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao reembolsar créditos");
+      if (result?.data?.success) {
+        // Atualizar créditos após reembolso
+        await fetchCredits();
+        toast.success("Créditos reembolsados com sucesso");
+        return true;
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao reembolsar créditos";
+        toast.error(errorMessage);
+        return false;
       }
-
-      // Atualizar créditos após reembolso
-      await fetchCredits();
-      toast.success("Créditos reembolsados com sucesso");
-      return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao reembolsar créditos";
       toast.error(errorMessage);
@@ -151,26 +154,21 @@ export function useCredits() {
     }
 
     try {
-      const response = await fetch("/api/credits/spend", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          modelId,
-          imageId,
-          description: `Geração de imagem - ${modelId}`,
-        }),
+      const result = await executeSpendCreditsAction({
+        modelId,
+        imageId,
+        description: `Geração de imagem - ${modelId}`,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao gastar créditos");
+      if (result?.data?.success) {
+        // Atualizar créditos após gasto
+        await fetchCredits();
+        return true;
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao gastar créditos";
+        toast.error(errorMessage);
+        return false;
       }
-
-      // Atualizar créditos após gasto
-      await fetchCredits();
-      return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao gastar créditos";
       toast.error(errorMessage);
@@ -190,27 +188,22 @@ export function useCredits() {
     }
 
     try {
-      const response = await fetch("/api/credits/earn", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount,
-          description,
-          type,
-        }),
+      const result = await executeEarnCreditsAction({
+        amount,
+        description,
+        type,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao adicionar créditos");
+      if (result?.data?.success) {
+        // Atualizar créditos após ganho
+        await fetchCredits();
+        toast.success(`${amount} créditos adicionados!`);
+        return true;
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao adicionar créditos";
+        toast.error(String(errorMessage));
+        return false;
       }
-
-      // Atualizar créditos após ganho
-      await fetchCredits();
-      toast.success(`${amount} créditos adicionados!`);
-      return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao adicionar créditos";
       toast.error(errorMessage);

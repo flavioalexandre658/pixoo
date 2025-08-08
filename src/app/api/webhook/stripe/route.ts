@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { db } from "../../../../db";
 import { subscriptions, plans } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
-import { CreditsService } from "../../../../services/credits/credits.service";
+import { earnCredits } from "@/actions/credits/earn/earn-credits.action";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not set");
@@ -14,7 +14,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-07-30.basil",
 });
 
-// CreditsService é uma classe com métodos estáticos
+// Sistema de créditos migrado para Safe Actions
 
 export async function POST(req: NextRequest) {
   try {
@@ -174,11 +174,49 @@ export async function POST(req: NextRequest) {
 
       if (plan && plan.credits > 0) {
         // Adicionar créditos do plano ao usuário
-        await CreditsService.earnCredits({
-          userId: userId,
+        // Nota: Como o webhook não tem contexto de usuário autenticado,
+        // precisamos usar uma abordagem diferente ou criar uma action específica
+        // Por enquanto, vamos usar a lógica direta no banco de dados
+        const { db } = await import("@/db");
+        const { userCredits, creditTransactions } = await import("@/db/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        // Obter ou criar créditos do usuário
+        let userCredit = await db.query.userCredits.findFirst({
+          where: eq(userCredits.userId, userId),
+        });
+
+        if (!userCredit) {
+          userCredit = await db.insert(userCredits).values({
+            id: crypto.randomUUID(),
+            userId,
+            balance: 0,
+            totalEarned: 0,
+            totalSpent: 0,
+          }).returning().then((res) => res[0]);
+        }
+
+        const newBalance = (userCredit?.balance ?? 0) + plan.credits;
+        const newTotalEarned = (userCredit?.totalEarned ?? 0) + plan.credits;
+
+        await db
+          .update(userCredits)
+          .set({
+            balance: newBalance,
+            totalEarned: newTotalEarned,
+            updatedAt: new Date(),
+          })
+          .where(eq(userCredits.userId, userId));
+
+        // Registrar transação
+        await db.insert(creditTransactions).values({
+          id: crypto.randomUUID(),
+          userId,
+          type: "earned",
           amount: plan.credits,
           description: `Créditos da assinatura do plano ${plan.name}`,
-          type: "earned",
+          balanceAfter: newBalance,
+          createdAt: new Date(),
         });
 
         console.log(
@@ -249,11 +287,46 @@ export async function POST(req: NextRequest) {
         if (invoice.billing_reason === "subscription_cycle") {
           const plan = dbSubscription.plan;
           if (plan && plan.credits > 0) {
-            await CreditsService.earnCredits({
+            // Lógica direta no banco para renovação de créditos
+            const { userCredits, creditTransactions } = await import("@/db/schema");
+            const { eq } = await import("drizzle-orm");
+            
+            // Obter créditos do usuário
+            let userCredit = await db.query.userCredits.findFirst({
+              where: eq(userCredits.userId, dbSubscription.userId),
+            });
+
+            if (!userCredit) {
+              userCredit = await db.insert(userCredits).values({
+                id: crypto.randomUUID(),
+                userId: dbSubscription.userId,
+                balance: 0,
+                totalEarned: 0,
+                totalSpent: 0,
+              }).returning().then((res) => res[0]);
+            }
+
+            const newBalance = (userCredit?.balance ?? 0) + plan.credits;
+            const newTotalEarned = (userCredit?.totalEarned ?? 0) + plan.credits;
+
+            await db
+              .update(userCredits)
+              .set({
+                balance: newBalance,
+                totalEarned: newTotalEarned,
+                updatedAt: new Date(),
+              })
+              .where(eq(userCredits.userId, dbSubscription.userId));
+
+            // Registrar transação
+            await db.insert(creditTransactions).values({
+              id: crypto.randomUUID(),
               userId: dbSubscription.userId,
+              type: "earned",
               amount: plan.credits,
               description: `Créditos da renovação do plano ${plan.name}`,
-              type: "earned",
+              balanceAfter: newBalance,
+              createdAt: new Date(),
             });
 
             console.log(

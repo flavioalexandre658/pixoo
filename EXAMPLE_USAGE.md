@@ -91,20 +91,26 @@ export async function POST(request: NextRequest) {
     
     if (reservation) {
       // ✅ Confirmar créditos via webhook
-      await CreditsService.confirmSpendCredits({
-        userId: imageRecord.userId,
-        modelId: imageRecord.model,
-        imageId: payload.task_id,
-        reservationId: reservation.reservationId
+      const confirmResult = await confirmCredits({
+        reservationId: reservation.reservationId,
+        description: `Geração de imagem concluída via webhook - ${imageRecord.model}`
       });
+      
+      if (!confirmResult.success) {
+        throw new Error(confirmResult.errors?._form?.[0] || 'Erro ao confirmar créditos');
+      }
     }
   } else if (payload.status === "FAILED") {
     // ❌ Reembolsar créditos via webhook
-    await CreditsService.refundCredits({
-      userId: imageRecord.userId,
+    const refundResult = await refundCredits({
       amount: imageRecord.creditsUsed,
-      description: "Falha na geração via webhook"
+      description: "Falha na geração via webhook",
+      relatedImageId: payload.task_id
     });
+    
+    if (!refundResult.success) {
+      throw new Error(refundResult.errors?._form?.[0] || 'Erro ao processar reembolso');
+    }
   }
 }
 ```

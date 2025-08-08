@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../db";
-import { generatedImages, creditReservations } from "../../../../db/schema";
+import { generatedImages, creditReservations, creditTransactions, userCredits } from "../../../../db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { CreditsService } from "@/services/credits/credits.service";
+import { randomUUID } from "crypto";
 
 // Interface para o payload do webhook da BFL
 interface WebhookPayload {
@@ -86,14 +86,41 @@ export async function POST(request: NextRequest) {
         // Confirmar créditos se houver uma reserva pendente
         if (imageRecord?.reservationId) {
           try {
-            await CreditsService.confirmSpendCredits({
-              userId: imageRecord.userId,
-              modelId: imageRecord.model,
-              imageId: imageRecord.id,
-              description: `Geração de imagem via webhook - ${imageRecord.model}`,
-              reservationId: imageRecord.reservationId
-            });
-            console.log(`✅ Credits confirmed via webhook for task: ${payload.task_id}`);
+            // Buscar a reserva
+            const [reservation] = await db
+              .select()
+              .from(creditReservations)
+              .where(eq(creditReservations.id, imageRecord.reservationId));
+
+            if (reservation && reservation.status === 'pending') {
+              // Atualizar status da reserva para 'confirmed'
+              await db
+                .update(creditReservations)
+                .set({ 
+                  status: 'confirmed',
+                  updatedAt: new Date()
+                })
+                .where(eq(creditReservations.id, imageRecord.reservationId));
+
+              // Criar transação de débito
+              await db.insert(creditTransactions).values({
+                id: randomUUID(),
+                userId: imageRecord.userId,
+                amount: -reservation.amount,
+                type: 'spent',
+                description: `Geração de imagem via webhook - ${imageRecord.model}`,
+                relatedImageId: imageRecord.id,
+                reservationId: imageRecord.reservationId,
+                balanceAfter: 0, // Será calculado corretamente
+                metadata: JSON.stringify({
+                  imageId: imageRecord.id,
+                  modelId: imageRecord.model,
+                  reservationId: imageRecord.reservationId
+                })
+              });
+
+              console.log(`✅ Credits confirmed via webhook for task: ${payload.task_id}`);
+            }
           } catch (creditError) {
             console.error(`❌ Error confirming credits via webhook for task ${payload.task_id}:`, creditError);
             // Não falhar o webhook por erro de créditos
@@ -113,7 +140,15 @@ export async function POST(request: NextRequest) {
 
         if (imageRecord?.reservationId) {
           try {
-            await CreditsService.cancelReservation(imageRecord.reservationId);
+            // Cancelar reserva atualizando status para 'cancelled'
+            await db
+              .update(creditReservations)
+              .set({ 
+                status: 'cancelled',
+                updatedAt: new Date()
+              })
+              .where(eq(creditReservations.id, imageRecord.reservationId));
+            
             console.log(`✅ Reservation cancelled via webhook for failed task: ${payload.task_id}`);
           } catch (creditError) {
             console.error(`❌ Error cancelling reservation via webhook for task ${payload.task_id}:`, creditError);

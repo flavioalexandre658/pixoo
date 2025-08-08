@@ -1,4 +1,7 @@
-import { CreditsService } from '../src/services/credits/credits.service';
+import { randomUUID } from 'crypto';
+import { db } from '../src/db';
+import { modelCosts } from '../src/db/schema';
+import { MODEL_COSTS } from '../src/config/model-costs';
 
 /**
  * Script para inicializar os custos dos modelos no banco de dados
@@ -8,7 +11,24 @@ async function initializeModelCosts() {
   try {
     console.log("🚀 Inicializando custos dos modelos...");
     
-    await CreditsService.initializeModelCosts();
+    // Inserir custos dos modelos no banco de dados
+    for (const [modelId, config] of Object.entries(MODEL_COSTS)) {
+      await db.insert(modelCosts).values({
+        id: randomUUID(),
+        modelId,
+        modelName: config.name,
+        credits: config.credits,
+        isActive: "true"
+      }).onConflictDoUpdate({
+        target: modelCosts.modelId,
+        set: {
+          modelName: config.name,
+          credits: config.credits,
+          isActive: "true",
+          updatedAt: new Date()
+        }
+      });
+    }
     
     console.log("✅ Custos dos modelos inicializados com sucesso!");
     console.log("📋 Modelos configurados:");

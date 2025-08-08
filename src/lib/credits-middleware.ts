@@ -1,4 +1,6 @@
-import { CreditsService } from "@/services/credits/credits.service";
+import { getUserCredits } from "@/actions/credits/get/get-user-credits.action";
+import { earnCredits } from "@/actions/credits/earn/earn-credits.action";
+import { spendCredits } from "@/actions/credits/spend/spend-credits.action";
 
 /**
  * Middleware para gerenciar créditos de usuários
@@ -16,11 +18,15 @@ export class CreditsMiddleware {
   ): Promise<void> {
     try {
       // Verificar se o usuário já tem créditos
-      const existingCredits = await CreditsService.getUserCredits(userId);
+      const result = await getUserCredits({});
       
-      if (!existingCredits) {
-        // Criar créditos iniciais para o usuário
-        await CreditsService.createUserCredits(userId, initialCredits);
+      if (!result?.data?.success || !result.data?.data || result.data?.data.balance === 0) {
+        // Criar créditos iniciais usando earnCredits
+        await earnCredits({
+          amount: initialCredits,
+          description: "Créditos de boas-vindas",
+          type: "bonus",
+        });
         console.log(`✅ Créditos iniciais criados para usuário ${userId}: ${initialCredits} créditos`);
       }
     } catch (error) {
@@ -43,11 +49,11 @@ export class CreditsMiddleware {
       await this.ensureUserCredits(userId);
       
       // Verificar se tem créditos suficientes
-      const hasCredits = await CreditsService.hasEnoughCredits(userId, requiredCredits);
+      const userCreditsResult = await getUserCredits({});
+      const currentBalance = userCreditsResult?.data?.data?.balance || 0;
+      const hasCredits = currentBalance >= requiredCredits;
       
       if (!hasCredits) {
-        const userCredits = await CreditsService.getUserCredits(userId);
-        const currentBalance = userCredits?.balance || 0;
         
         return {
           valid: false,
@@ -79,12 +85,16 @@ export class CreditsMiddleware {
     description?: string
   ): Promise<{ success: boolean; message?: string }> {
     try {
-      await CreditsService.spendCredits({
-        userId,
+      const result = await spendCredits({
         modelId,
         imageId,
         description: description || `Geração de imagem - ${modelId}`,
       });
+      
+      if (!result?.data?.success) {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao processar gasto de créditos";
+        throw new Error(errorMessage);
+      }
       
       return { success: true };
     } catch (error) {
@@ -108,14 +118,21 @@ export class CreditsMiddleware {
     reason: string
   ): Promise<{ success: boolean; message?: string }> {
     try {
-      await CreditsService.earnCredits({
-        userId,
+      const result = await earnCredits({
         amount,
         description: reason,
         type: "bonus",
       });
       
-      return { success: true };
+      if (result?.data?.success) {
+        return { success: true };
+      } else {
+        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao adicionar créditos";
+        return {
+          success: false,
+          message: String(errorMessage),
+        };
+      }
     } catch (error) {
       console.error(`❌ Erro ao adicionar créditos de bônus:`, error);
       return {
