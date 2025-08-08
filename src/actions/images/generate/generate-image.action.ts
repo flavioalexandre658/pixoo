@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { generatedImages, modelCosts } from "@/db/schema";
 import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action";
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
-import { refundCredits } from "@/actions/credits/refund/refund-credits.action";
+import { cancelReservation } from "@/actions/credits";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -48,7 +48,7 @@ export const generateImage = authActionClient
         height,
         seed,
         steps,
-        guidance
+        guidance,
       } = parsedInput;
 
       const { userId } = ctx as { userId: string };
@@ -80,13 +80,16 @@ export const generateImage = authActionClient
         modelId: model,
         description: `Reserva para geração de imagem - ${model}`,
       });
-      
+
       if (reserveResult.serverError || !reserveResult.data?.success) {
         return {
-          error: reserveResult.data?.errors?._form?.[0] || reserveResult.serverError || "Erro ao reservar créditos",
+          error:
+            reserveResult.data?.errors?._form?.[0] ||
+            reserveResult.serverError ||
+            "Erro ao reservar créditos",
         };
       }
-      
+
       reservationId = reserveResult.data?.data?.reservationId || null;
 
       // Preparar parâmetros da requisição
@@ -119,11 +122,13 @@ export const generateImage = authActionClient
       }
 
       // Configurar webhook
-      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/bfl`;
+      const webhookUrl = `${process.env.WEBHOOK_URL}`;
       requestBody.webhook_url = webhookUrl;
 
       // Função para fazer requisição com retry e backoff exponencial
-      const makeRequestWithRetry = async (maxRetries = 3): Promise<Response> => {
+      const makeRequestWithRetry = async (
+        maxRetries = 3
+      ): Promise<Response> => {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
             const createResponse = await fetch(`${BFL_BASE_URL}${endpoint}`, {
@@ -141,7 +146,9 @@ export const generateImage = authActionClient
             }
 
             if (createResponse.status === 429) {
-              throw new Error("Limite de taxa excedido. Tente novamente mais tarde.");
+              throw new Error(
+                "Limite de taxa excedido. Tente novamente mais tarde."
+              );
             }
 
             // Retry em caso de erro 502/503/504
@@ -157,8 +164,9 @@ export const generateImage = authActionClient
             }
 
             if (!createResponse.ok) {
-              const errorText = await createResponse.text();
-              throw new Error(`Falha ao criar requisição: ${createResponse.statusText}`);
+              throw new Error(
+                `Falha ao criar requisição: ${createResponse.statusText}`
+              );
             }
 
             return createResponse;
@@ -175,7 +183,6 @@ export const generateImage = authActionClient
 
       const createResponse = await makeRequestWithRetry();
       const createData = await createResponse.json();
-
       // Se a resposta já contém o resultado (para modelos rápidos como flux-schnell)
       if (createData.result && createData.result.sample) {
         // Confirmar créditos se houve reserva
@@ -185,9 +192,12 @@ export const generateImage = authActionClient
             modelId: model,
             description: `Geração de imagem concluída - ${model}`,
           });
-          
+
           if (confirmResult.serverError || !confirmResult.data?.success) {
-            console.error("Erro ao confirmar créditos:", confirmResult.data?.errors || confirmResult.serverError);
+            console.error(
+              "Erro ao confirmar créditos:",
+              confirmResult.data?.errors || confirmResult.serverError
+            );
           }
         }
 
@@ -218,15 +228,19 @@ export const generateImage = authActionClient
           });
         } catch (dbError) {
           console.error("Erro ao salvar no banco:", dbError);
-          // Se falhar ao salvar no banco e há reserva, reembolsar
+          // Se falhar ao salvar no banco e há reserva, cancelar a reserva (não reembolsar pois não foi cobrado)
           if (reservationId) {
-            const refundResult = await refundCredits({
-              amount: modelCost.credits,
-              description: `Reembolso por erro ao salvar dados - ${model}`,
+            const cancelResult = await cancelReservation({
+              reservationId: reservationId,
+              reason: `Erro ao salvar dados da imagem - ${model}`,
+              userId: "",
             });
-            
-            if (refundResult.serverError || !refundResult.data?.success) {
-              console.error("Erro ao reembolsar créditos:", refundResult.data?.errors || refundResult.serverError);
+
+            if (cancelResult.serverError || !cancelResult.data?.success) {
+              console.error(
+                "Erro ao cancelar reserva:",
+                cancelResult.data?.errors || cancelResult.serverError
+              );
             }
           }
           return {

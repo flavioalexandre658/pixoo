@@ -14,8 +14,13 @@ import {
 import { ImagePreview } from "@/components/ui/image-preview/image-preview";
 import { useCredits } from "@/hooks/use-credits";
 import toast from "react-hot-toast";
-
-export default function TextToImage() {
+import { useAction } from "next-safe-action/hooks";
+import { getImageByTaskId } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
+import { ModelCost } from "@/db/schema";
+interface TextToImage {
+  models: ModelCost[];
+}
+export default function TextToImage({ models }: TextToImage) {
   const t = useTranslations("textToImage");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
@@ -34,7 +39,9 @@ export default function TextToImage() {
     reservationId: string;
     modelId: string;
   } | null>(null);
-  const { refundCredits, fetchCredits } = useCredits();
+  const { refundCredits, cancelReservation, fetchCredits } = useCredits();
+
+  const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
   // Contador de tempo em tempo real
   useEffect(() => {
@@ -147,17 +154,17 @@ export default function TextToImage() {
     const checkStatus = async () => {
       try {
         console.log(`Polling status for task: ${taskId}`);
-        const response = await fetch(`/api/images/${taskId}`);
+        const response = await executeGetImageByTaskId({ taskId });
 
-        if (response.ok) {
-          const data = await response.json();
+        if (!response.serverError || response.data?.success) {
+          const data = response.data?.data;
           console.log("Polling response:", {
             taskId,
-            status: data.status,
-            hasImageUrl: !!data.imageUrl,
+            status: data?.status,
+            hasImageUrl: !!data?.imageUrl,
           });
 
-          if (data.status === "ready" && data.imageUrl) {
+          if (data?.status === "ready" && data?.imageUrl) {
             console.log("✅ Task completed successfully via polling!");
 
             // Nota: A confirmação de créditos será feita automaticamente via webhook
@@ -192,34 +199,25 @@ export default function TextToImage() {
             }
 
             setCurrentTaskId(null);
-          } else if (data.status === "error") {
-            console.log("❌ Task failed via polling:", data.error);
+          } else if (data?.status === "error") {
+            console.log(
+              "❌ Task failed via polling:",
+              response.data?.errors?._form[0]
+            );
 
-            // Reembolsar créditos se houver reserva
-            if (currentReservation) {
+            // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
+            if (currentReservation?.reservationId) {
               try {
-                // Buscar custo do modelo para reembolso
-                const modelCosts = {
-                  "flux-schnell": 1,
-                  "flux-dev": 10,
-                  "flux-pro": 25,
-                  "flux-pro-1.1": 40,
-                };
-                const cost =
-                  modelCosts[
-                    currentReservation.modelId as keyof typeof modelCosts
-                  ] || 10;
-                await refundCredits(
-                  cost,
-                  `Falha na geração - ${currentReservation.modelId}`,
-                  taskId
+                await cancelReservation(
+                  currentReservation.reservationId,
+                  `Falha na geração - ${currentReservation.modelId}`
                 );
-                console.log("✅ Credits refunded successfully!");
+                console.log("✅ Reservation cancelled successfully!");
                 // Atualizar saldo na UI
                 await fetchCredits();
-                console.log("✅ Credits balance updated in UI after refund!");
+                console.log("✅ Credits balance updated in UI after cancellation!");
               } catch (error) {
-                console.error("❌ Error refunding credits:", error);
+                console.error("❌ Error cancelling reservation:", error);
               }
               setCurrentReservation(null);
             }
@@ -230,17 +228,21 @@ export default function TextToImage() {
               pollingIntervalRef.current = null;
             }
 
-            toast.error(data.error || "Image generation failed");
+            toast.error(
+              response.data?.errors?._form[0] || "Image generation failed"
+            );
             setIsGenerating(false);
             setCurrentTaskId(null);
-          } else if (data.status === "processing") {
+          } else if (data?.status === "processing") {
             console.log("🔄 Task still processing...");
-          } else if (data.status === "pending") {
+          } else if (data?.status === "pending") {
             console.log("⏳ Task pending...");
           }
         } else {
-          console.log(`Polling failed with status: ${response.status}`);
-          if (response.status === 404) {
+          console.log(
+            `Polling failed with status: ${response.data?.errors?._form}`
+          );
+          if (response.serverError) {
             console.log(
               "Task not found in database yet, continuing polling..."
             );
@@ -253,24 +255,14 @@ export default function TextToImage() {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
 
-          // Reembolsar créditos se houver reserva
-          if (currentReservation) {
+          // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
+          if (currentReservation?.reservationId) {
             try {
-              const modelCosts = {
-                "flux-schnell": 1,
-                "flux-dev": 10,
-                "flux-pro": 25,
-                "flux-pro-1.1": 40,
-              };
-              const cost =
-                modelCosts[
-                  currentReservation.modelId as keyof typeof modelCosts
-                ] || 10;
-              await refundCredits(
-                cost,
+              await cancelReservation(
+                currentReservation.reservationId,
                 `Erro de rede na geração - ${currentReservation.modelId}`
               );
-              console.log("✅ Credits refunded due to network error!");
+              console.log("✅ Reservation cancelled due to network error!");
               // Atualizar saldo na UI
               await fetchCredits();
               console.log(
@@ -351,6 +343,7 @@ export default function TextToImage() {
         {/* Left side - Form */}
         <PageContainerLeft>
           <FormTextToImage
+            models={models}
             onImageGenerated={handleImageGenerated}
             onGenerationStart={() => {
               const now = Date.now();

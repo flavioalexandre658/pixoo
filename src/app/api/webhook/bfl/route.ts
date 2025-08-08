@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../db";
-import { generatedImages, creditReservations, creditTransactions, userCredits } from "../../../../db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { randomUUID } from "crypto";
+import { generatedImages } from "../../../../db/schema";
+import { eq } from "drizzle-orm";
+import {
+  confirmCreditsWebhook,
+  cancelReservationWebhook,
+} from "../../../../actions/credits";
+import { getImageByTaskIdInternal } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 
 // Interface para o payload do webhook da BFL
 interface WebhookPayload {
@@ -24,41 +28,45 @@ interface WebhookPayload {
 const webhookResults = new Map<string, WebhookPayload>();
 
 export async function POST(request: NextRequest) {
+  console.log("🔔 Webhook BFL chamado:", {
+    timestamp: new Date().toISOString(),
+    headers: Object.fromEntries(request.headers.entries()),
+    url: request.url,
+  });
+
   try {
     const body = await request.text();
-    const webhookSecret = request.headers.get("x-webhook-secret");
-    if (!webhookSecret) {
-      return NextResponse.json(
-        { error: "Webhook secret required" },
-        { status: 401 }
-      );
-    }
-    const expectedSecret = process.env.BFL_WEBHOOK_SECRET || "default-secret";
-    if (webhookSecret !== expectedSecret) {
-      return NextResponse.json(
-        { error: "Invalid webhook secret" },
-        { status: 401 }
-      );
-    }
+    console.log("📦 Payload recebido:", body);
+
     const payload: WebhookPayload = JSON.parse(body);
+
     const mappedStatus =
       payload.status === "SUCCESS"
         ? "Ready"
         : payload.status === "FAILED"
-          ? "Error"
-          : payload.status === "PENDING"
-            ? "Pending"
-            : payload.status === "processing"
-              ? "Processing"
-              : "Error";
+        ? "Error"
+        : payload.status === "PENDING"
+        ? "Pending"
+        : payload.status === "processing"
+        ? "Processing"
+        : "Error";
     if (mappedStatus === "Ready") {
       webhookResults.set(payload.task_id, payload);
       try {
-        // Buscar informações da imagem para confirmar créditos
-        const [imageRecord] = await db
-          .select()
-          .from(generatedImages)
-          .where(eq(generatedImages.taskId, payload.task_id));
+        const res = await getImageByTaskIdInternal(payload.task_id);
+        console.log(res);
+        if (!res.success) {
+          console.error(
+            `❌ Image record not found for task: ${payload.task_id}`,
+            res.errors
+          );
+          return NextResponse.json(
+            { error: "Image record not found" },
+            { status: 404 }
+          );
+        }
+
+        const imageRecord = res.data;
 
         const updateData: any = {
           status: mappedStatus.toLowerCase(),
@@ -86,48 +94,37 @@ export async function POST(request: NextRequest) {
         // Confirmar créditos se houver uma reserva pendente
         if (imageRecord?.reservationId) {
           try {
-            // Buscar a reserva
-            const [reservation] = await db
-              .select()
-              .from(creditReservations)
-              .where(eq(creditReservations.id, imageRecord.reservationId));
+            const result = await confirmCreditsWebhook({
+              userId: imageRecord.userId,
+              reservationId: imageRecord.reservationId,
+              modelId: imageRecord.model,
+              imageId: imageRecord.id,
+              description: `Geração de imagem via webhook - ${imageRecord.model}`,
+            });
 
-            if (reservation && reservation.status === 'pending') {
-              // Atualizar status da reserva para 'confirmed'
-              await db
-                .update(creditReservations)
-                .set({ 
-                  status: 'confirmed',
-                  updatedAt: new Date()
-                })
-                .where(eq(creditReservations.id, imageRecord.reservationId));
-
-              // Criar transação de débito
-              await db.insert(creditTransactions).values({
-                id: randomUUID(),
-                userId: imageRecord.userId,
-                amount: -reservation.amount,
-                type: 'spent',
-                description: `Geração de imagem via webhook - ${imageRecord.model}`,
-                relatedImageId: imageRecord.id,
-                reservationId: imageRecord.reservationId,
-                balanceAfter: 0, // Será calculado corretamente
-                metadata: JSON.stringify({
-                  imageId: imageRecord.id,
-                  modelId: imageRecord.model,
-                  reservationId: imageRecord.reservationId
-                })
-              });
-
-              console.log(`✅ Credits confirmed via webhook for task: ${payload.task_id}`);
+            if (result?.data?.success) {
+              console.log(
+                `✅ Credits confirmed via webhook for task: ${payload.task_id}`
+              );
+            } else {
+              console.error(
+                `❌ Error confirming credits via webhook for task ${payload.task_id}:`,
+                result?.data?.errors
+              );
             }
           } catch (creditError) {
-            console.error(`❌ Error confirming credits via webhook for task ${payload.task_id}:`, creditError);
+            console.error(
+              `❌ Error confirming credits via webhook for task ${payload.task_id}:`,
+              creditError
+            );
             // Não falhar o webhook por erro de créditos
           }
         }
       } catch (dbError) {
-        console.error(`❌ Error processing webhook for task ${payload.task_id}:`, dbError);
+        console.error(
+          `❌ Error processing webhook for task ${payload.task_id}:`,
+          dbError
+        );
       }
       return NextResponse.json({ success: true });
     } else if (mappedStatus === "Error") {
@@ -140,18 +137,27 @@ export async function POST(request: NextRequest) {
 
         if (imageRecord?.reservationId) {
           try {
-            // Cancelar reserva atualizando status para 'cancelled'
-            await db
-              .update(creditReservations)
-              .set({ 
-                status: 'cancelled',
-                updatedAt: new Date()
-              })
-              .where(eq(creditReservations.id, imageRecord.reservationId));
-            
-            console.log(`✅ Reservation cancelled via webhook for failed task: ${payload.task_id}`);
+            const result = await cancelReservationWebhook({
+              userId: imageRecord.userId,
+              reservationId: imageRecord.reservationId,
+              reason: `Falha na geração da imagem - Task: ${payload.task_id}`,
+            });
+
+            if (result?.data?.success) {
+              console.log(
+                `✅ Reservation cancelled via webhook for failed task: ${payload.task_id}`
+              );
+            } else {
+              console.error(
+                `❌ Error cancelling reservation via webhook for task ${payload.task_id}:`,
+                result?.data?.errors
+              );
+            }
           } catch (creditError) {
-            console.error(`❌ Error cancelling reservation via webhook for task ${payload.task_id}:`, creditError);
+            console.error(
+              `❌ Error cancelling reservation via webhook for task ${payload.task_id}:`,
+              creditError
+            );
           }
         }
 
@@ -161,7 +167,10 @@ export async function POST(request: NextRequest) {
           .set({ status: "error" })
           .where(eq(generatedImages.taskId, payload.task_id));
       } catch (dbError) {
-        console.error(`❌ Error processing failed webhook for task ${payload.task_id}:`, dbError);
+        console.error(
+          `❌ Error processing failed webhook for task ${payload.task_id}:`,
+          dbError
+        );
       }
       return NextResponse.json({ success: true });
     } else {

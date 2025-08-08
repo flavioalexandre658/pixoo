@@ -36,6 +36,9 @@ import {
 } from "@/components/ui/dialog";
 import { DimensionSelector, Dimension } from "./dimension-selector";
 import { useCredits } from "@/hooks/use-credits";
+import { ModelCost } from "@/db/schema";
+import { useAction } from "next-safe-action/hooks";
+import { generateImage } from "@/actions/images/generate/generate-image.action";
 
 const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
@@ -50,22 +53,8 @@ const formTextToImageSchema = z.object({
 
 type FormTextToImageForm = z.infer<typeof formTextToImageSchema>;
 
-const models = [
-  {
-    id: "flux-schnell",
-    name: "Flux Schnell",
-    credits: 0,
-    badge: "free",
-  },
-  { id: "flux-dev", name: "Flux Dev", credits: 2 },
-  { id: "flux-pro", name: "Flux Pro", credits: 5 },
-  { id: "flux-pro-1.1", name: "Flux Pro 1.1", credits: 4 },
-  { id: "flux-pro-1.1-ultra", name: "Flux Pro 1.1 Ultra", credits: 6 },
-  { id: "flux-realism", name: "Flux Realism", credits: 3 },
-  { id: "flux-kontext-pro", name: "Flux Kontext Pro", credits: 4 },
-];
-
 interface FormTextToImageProps {
+  models: ModelCost[];
   onImageGenerated: (imageUrl: string) => void;
   onGenerationStart?: () => void;
   onStartPolling?: (
@@ -78,6 +67,7 @@ interface FormTextToImageProps {
 }
 
 export function FormTextToImage({
+  models,
   onImageGenerated,
   onGenerationStart,
   onStartPolling,
@@ -91,6 +81,7 @@ export function FormTextToImage({
     hasEnoughCredits,
     reserveCredits,
     refundCredits,
+    cancelReservation,
     isLoading: creditsLoading,
   } = useCredits();
   const [currentReservation, setCurrentReservation] = useState<{
@@ -101,6 +92,7 @@ export function FormTextToImage({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [startedGeneration, setStartedGeneration] = useState(isGenerating);
+  const { executeAsync: executeGenerateImage } = useAction(generateImage);
 
   // Reset startedGeneration when generation is complete
   useEffect(() => {
@@ -109,6 +101,7 @@ export function FormTextToImage({
       onGenerationComplete?.();
     }
   }, [isGenerating, startedGeneration, onGenerationComplete]);
+
   const [dimension, setDimension] = useState<Dimension>({
     aspectRatio: "1:1",
     width: 1024,
@@ -136,7 +129,7 @@ export function FormTextToImage({
     onGenerationButtonClick?.();
 
     // Verificar se o modelo selecionado requer créditos
-    const selectedModel = models.find((m) => m.id === data.model);
+    const selectedModel = models.find((m) => m.modelId === data.model);
     if (!selectedModel) {
       toast.error("Modelo não encontrado");
       setStartedGeneration(false);
@@ -146,7 +139,7 @@ export function FormTextToImage({
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
     if (selectedModel.credits > 0) {
-      reservation = await reserveCredits(selectedModel.id);
+      reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
           `Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`
@@ -159,58 +152,54 @@ export function FormTextToImage({
 
     try {
       toast.success(t("startingGeneration"));
-      const response = await fetch("/api/text-to-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: data.prompt,
-          model: data.model,
-          width: dimension.width,
-          height: dimension.height,
-          aspectRatio: dimension.aspectRatio,
-          seed: data.seed,
-          steps: data.steps,
-          guidance: data.guidance,
-          imagePublic: data.imagePublic,
-        }),
+
+      const response = await executeGenerateImage({
+        prompt: data.prompt,
+        model: data.model,
+        width: dimension.width,
+        height: dimension.height,
+        aspectRatio: dimension.aspectRatio,
+        seed: data.seed,
+        steps: data.steps,
+        guidance: data.guidance,
+        imagePublic: data.imagePublic,
       });
 
-      if (!response.ok) {
+      if (!response.serverError && response.data?.success) {
         setStartedGeneration(false);
 
-        // Reembolsar créditos em caso de erro na API
+        // Cancelar reserva em caso de erro na API (usuário não foi cobrado ainda)
         if (reservation) {
-          await refundCredits(
-            reservation.cost,
-            `Falha na API de geração - Status ${response.status}`,
-            undefined
+          await cancelReservation(
+            reservation.reservationId,
+            `Falha na API de geração - Status ${response.data?.status}`
           );
           setCurrentReservation(null);
         }
 
-        if (response.status === 429) {
+        if (response.data?.status === 429) {
           toast.error("Rate limit exceeded. Please try again later.");
         } else if (
-          response.status === 502 ||
-          response.status === 503 ||
-          response.status === 504
+          response.data?.status === 502 ||
+          response.data?.status === 503 ||
+          response.data?.status === 504
         ) {
           toast.error(
             "Service temporarily unavailable. The system is automatically retrying..."
           );
+        } else if (response.data?.status === 400) {
+          toast.error("Bad request. Please check your input.");
         } else {
-          const errorData = await response.json();
+          const errorData = response.data?.error;
           onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-          throw new Error(errorData.error || "Failed to generate image");
+          throw new Error(errorData || "Failed to generate image");
         }
         return;
       }
 
-      const result = await response.json();
+      const result = response.data;
 
-      if (result.taskId) {
+      if (result?.taskId) {
         toast.info(t("checkingStatus"));
         setGenerationProgress(25);
         onGenerationStart?.();
@@ -221,11 +210,11 @@ export function FormTextToImage({
           reservation
             ? {
                 reservationId: reservation.reservationId,
-                modelId: selectedModel.id,
+                modelId: selectedModel.modelId,
               }
             : undefined
         );
-      } else if (result.success && result.imageUrl) {
+      } else if (result?.success && result?.imageUrl) {
         setStartedGeneration(false);
 
         // Nota: A confirmação de créditos será feita automaticamente via webhook
@@ -242,12 +231,11 @@ export function FormTextToImage({
       } else {
         setStartedGeneration(false);
 
-        // Reembolsar créditos em caso de resposta inválida
+        // Cancelar reserva em caso de resposta inválida (usuário não foi cobrado ainda)
         if (reservation) {
-          await refundCredits(
-            reservation.cost,
-            "Resposta inválida do servidor",
-            undefined
+          await cancelReservation(
+            reservation.reservationId,
+            "Resposta inválida do servidor"
           );
           setCurrentReservation(null);
         }
@@ -258,12 +246,11 @@ export function FormTextToImage({
     } catch (error: any) {
       setStartedGeneration(false);
 
-      // Reembolsar créditos em caso de erro
+      // Cancelar reserva em caso de erro (usuário não foi cobrado ainda)
       if (currentReservation) {
-        await refundCredits(
-          currentReservation.cost,
-          `Erro na geração: ${error.message}`,
-          undefined
+        await cancelReservation(
+          currentReservation.reservationId,
+          `Erro na geração: ${error.message}`
         );
         setCurrentReservation(null);
       }
@@ -409,13 +396,13 @@ export function FormTextToImage({
                   </SelectTrigger>
                   <SelectContent>
                     {models.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
+                      <SelectItem key={model.modelId} value={model.modelId}>
                         <div className="flex items-center justify-between w-full">
-                          <span>{model.name}</span>
+                          <span>{model.modelName}</span>
                           <div className="flex items-center gap-2 ml-2">
-                            {model.badge && (
+                            {!model.credits && (
                               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                {model.badge}
+                                Free
                               </span>
                             )}
                             {model.credits > 0 && (
@@ -446,13 +433,13 @@ export function FormTextToImage({
                 </SelectTrigger>
                 <SelectContent>
                   {models.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
+                    <SelectItem key={model.modelId} value={model.modelId}>
                       <div className="flex items-center justify-between w-full">
-                        <span>{model.name}</span>
+                        <span>{model.modelName}</span>
                         <div className="flex items-center gap-2 ml-2">
-                          {model.badge && (
+                          {!model.credits && (
                             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              {model.badge}
+                              Free
                             </span>
                           )}
                           {model.credits > 0 && (

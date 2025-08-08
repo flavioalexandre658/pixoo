@@ -10,6 +10,8 @@ import { FilterSelect } from "./filter-select";
 import { ZoomControls } from "./zoom-controls";
 
 import { ImageHistoryCard } from "./image-history-card";
+import { getImagesHistory } from "@/actions/images/history/get-images-history.action";
+import { useAction } from "next-safe-action/hooks";
 
 interface GeneratedImage {
   id: string;
@@ -38,13 +40,21 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
   const [statusFilter, setStatusFilter] = useState("");
   const [zoom, setZoom] = useState(1);
   const [cropped, setCropped] = useState(false);
+  const { executeAsync: executeGetImagesHistory } = useAction(getImagesHistory);
 
   const fetchImages = async () => {
     try {
-      const response = await fetch("/api/images/history");
-      if (response.ok) {
-        const data = await response.json();
-        setImages(data);
+      const { data } = await executeGetImagesHistory({
+        limit: 100,
+      });
+      if (data?.success && data.data) {
+        setImages(
+          data.data.map((img) => ({
+            ...img,
+            createdAt: img.createdAt.toString(),
+            completedAt: img.completedAt?.toString() || null,
+          }))
+        );
       }
     } catch (error) {
       console.error("Error fetching image history:", error);
@@ -78,7 +88,7 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
   };
 
   const viewFullImage = (url: string, prompt: string) => {
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   const formatTime = (timeMs: number | null) => {
@@ -164,9 +174,7 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
             />
           </div>
         </div>
-        <p className="text-sm text-muted-foreground mt-2">
-          {t("description")}
-        </p>
+        <p className="text-sm text-muted-foreground mt-2">{t("description")}</p>
       </CardHeader>
       <CardContent>
         {filteredImages.length === 0 ? (

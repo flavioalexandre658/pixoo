@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { UserCreditsSummary } from "@/interfaces/credits.interface";
@@ -9,23 +9,29 @@ import { spendCredits as spendCreditsAction } from "@/actions/credits/spend/spen
 import { reserveCredits as reserveCreditsAction } from "@/actions/credits/reserve/reserve-credits.action";
 import { confirmCredits as confirmCreditsAction } from "@/actions/credits/confirm/confirm-credits.action";
 import { refundCredits as refundCreditsAction } from "@/actions/credits/refund/refund-credits.action";
-import { useAction } from 'next-safe-action/hooks';
+import { cancelReservation as cancelReservationAction } from "@/actions/credits/cancel/cancel-reservation.action";
+import { useAction } from "next-safe-action/hooks";
 
 export function useCredits() {
   const { data: session } = useSession();
   const [credits, setCredits] = useState<UserCreditsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { executeAsync: executeReserveCreditsAction } = useAction(reserveCreditsAction);
-  const { executeAsync: executeConfirmCreditsAction } = useAction(confirmCreditsAction);
-  const { executeAsync: executeRefundCreditsAction } = useAction(refundCreditsAction);
-  const { executeAsync: executeEarnCreditsAction } = useAction(earnCreditsAction);
-  const { executeAsync: executeSpendCreditsAction } = useAction(spendCreditsAction);
-  const { executeAsync: executeGetUserCreditsAction } = useAction(getUserCredits);
-
-
-
-
+  const { executeAsync: executeReserveCreditsAction } =
+    useAction(reserveCreditsAction);
+  const { executeAsync: executeConfirmCreditsAction } =
+    useAction(confirmCreditsAction);
+  const { executeAsync: executeRefundCreditsAction } =
+    useAction(refundCreditsAction);
+  const { executeAsync: executeCancelReservationAction } = useAction(
+    cancelReservationAction
+  );
+  const { executeAsync: executeEarnCreditsAction } =
+    useAction(earnCreditsAction);
+  const { executeAsync: executeSpendCreditsAction } =
+    useAction(spendCreditsAction);
+  const { executeAsync: executeGetUserCreditsAction } =
+    useAction(getUserCredits);
 
   // Buscar créditos do usuário
   const fetchCredits = async () => {
@@ -40,12 +46,14 @@ export function useCredits() {
       if (result?.data?.success) {
         setCredits(result.data?.data || null);
       } else {
-        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao buscar créditos";
+        const errorMessage =
+          result?.data?.errors?._form?.[0] || "Erro ao buscar créditos";
         setError(errorMessage);
         toast.error(errorMessage);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -59,14 +67,15 @@ export function useCredits() {
   };
 
   // Reservar créditos antes da geração
-  const reserveCredits = async (modelId: string): Promise<{ reservationId: string; cost: number } | null> => {
+  const reserveCredits = async (
+    modelId: string
+  ): Promise<{ reservationId: string; cost: number } | null> => {
     if (!session?.user?.id) {
       toast.error("Usuário não autenticado");
       return null;
     }
 
     try {
-
       const result = await executeReserveCreditsAction({
         modelId,
         description: `Reserva para geração de imagem - ${modelId}`,
@@ -75,19 +84,25 @@ export function useCredits() {
       if (result?.data?.success) {
         return result.data?.data || null;
       } else {
-        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao reservar créditos";
+        const errorMessage =
+          result?.data?.errors?._form?.[0] || "Erro ao reservar créditos";
         toast.error(errorMessage);
         return null;
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao reservar créditos";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao reservar créditos";
       toast.error(errorMessage);
       return null;
     }
   };
 
   // Confirmar gasto de créditos após geração bem-sucedida
-  const confirmSpendCredits = async (reservationId: string, modelId: string, imageId?: string): Promise<boolean> => {
+  const confirmSpendCredits = async (
+    reservationId: string,
+    modelId: string,
+    imageId?: string
+  ): Promise<boolean> => {
     if (!session?.user?.id) {
       toast.error("Usuário não autenticado");
       return false;
@@ -106,19 +121,63 @@ export function useCredits() {
         await fetchCredits();
         return true;
       } else {
-        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao confirmar gasto de créditos";
+        const errorMessage =
+          result?.data?.errors?._form?.[0] ||
+          "Erro ao confirmar gasto de créditos";
         toast.error(errorMessage);
         return false;
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao confirmar gasto de créditos";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Erro ao confirmar gasto de créditos";
       toast.error(errorMessage);
       return false;
     }
   };
 
-  // Reembolsar créditos em caso de falha
-  const refundCredits = async (amount: number, description: string, relatedImageId?: string): Promise<boolean> => {
+  // Cancelar reserva de créditos (quando usuário não foi cobrado)
+  const cancelReservation = async (
+    reservationId: string,
+    reason?: string
+  ): Promise<boolean> => {
+    if (!session?.user?.id) {
+      toast.error("Usuário não autenticado");
+      return false;
+    }
+
+    try {
+      const result = await executeCancelReservationAction({
+        reservationId,
+        reason,
+        userId: session.user.id,
+      });
+
+      if (result?.data?.success) {
+        // Atualizar créditos após cancelamento
+        await fetchCredits();
+        toast.success("Reserva cancelada com sucesso");
+        return true;
+      } else {
+        const errorMessage =
+          result?.data?.errors?._form?.[0] || "Erro ao cancelar reserva";
+        toast.error(errorMessage);
+        return false;
+      }
+    } catch (error) {
+      console.error("Erro ao cancelar reserva:", error);
+      toast.error("Erro ao cancelar reserva");
+      return false;
+    }
+  };
+
+  // Reembolsar créditos em caso de falha (quando usuário já foi cobrado)
+  const refundCredits = async (
+    amount: number,
+    description: string,
+    relatedImageId?: string
+  ): Promise<boolean> => {
     if (!session?.user?.id) {
       toast.error("Usuário não autenticado");
       return false;
@@ -137,19 +196,24 @@ export function useCredits() {
         toast.success("Créditos reembolsados com sucesso");
         return true;
       } else {
-        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao reembolsar créditos";
+        const errorMessage =
+          result?.data?.errors?._form?.[0] || "Erro ao reembolsar créditos";
         toast.error(errorMessage);
         return false;
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao reembolsar créditos";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao reembolsar créditos";
       toast.error(errorMessage);
       return false;
     }
   };
 
   // Método legado mantido para compatibilidade
-  const spendCredits = async (modelId: string, imageId?: string): Promise<boolean> => {
+  const spendCredits = async (
+    modelId: string,
+    imageId?: string
+  ): Promise<boolean> => {
     if (!session?.user?.id) {
       toast.error("Usuário não autenticado");
       return false;
@@ -167,12 +231,14 @@ export function useCredits() {
         await fetchCredits();
         return true;
       } else {
-        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao gastar créditos";
+        const errorMessage =
+          result?.data?.errors?._form?.[0] || "Erro ao gastar créditos";
         toast.error(errorMessage);
         return false;
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao gastar créditos";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao gastar créditos";
       toast.error(errorMessage);
       return false;
     }
@@ -202,12 +268,14 @@ export function useCredits() {
         toast.success(`${amount} créditos adicionados!`);
         return true;
       } else {
-        const errorMessage = result?.data?.errors?._form?.[0] || "Erro ao adicionar créditos";
+        const errorMessage =
+          result?.data?.errors?._form?.[0] || "Erro ao adicionar créditos";
         toast.error(String(errorMessage));
         return false;
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao adicionar créditos";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao adicionar créditos";
       toast.error(errorMessage);
       return false;
     }
@@ -234,8 +302,8 @@ export function useCredits() {
       fetchCredits();
     };
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', () => {
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         fetchCredits();
       }
@@ -243,8 +311,8 @@ export function useCredits() {
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleFocus);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
     };
   }, [session?.user?.id]);
 
@@ -263,6 +331,7 @@ export function useCredits() {
     // Novos métodos para sistema de reserva
     reserveCredits,
     confirmSpendCredits,
+    cancelReservation,
     refundCredits,
   };
 }
