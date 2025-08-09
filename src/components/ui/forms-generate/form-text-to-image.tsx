@@ -112,7 +112,7 @@ export function FormTextToImage({
     resolver: zodResolver(formTextToImageSchema),
     defaultValues: {
       prompt: "",
-      model: "flux-schnell",
+      model: "flux-pro",
       imagePublic: false,
       width: 1024,
       height: 1024,
