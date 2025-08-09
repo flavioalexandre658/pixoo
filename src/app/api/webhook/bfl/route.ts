@@ -52,16 +52,49 @@ export async function POST(request: NextRequest) {
         : "Error";
     if (mappedStatus === "Ready") {
       webhookResults.set(payload.task_id, payload);
+      
       try {
-        const res = await getImageByTaskIdInternal(payload.task_id);
-        console.log(res);
-        if (!res.success) {
+        // Implementar retry para resolver problema de timing
+        let res = null;
+        let retryCount = 0;
+        const maxRetries = 5;
+        const retryDelay = 1000; // 1 segundo
+        
+        while (retryCount < maxRetries) {
+          try {
+            res = await getImageByTaskIdInternal(payload.task_id);
+            
+            if (res.success) {
+              console.log(`✅ Imagem encontrada na tentativa ${retryCount + 1}:`, {
+                taskId: payload.task_id,
+                attempt: retryCount + 1
+              });
+              break;
+            } else {
+              retryCount++;
+              if (retryCount < maxRetries) {
+                console.log(`⏳ Tentativa ${retryCount}/${maxRetries} - Aguardando ${retryDelay}ms antes de tentar novamente...`, {
+                  taskId: payload.task_id
+                });
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+              }
+            }
+          } catch (error) {
+            retryCount++;
+            console.error(`❌ Erro na tentativa ${retryCount}:`, error);
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+            }
+          }
+        }
+        
+        if (!res || !res.success) {
           console.error(
-            `❌ Image record not found for task: ${payload.task_id}`,
-            res.errors
+            `❌ Image record not found after ${maxRetries} attempts for task: ${payload.task_id}`,
+            res?.errors
           );
           return NextResponse.json(
-            { error: "Image record not found" },
+            { error: "Image record not found after retries" },
             { status: 404 }
           );
         }

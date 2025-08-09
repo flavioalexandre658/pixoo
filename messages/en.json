@@ -106,7 +106,11 @@
     "generating": "Generating image...",
     "noImageGenerated": "No image generated",
     "creditsRequired": "Credits required",
-    "insufficientCredits": "Insufficient credits"
+    "insufficientCredits": "Insufficient credits",
+    "noImageToDownload": "No image to download",
+    "imageLoadError": "Error loading image",
+    "retryWithProxy": "Retry with Proxy",
+    "openInNewTab": "Open in New Tab"
   },
   "models": {
     "fluxSchnell": "Flux Schnell",

@@ -81,7 +81,10 @@
     "preparingDownload": "Preparando download...",
     "downloadSuccess": "Imagem baixada com sucesso!",
     "downloadFailed": "Falha ao baixar imagem. Tente novamente.",
-    "noImageToDownload": "Nenhuma imagem para baixar"
+    "noImageToDownload": "Nenhuma imagem para baixar",
+    "imageLoadError": "Erro ao carregar imagem",
+    "retryWithProxy": "Tentar via Proxy",
+    "openInNewTab": "Abrir em Nova Aba"
   },
   "auth": {
     "loading": "Carregando...",

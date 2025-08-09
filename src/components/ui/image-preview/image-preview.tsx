@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Download, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { memo, useState } from "react";
 
 interface ImagePreviewProps {
   isGenerating: boolean;
@@ -15,8 +16,6 @@ interface ImagePreviewProps {
 
 export const ImagePreview = memo(ImagePreviewComponent);
 
-import { memo } from "react";
-
 function ImagePreviewComponent({
   isGenerating,
   generatedImage,
@@ -25,6 +24,16 @@ function ImagePreviewComponent({
   className = "",
 }: ImagePreviewProps) {
   const t = useTranslations("imagePreview");
+  const [imageError, setImageError] = useState(false);
+  const [useProxy, setUseProxy] = useState(false);
+
+  // Função para obter a URL da imagem (direta ou via proxy)
+  const getImageUrl = (originalUrl: string) => {
+    if (useProxy) {
+      return `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`;
+    }
+    return originalUrl;
+  };
 
   const handleDownload = async () => {
     if (!generatedImage || !onDownload) return;
@@ -79,24 +88,68 @@ function ImagePreviewComponent({
             </div>
           </div>
           <div className="relative w-full aspect-square">
-            <Image
-              src={generatedImage}
-              alt={t("generatedImageAlt")}
-              layout="fill"
-              objectFit="cover"
-              className="transition-transform duration-300"
-              onLoad={() =>
-                console.log("✅ Image loaded successfully:", generatedImage)
-              }
-              onError={(e) =>
-                console.error(
-                  "❌ Image failed to load:",
-                  e,
-                  "src:",
-                  generatedImage
-                )
-              }
-            />
+            {imageError ? (
+              <div className="flex items-center justify-center h-full bg-muted rounded-lg">
+                <div className="text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">{t("imageLoadError")}</p>
+                  <div className="flex flex-col gap-2">
+                    {!useProxy && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setUseProxy(true);
+                          setImageError(false);
+                        }}
+                      >
+                        {t("retryWithProxy")}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(generatedImage, '_blank')}
+                    >
+                      {t("openInNewTab")}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Image
+                key={`${generatedImage}-${useProxy}`}
+                src={getImageUrl(generatedImage)}
+                alt={t("generatedImageAlt")}
+                fill
+                style={{ objectFit: "cover" }}
+                className="transition-transform duration-300"
+                unoptimized={true}
+                onLoad={() => {
+                  console.log("✅ Image loaded successfully:", useProxy ? "via proxy" : "direct", generatedImage);
+                  setImageError(false);
+                }}
+                onError={(e) => {
+                  console.error(
+                    "❌ Image failed to load:",
+                    e,
+                    "src:",
+                    generatedImage,
+                    "useProxy:",
+                    useProxy
+                  );
+                  
+                  if (!useProxy) {
+                    // Primeira tentativa falhou, tentar com proxy
+                    console.log("🔄 Tentando carregar via proxy...");
+                    setUseProxy(true);
+                  } else {
+                    // Proxy também falhou
+                    console.error("❌ Falha no carregamento mesmo via proxy");
+                    setImageError(true);
+                  }
+                }}
+              />
+            )}
           </div>
         </div>
       ) : (

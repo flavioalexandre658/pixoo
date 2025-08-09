@@ -77,7 +77,11 @@
     "generateImage": "Generar Imagen",
     "generating": "Generando imagen...",
     "noImageGenerated": "Ninguna imagen generada",
-    "imageGenerated": "¡Imagen generada con éxito!"
+    "imageGenerated": "¡Imagen generada con éxito!",
+    "noImageToDownload": "No hay imagen para descargar",
+    "imageLoadError": "Error al cargar imagen",
+    "retryWithProxy": "Reintentar con Proxy",
+    "openInNewTab": "Abrir en Nueva Pestaña"
   },
   "models": {
     "fluxSchnell": "Flux Schnell",
