@@ -1,6 +1,6 @@
 "use client";
 
-import { useCredits } from "@/hooks/use-credits";
+import { useCreditsContext } from "@/contexts/credits-context";
 import { Coins, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,8 @@ export function CreditsDisplay({
   showAddButton = false,
   className = "",
 }: CreditsDisplayProps) {
-  const { credits, isLoading, balance } = useCredits();
+  const { credits, isLoading } = useCreditsContext();
+  const balance = credits?.balance || 0;
 
   if (isLoading) {
     return (

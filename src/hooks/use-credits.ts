@@ -1,9 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
-import { UserCreditsSummary } from "@/interfaces/credits.interface";
 import { toast } from "sonner";
-import { getUserCredits } from "@/actions/credits/get/get-user-credits.action";
 import { earnCredits as earnCreditsAction } from "@/actions/credits/earn/earn-credits.action";
 import { spendCredits as spendCreditsAction } from "@/actions/credits/spend/spend-credits.action";
 import { reserveCredits as reserveCreditsAction } from "@/actions/credits/reserve/reserve-credits.action";
@@ -11,12 +8,11 @@ import { confirmCredits as confirmCreditsAction } from "@/actions/credits/confir
 import { refundCredits as refundCreditsAction } from "@/actions/credits/refund/refund-credits.action";
 import { cancelReservation as cancelReservationAction } from "@/actions/credits/cancel/cancel-reservation.action";
 import { useAction } from "next-safe-action/hooks";
+import { useCreditsContext } from "@/contexts/credits-context";
 
 export function useCredits() {
   const { data: session } = useSession();
-  const [credits, setCredits] = useState<UserCreditsSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { credits, isLoading, error, fetchCredits, updateCredits } = useCreditsContext();
   const { executeAsync: executeReserveCreditsAction } =
     useAction(reserveCreditsAction);
   const { executeAsync: executeConfirmCreditsAction } =
@@ -30,36 +26,9 @@ export function useCredits() {
     useAction(earnCreditsAction);
   const { executeAsync: executeSpendCreditsAction } =
     useAction(spendCreditsAction);
-  const { executeAsync: executeGetUserCreditsAction } =
-    useAction(getUserCredits);
 
-  // Buscar créditos do usuário
-  const fetchCredits = async () => {
-    if (!session?.user?.id) return;
 
-    setIsLoading(true);
-    setError(null);
 
-    try {
-      const result = await executeGetUserCreditsAction({});
-
-      if (result?.data?.success) {
-        setCredits(result.data?.data || null);
-      } else {
-        const errorMessage =
-          result?.data?.errors?._form?.[0] || "Erro ao buscar créditos";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro desconhecido";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Verificar se tem créditos suficientes
   const hasEnoughCredits = (requiredCredits: number): boolean => {
@@ -281,27 +250,7 @@ export function useCredits() {
     }
   };
 
-  // Atualizar créditos periodicamente e quando a aba volta ao foco
-  useEffect(() => {
-    if (!session?.user?.id) return;
 
-    // Atualizar quando a aba volta ao foco
-    const handleFocus = () => {
-      fetchCredits();
-    };
-
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
-        fetchCredits();
-      }
-    });
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleFocus);
-    };
-  }, [session?.user?.id]);
 
   return {
     credits,

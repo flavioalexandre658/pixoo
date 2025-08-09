@@ -1,48 +1,33 @@
-"use client";
-
+import { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { CreditsProvider } from "@/contexts/credits-context";
+import { getCreditsSSR } from "@/lib/credits-ssr";
+import { headers } from "next/headers";
 import { AppLayout } from "@/components/layout/app-layout";
-import { ReactNode, useEffect } from "react";
-import { useSession } from "@/lib/auth-client";
-import { useRouter, useParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 type Props = {
   children: ReactNode;
+  params: Promise<{ locale: string }>;
 };
 
-export default function ApplicationLayout({ children }: Props) {
-  const { data: session, isPending } = useSession();
-  const router = useRouter();
-  const params = useParams();
-  const locale = params.locale as string;
-  const t = useTranslations("auth");
+export default async function ApplicationLayout({ children, params }: Props) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const { locale } = await params;
 
-  useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.push(`/${locale}/sign-in`);
-    }
-  }, [session, isPending, router, locale]);
-
-  // Mostrar loading enquanto verifica a sessão
-  if (isPending) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600 dark:text-gray-400">
-            {t("loading") || "Carregando..."}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Se não há sessão, não renderizar nada (redirecionamento já foi feito)
+  // Redirecionar se não há sessão
   if (!session?.user) {
-    return null;
+    redirect(`/${locale}/sign-in`);
   }
 
-  // Se há sessão válida, renderizar o layout da aplicação
-  return <AppLayout>{children}</AppLayout>;
+  // Carregar créditos do usuário no SSR
+  const initialCredits = await getCreditsSSR();
+
+  return (
+    <CreditsProvider initialCredits={initialCredits}>
+      <AppLayout>{children}</AppLayout>
+    </CreditsProvider>
+  );
 }
