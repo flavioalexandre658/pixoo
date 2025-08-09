@@ -281,21 +281,9 @@ export function useCredits() {
     }
   };
 
-  // Buscar créditos quando o usuário estiver logado
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchCredits();
-    }
-  }, [session?.user?.id]);
-
   // Atualizar créditos periodicamente e quando a aba volta ao foco
   useEffect(() => {
     if (!session?.user?.id) return;
-
-    // Polling a cada 30 segundos
-    const interval = setInterval(() => {
-      fetchCredits();
-    }, 30000);
 
     // Atualizar quando a aba volta ao foco
     const handleFocus = () => {
@@ -310,7 +298,6 @@ export function useCredits() {
     });
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleFocus);
     };

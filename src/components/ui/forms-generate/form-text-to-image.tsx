@@ -80,7 +80,7 @@ export function FormTextToImage({
     credits,
     hasEnoughCredits,
     reserveCredits,
-    refundCredits,
+    fetchCredits,
     cancelReservation,
     isLoading: creditsLoading,
   } = useCredits();
@@ -227,6 +227,7 @@ export function FormTextToImage({
         }
 
         onImageGenerated(result.imageUrl);
+        fetchCredits();
         toast.success(t("imageGeneratedSuccess"));
       } else {
         setStartedGeneration(false);
