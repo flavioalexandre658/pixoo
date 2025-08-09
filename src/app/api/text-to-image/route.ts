@@ -9,7 +9,7 @@ import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
 import { eq } from "drizzle-orm";
 
-const BFL_API_KEY = "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
+const BFL_API_KEY = process.env.BFL_API_KEY || "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
 
 // Mapeamento dos modelos para os endpoints da BFL
@@ -182,6 +182,7 @@ export async function POST(request: NextRequest) {
               accept: "application/json",
             },
             body: JSON.stringify(requestBody),
+            signal: AbortSignal.timeout(30000), // 30 segundos timeout
           });
 
           console.log(

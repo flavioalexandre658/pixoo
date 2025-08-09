@@ -141,6 +141,12 @@ export const generateImage = authActionClient
               body: JSON.stringify(requestBody),
             });
 
+            console.log(
+              `BFL API Response Status (attempt ${attempt}):`,
+              createResponse.status,
+              createResponse.statusText
+            );
+
             if (createResponse.status === 402) {
               throw new Error("Créditos insuficientes na conta BFL");
             }

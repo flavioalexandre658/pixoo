@@ -152,17 +152,17 @@ export function FormTextToImage({
 
     try {
       toast.success(t("startingGeneration"));
-
+      console.log(data);
       const response = await executeGenerateImage({
         prompt: data.prompt,
         model: data.model,
         width: dimension.width,
         height: dimension.height,
         aspectRatio: dimension.aspectRatio,
-        seed: data.seed,
-        steps: data.steps,
-        guidance: data.guidance,
-        imagePublic: data.imagePublic,
+        seed: data.seed ?? -1,
+        steps: data.steps ?? 4,
+        guidance: data.guidance ?? 1,
+        imagePublic: data.imagePublic ?? false,
       });
 
       if (!response.serverError && response.data?.success) {
