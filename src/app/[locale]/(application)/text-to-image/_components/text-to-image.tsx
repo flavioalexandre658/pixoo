@@ -102,6 +102,7 @@ export default function TextToImage({ models }: TextToImage) {
           credentials: "omit",
         });
       } catch (corsError) {
+        console.log(corsError);
         // Se falhar por CORS, tentar através de proxy
         response = await fetch(
           `/api/proxy-image?url=${encodeURIComponent(generatedImage)}`
@@ -221,7 +222,9 @@ export default function TextToImage({ models }: TextToImage) {
                 console.log("✅ Reservation cancelled successfully!");
                 // Atualizar saldo na UI
                 await fetchCredits();
-                console.log("✅ Credits balance updated in UI after cancellation!");
+                console.log(
+                  "✅ Credits balance updated in UI after cancellation!"
+                );
               } catch (error) {
                 console.error("❌ Error cancelling reservation:", error);
               }

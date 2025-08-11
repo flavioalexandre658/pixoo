@@ -82,7 +82,6 @@ export function FormTextToImage({
     reserveCredits,
     fetchCredits,
     cancelReservation,
-    isLoading: creditsLoading,
   } = useCredits();
   const [currentReservation, setCurrentReservation] = useState<{
     reservationId: string;
@@ -90,7 +89,6 @@ export function FormTextToImage({
   } | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
   const [startedGeneration, setStartedGeneration] = useState(isGenerating);
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
 
@@ -201,7 +199,6 @@ export function FormTextToImage({
 
       if (result?.taskId) {
         toast.info(t("checkingStatus"));
-        setGenerationProgress(25);
         onGenerationStart?.();
 
         // Usar apenas polling - mais confiável que SSE
@@ -515,7 +512,7 @@ export function FormTextToImage({
               disabled={
                 isGenerating ||
                 startedGeneration ||
-                creditsLoading ||
+                // creditsLoading ||
                 (selectedModel &&
                   selectedModel.credits > 0 &&
                   !hasEnoughCredits(selectedModel.credits))

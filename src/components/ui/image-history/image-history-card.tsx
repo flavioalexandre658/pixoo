@@ -39,20 +39,20 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
   };
 
   return (
-    <div className="border rounded-lg p-4 flex flex-col space-y-3 group relative overflow-hidden">
+    <div className="border rounded-lg p-3 sm:p-4 flex flex-col space-y-3 group relative overflow-hidden h-full">
       <div 
-        className="relative w-full aspect-square bg-muted rounded-md"
+        className="relative w-full aspect-square bg-muted rounded-md overflow-hidden"
         style={{
-          overflow: cropped ? 'hidden' : 'visible',
+          overflow: 'hidden',
         }}
       >
         {image.imageUrl && image.status === "ready" && !imageError ? (
           <Image
             src={image.imageUrl}
             alt={image.prompt}
-            layout="fill"
-            objectFit="cover"
-            className="transition-transform duration-300"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="transition-transform duration-300 object-cover"
             style={{
               transform: `scale(${zoom})`,
               objectFit: cropped ? 'cover' : 'contain',
@@ -61,39 +61,39 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
-            <AlertTriangle className="w-8 h-8 mb-2" />
-            <span className="text-sm text-center">
+            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 mb-2" />
+            <span className="text-xs sm:text-sm text-center px-2">
               {image.status === 'pending' ? t("generating") : t("failedToLoad")}
             </span>
           </div>
         )}
       </div>
       {/* Prompt */}
-      <div>
-        <p className="text-sm font-medium line-clamp-2">
+      <div className="flex-1">
+        <p className="text-xs sm:text-sm font-medium line-clamp-2 leading-tight">
           {image.prompt}
         </p>
       </div>
       {/* Badges e informações */}
-      <div className="flex flex-wrap gap-2">
-        <Badge className={getModelBadgeColor(image.model)}>
+      <div className="flex flex-wrap gap-1 sm:gap-2">
+        <Badge className={`text-xs ${getModelBadgeColor(image.model)}`}>
           {image.model}
         </Badge>
-        <Badge variant="outline">{image.aspectRatio}</Badge>
+        <Badge variant="outline" className="text-xs">{image.aspectRatio}</Badge>
       </div>
       {/* Métricas */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {formatTime(image.generationTimeMs)}
+          <Clock className="h-3 w-3 flex-shrink-0" />
+          <span className="truncate">{formatTime(image.generationTimeMs)}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Zap className="h-3 w-3" />
-          {image.creditsUsed} {t("credits")}
+          <Zap className="h-3 w-3 flex-shrink-0" />
+          <span className="truncate">{image.creditsUsed} {t("credits")}</span>
         </div>
       </div>
       {/* Data */}
-      <div className="text-xs text-muted-foreground">
+      <div className="text-xs text-muted-foreground truncate">
         {formatDistanceToNow(new Date(image.createdAt), {
           addSuffix: true,
           locale: ptBR,
@@ -101,33 +101,33 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
       </div>
       {/* Ações */}
       {image.imageUrl && image.status === "ready" && !isSelectionMode && (
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2 mt-auto">
           {onViewFull && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => onViewFull(image.imageUrl!, image.prompt)}
-              className="flex-1"
+              className="flex-1 text-xs sm:text-sm px-2 sm:px-3"
             >
-              <Eye className="h-3 w-3 mr-1" />
-              {t("viewFull")}
+              <Eye className="h-3 w-3 sm:mr-1" />
+              <span className="hidden sm:inline">{t("viewFull")}</span>
             </Button>
           )}
           <Button
             variant="outline"
             size="sm"
             onClick={() => onDownload(image.imageUrl!, image.prompt)}
-            className="flex-1"
+            className="flex-1 text-xs sm:text-sm px-2 sm:px-3"
           >
-            <Download className="h-3 w-3 mr-1" />
-            {t("download")}
+            <Download className="h-3 w-3 sm:mr-1" />
+            <span className="hidden sm:inline">{t("download")}</span>
           </Button>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => onDelete(image.id)}
             disabled={isDeleting}
-            className="px-2"
+            className="px-2 flex-shrink-0"
           >
             <Trash2 className="h-3 w-3" />
           </Button>

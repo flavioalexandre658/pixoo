@@ -265,54 +265,67 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{t("title")}</CardTitle>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <CardTitle className="flex-shrink-0">{t("title")}</CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
             {!isSelectionMode ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsSelectionMode(true)}
                 disabled={filteredImages.length === 0}
+                className="whitespace-nowrap"
               >
                 Selecionar
               </Button>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                <span className="text-sm text-muted-foreground whitespace-nowrap order-1 w-full sm:w-auto text-center sm:text-left">
                   {selectedImages.size} selecionada(s)
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={selectAllImages}
-                  disabled={selectedImages.size === filteredImages.length}
-                >
-                  Selecionar Todas
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteMultipleImages}
-                  disabled={selectedImages.size === 0 || isDeleting}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  {isDeleting ? "Deletando..." : "Deletar"}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={clearSelection}>
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2 order-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllImages}
+                    disabled={selectedImages.size === filteredImages.length}
+                    className="flex-1 sm:flex-none whitespace-nowrap"
+                  >
+                    <span className="hidden sm:inline">Selecionar Todas</span>
+                    <span className="sm:hidden">Todas</span>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteMultipleImages}
+                    disabled={selectedImages.size === 0 || isDeleting}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Trash2 className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">{isDeleting ? "Deletando..." : "Deletar"}</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearSelection}
+                    className="px-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
-          <div className="flex flex-wrap gap-2 flex-1">
-            <SearchBar
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-            />
+        <div className="flex flex-col gap-3 mt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <SearchBar
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+              />
+            </div>
             <FilterSelect
               options={[...new Set(images.map((img) => img.model))].map(
                 (model) => ({ label: model, value: model })
@@ -347,7 +360,7 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
             <p>{t("noImagesFound")}</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredImages.map((image) => (
               <div key={image.id} className="relative">
                 {isSelectionMode && (
