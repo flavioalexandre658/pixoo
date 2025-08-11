@@ -15,6 +15,7 @@ interface ImagePreviewProps {
   imageId?: string;
   isDeleting?: boolean;
   className?: string;
+  isWaitingWebhook?: boolean;
 }
 
 export const ImagePreview = memo(ImagePreviewComponent);
@@ -28,6 +29,7 @@ function ImagePreviewComponent({
   imageId,
   isDeleting = false,
   className = "",
+  isWaitingWebhook = false,
 }: ImagePreviewProps) {
   const t = useTranslations("imagePreview");
   const [imageError, setImageError] = useState(false);
@@ -56,12 +58,14 @@ function ImagePreviewComponent({
     <div className={className}>
       {isGenerating ? (
         <div className="flex flex-col items-center justify-center h-full space-y-4">
-          <div className="text-center">
-            <div className="text-6xl font-mono font-bold text-primary">
-              {(currentTime / 1000).toFixed(1)}
+          {isWaitingWebhook && (
+            <div className="text-center">
+              <div className="text-6xl font-mono font-bold text-primary">
+                {(currentTime / 1000).toFixed(1)}
+              </div>
+              <div className="text-lg text-muted-foreground mt-2">{t("seconds")}</div>
             </div>
-            <div className="text-lg text-muted-foreground mt-2">{t("seconds")}</div>
-          </div>
+          )}
           <div className="text-sm text-muted-foreground">
             {t("generating")}
           </div>

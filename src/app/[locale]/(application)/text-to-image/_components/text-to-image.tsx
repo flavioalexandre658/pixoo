@@ -30,6 +30,7 @@ export default function TextToImage({ models }: TextToImage) {
     console.log("🖼️ generatedImage state updated to:", imageUrl);
   };
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isWaitingWebhook, setIsWaitingWebhook] = useState(false);
   const generationStartTimeRef = useRef<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
@@ -77,6 +78,7 @@ export default function TextToImage({ models }: TextToImage) {
 
   const handleGenerationComplete = (timeMs: number) => {
     setIsGenerating(false);
+    setIsWaitingWebhook(false);
     generationStartTimeRef.current = null;
     setCurrentTime(timeMs);
     // Atualizar histórico quando uma nova imagem for gerada
@@ -141,6 +143,7 @@ export default function TextToImage({ models }: TextToImage) {
   ) => {
     console.log("Starting polling for task:", taskId);
     setCurrentTaskId(taskId);
+    setIsWaitingWebhook(true);
     if (reservationData) {
       setCurrentReservation(reservationData);
     }
@@ -185,6 +188,9 @@ export default function TextToImage({ models }: TextToImage) {
               pollingIntervalRef.current = null;
             }
 
+            // Parar de aguardar webhook
+            setIsWaitingWebhook(false);
+
             // Atualizar UI
             handleImageGenerated(data.imageUrl);
             toast.success("Image generated successfully!");
@@ -227,6 +233,9 @@ export default function TextToImage({ models }: TextToImage) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
+
+            // Parar de aguardar webhook
+            setIsWaitingWebhook(false);
 
             toast.error(
               response.data?.errors?._form[0] || "Image generation failed"
@@ -276,6 +285,7 @@ export default function TextToImage({ models }: TextToImage) {
 
           toast.error("Network error during generation. Please try again.");
           setIsGenerating(false);
+          setIsWaitingWebhook(false);
           setCurrentTaskId(null);
         }
       }
@@ -325,6 +335,7 @@ export default function TextToImage({ models }: TextToImage) {
 
           toast.error("Generation timeout. Please try again.");
           setIsGenerating(false);
+          setIsWaitingWebhook(false);
           setCurrentTaskId(null);
         }
       }
@@ -358,6 +369,7 @@ export default function TextToImage({ models }: TextToImage) {
             }}
             onGenerationComplete={() => {
               setIsGenerating(false);
+              setIsWaitingWebhook(false);
             }}
             onGenerationButtonClick={() => {
               const now = Date.now();
@@ -372,6 +384,7 @@ export default function TextToImage({ models }: TextToImage) {
         <PageContainerRight>
           <ImagePreview
             isGenerating={isGenerating}
+            isWaitingWebhook={isWaitingWebhook}
             generatedImage={generatedImage}
             currentTime={currentTime}
             onDownload={downloadImage}
