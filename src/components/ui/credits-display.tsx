@@ -29,8 +29,8 @@ export function CreditsDisplay({
   if (isLoading) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <Skeleton className="h-6 w-6 rounded-full" />
-        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+        <Skeleton className="h-4 w-6" />
       </div>
     );
   }
@@ -89,13 +89,13 @@ export function CreditsDisplay({
           </Button>
         )}
       </div>
-      
+
       <div className="grid grid-cols-3 gap-4">
         <div className="text-center">
           <div className="text-2xl font-bold text-green-600">{balance}</div>
           <div className="text-xs text-muted-foreground">Saldo Atual</div>
         </div>
-        
+
         {credits && (
           <>
             <div className="text-center">
@@ -104,7 +104,7 @@ export function CreditsDisplay({
               </div>
               <div className="text-xs text-muted-foreground">Total Ganho</div>
             </div>
-            
+
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
                 {credits.totalSpent}
@@ -114,7 +114,7 @@ export function CreditsDisplay({
           </>
         )}
       </div>
-      
+
       {credits && credits.recentTransactions.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium">Transações Recentes</h4>
@@ -132,7 +132,8 @@ export function CreditsDisplay({
                     transaction.amount > 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
-                  {transaction.amount > 0 ? "+" : ""}{transaction.amount}
+                  {transaction.amount > 0 ? "+" : ""}
+                  {transaction.amount}
                 </span>
               </div>
             ))}

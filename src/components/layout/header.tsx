@@ -76,16 +76,14 @@ export function Header({ className }: HeaderProps) {
           </DropdownMenu>
 
           {/* Credits Display */}
-          {session?.user && (
-            <CreditsDisplay variant="compact" />
-          )}
+          {session?.user && <CreditsDisplay variant="compact" />}
 
-          {/* Notifications */}
+          {/* Notifications 
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 relative">
             <Bell className="h-4 w-4" />
             <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
             <span className="sr-only">{t("notifications")}</span>
-          </Button>
+          </Button>*/}
 
           {/* User Menu */}
           <DropdownMenu>

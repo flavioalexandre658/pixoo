@@ -138,35 +138,55 @@ export function Sidebar({ className }: SidebarProps) {
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+      <div className={cn(
+        "flex items-center border-b",
+        isCollapsed && !isMobile ? "justify-center p-2" : "justify-between p-4"
+      )}>
+        <div className={cn(
+          "flex items-center",
+          isCollapsed && !isMobile ? "justify-center" : "gap-2"
+        )}>
+          <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           {(!isCollapsed || isMobile) && (
             <span className="font-semibold text-lg">Pixoo</span>
           )}
         </div>
-        {!isMobile && (
+        {!isMobile && !isCollapsed && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 flex-shrink-0"
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            <ChevronLeft className="h-4 w-4" />
           </Button>
+        )}
+        {!isMobile && isCollapsed && (
+          <div className="absolute top-2 right-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+      <nav className={cn(
+        "flex-1 overflow-y-auto space-y-6",
+        isCollapsed && !isMobile ? "p-2" : "p-4"
+      )}>
         {navigationSections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className="space-y-2">
+          <div key={sectionIndex} className={cn(
+            "space-y-2",
+            isCollapsed && !isMobile && "space-y-1"
+          )}>
             {section.title && (!isCollapsed || isMobile) && (
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">
                 {section.title}
@@ -180,11 +200,14 @@ export function Sidebar({ className }: SidebarProps) {
                     key={itemIndex}
                     variant={item.isActive ? "default" : "ghost"}
                     className={cn(
-                      "w-full justify-start gap-3 h-10",
-                      isCollapsed && !isMobile && "px-2",
+                      "w-full h-10",
+                      isCollapsed && !isMobile 
+                        ? "justify-center p-0 min-w-[2.5rem]" 
+                        : "justify-start gap-3 px-3",
                       item.isActive &&
                         "bg-blue-100 text-blue-700 hover:bg-blue-200"
                     )}
+                    title={isCollapsed && !isMobile ? item.label : undefined}
                     asChild
                   >
                     <a href={item.href}>
@@ -207,9 +230,17 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Upgrade Button */}
-      <div className="p-4 border-t">
-        <Button className="w-full bg-blue-600 hover:bg-blue-700">
-          {!isCollapsed || isMobile ? t("upgradeToPro") : "Pro"}
+      <div className={cn(
+        "border-t",
+        isCollapsed && !isMobile ? "p-2" : "p-4"
+      )}>
+        <Button className={cn(
+          "w-full bg-blue-600 hover:bg-blue-700",
+          isCollapsed && !isMobile && "h-10 p-0 min-w-[2.5rem]"
+        )}>
+          {!isCollapsed || isMobile ? t("upgradeToPro") : (
+            <Sparkles className="h-4 w-4" />
+          )}
         </Button>
       </div>
     </div>
@@ -220,7 +251,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          "hidden md:flex h-screen bg-background border-r transition-all duration-300",
+          "hidden md:flex h-screen bg-background border-r transition-all duration-300 relative",
           isCollapsed ? "w-16" : "w-64"
         )}
       >

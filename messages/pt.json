@@ -72,7 +72,7 @@
   "imagePreview": {
     "noImageGenerated": "Nenhuma imagem gerada",
     "download": "Baixar",
-    "viewFull": "Ver Completa",
+    "viewFull": "Ver",
     "viewFullSize": "Ver Tamanho Completo",
     "generating": "Gerando sua imagem...",
     "generatedImage": "Imagem Gerada",
@@ -153,7 +153,7 @@
     "error": "Erro",
     "noImagesFound": "Nenhuma imagem encontrada",
     "download": "Baixar",
-    "viewFull": "Ver Completa",
+    "viewFull": "Ver",
     "generating": "Gerando...",
     "failedToLoad": "Falha ao carregar imagem",
     "credits": "créditos",
