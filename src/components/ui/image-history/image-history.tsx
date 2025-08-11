@@ -1,16 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2, X } from "lucide-react";
 import { SearchBar } from "./search-bar";
 import { FilterSelect } from "./filter-select";
 import { ZoomControls } from "./zoom-controls";
+import { toast } from "sonner";
 
 import { ImageHistoryCard } from "./image-history-card";
 import { getImagesHistory } from "@/actions/images/history/get-images-history.action";
+import { deleteImage, deleteMultipleImages } from "@/actions/images/delete";
 import { useAction } from "next-safe-action/hooks";
 
 interface GeneratedImage {
@@ -40,9 +53,21 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
   const [statusFilter, setStatusFilter] = useState("");
   const [zoom, setZoom] = useState(1);
   const [cropped, setCropped] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    type: 'single' | 'multiple';
+    imageId?: string;
+    count?: number;
+  }>({ isOpen: false, type: 'single' });
   const { executeAsync: executeGetImagesHistory } = useAction(getImagesHistory);
+  const { executeAsync: executeDeleteImage } = useAction(deleteImage);
+  const { executeAsync: executeDeleteMultipleImages } =
+    useAction(deleteMultipleImages);
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     try {
       const { data } = await executeGetImagesHistory({
         limit: 100,
@@ -61,13 +86,13 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [executeGetImagesHistory]);
 
   useEffect(() => {
     fetchImages();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchImages]);
 
-  const downloadImage = async (imageUrl: string, prompt: string) => {
+  const downloadImage = async (imageUrl: string) => {
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -75,9 +100,7 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
       const a = document.createElement("a");
       a.style.display = "none";
       a.href = url;
-      a.download = `${prompt
-        .slice(0, 30)
-        .replace(/[^a-zA-Z0-9]/g, "_")}-${Date.now()}.png`;
+      a.download = `image-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -87,8 +110,110 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
     }
   };
 
-  const viewFullImage = (url: string, prompt: string) => {
+  const viewFullImage = (url: string) => {
     window.open(url, "_blank");
+  };
+
+  const handleDeleteImage = (imageId: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'single',
+      imageId,
+    });
+  };
+
+  const confirmDeleteImage = async () => {
+    if (isDeleting || !deleteConfirmation.imageId) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await executeDeleteImage({ imageId: deleteConfirmation.imageId });
+
+      if (result?.data?.success) {
+        toast.success("Imagem deletada com sucesso!");
+        // Remove a imagem da lista local
+        setImages((prev) => prev.filter((img) => img.id !== deleteConfirmation.imageId));
+        // Remove da seleção se estiver selecionada
+        setSelectedImages((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(deleteConfirmation.imageId!);
+          return newSet;
+        });
+      } else {
+        toast.error(
+          result?.data?.errors?._form?.[0] || "Erro ao deletar imagem"
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Erro ao deletar imagem");
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmation({ isOpen: false, type: 'single' });
+    }
+  };
+
+  const handleDeleteMultipleImages = () => {
+    if (selectedImages.size === 0) return;
+
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'multiple',
+      count: selectedImages.size,
+    });
+  };
+
+  const confirmDeleteMultipleImages = async () => {
+    if (isDeleting || selectedImages.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      const imageIds = Array.from(selectedImages);
+      const result = await executeDeleteMultipleImages({ imageIds });
+
+      if (result?.data?.success && result.data.data) {
+        toast.success(
+          `${result.data.data.deletedCount} imagem(ns) deletada(s) com sucesso!`
+        );
+        // Remove as imagens da lista local
+        setImages((prev) => prev.filter((img) => !selectedImages.has(img.id)));
+        // Limpa a seleção
+        setSelectedImages(new Set());
+        setIsSelectionMode(false);
+      } else {
+        toast.error(
+          result?.data?.errors?._form?.[0] || "Erro ao deletar imagens"
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting multiple images:", error);
+      toast.error("Erro ao deletar imagens");
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmation({ isOpen: false, type: 'multiple' });
+    }
+  };
+
+  const toggleImageSelection = (imageId: string) => {
+    setSelectedImages((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(imageId)) {
+        newSet.delete(imageId);
+      } else {
+        newSet.add(imageId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllImages = () => {
+    const allImageIds = filteredImages.map((img) => img.id);
+    setSelectedImages(new Set(allImageIds));
+  };
+
+  const clearSelection = () => {
+    setSelectedImages(new Set());
+    setIsSelectionMode(false);
   };
 
   const formatTime = (timeMs: number | null) => {
@@ -140,7 +265,47 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("title")}</CardTitle>
+          <div className="flex items-center gap-2">
+            {!isSelectionMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSelectionMode(true)}
+                disabled={filteredImages.length === 0}
+              >
+                Selecionar
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {selectedImages.size} selecionada(s)
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllImages}
+                  disabled={selectedImages.size === filteredImages.length}
+                >
+                  Selecionar Todas
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteMultipleImages}
+                  disabled={selectedImages.size === 0 || isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {isDeleting ? "Deletando..." : "Deletar"}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-2">
           <div className="flex flex-wrap gap-2 flex-1">
             <SearchBar
@@ -184,20 +349,67 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredImages.map((image) => (
-              <ImageHistoryCard
-                key={image.id}
-                image={image}
-                getModelBadgeColor={getModelBadgeColor}
-                formatTime={formatTime}
-                onDownload={downloadImage}
-                onViewFull={viewFullImage}
-                zoom={zoom}
-                cropped={cropped}
-              />
+              <div key={image.id} className="relative">
+                {isSelectionMode && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <Checkbox
+                      checked={selectedImages.has(image.id)}
+                      onCheckedChange={() => toggleImageSelection(image.id)}
+                      className="bg-white border-2 border-gray-300 shadow-sm"
+                    />
+                  </div>
+                )}
+                <ImageHistoryCard
+                  image={image}
+                  getModelBadgeColor={getModelBadgeColor}
+                  formatTime={formatTime}
+                  onDownload={downloadImage}
+                  onViewFull={viewFullImage}
+                  onDelete={handleDeleteImage}
+                  zoom={zoom}
+                  cropped={cropped}
+                  isSelectionMode={isSelectionMode}
+                  isDeleting={isDeleting}
+                />
+              </div>
             ))}
           </div>
         )}
       </CardContent>
+
+      {/* Modal de Confirmação de Deleção */}
+      <AlertDialog open={deleteConfirmation.isOpen} onOpenChange={(open) => 
+        setDeleteConfirmation(prev => ({ ...prev, isOpen: open }))
+      }>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteConfirmation.type === 'single' 
+                ? 'Confirmar deleção de imagem'
+                : 'Confirmar deleção de múltiplas imagens'
+              }
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirmation.type === 'single' 
+                ? 'Tem certeza que deseja deletar esta imagem? Esta ação não pode ser desfeita.'
+                : `Tem certeza que deseja deletar ${deleteConfirmation.count} imagem(ns)? Esta ação não pode ser desfeita.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteConfirmation.type === 'single' ? confirmDeleteImage : confirmDeleteMultipleImages}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deletando...' : 'Deletar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

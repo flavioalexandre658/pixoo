@@ -5,6 +5,7 @@ import {
   integer,
   decimal,
   boolean,
+  bigint,
 } from "drizzle-orm/pg-core";
 import { users } from "./auth.schema";
 
@@ -22,7 +23,7 @@ export const generatedImages = pgTable("generated_images", {
   creditsUsed: integer("credits_used").notNull().default(0),
   reservationId: text("reservation_id"), // ID da reserva de créditos
   generationTimeMs: integer("generation_time_ms"), // tempo em milissegundos
-  seed: integer("seed"),
+  seed: bigint("seed", { mode: "number" }),
   steps: integer("steps"),
   guidance: decimal("guidance", { precision: 3, scale: 1 }),
   isPublic: boolean("is_public").notNull().default(false),

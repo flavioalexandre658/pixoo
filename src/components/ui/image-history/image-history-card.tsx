@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Clock, Zap, AlertTriangle, Eye } from "lucide-react";
+import { Download, Clock, Zap, AlertTriangle, Eye, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useTranslations } from "next-intl";
@@ -23,11 +23,14 @@ interface ImageHistoryCardProps {
   formatTime: (ms: number | null) => string;
   onDownload: (url: string, prompt: string) => void;
   onViewFull?: (url: string, prompt: string) => void;
+  onDelete: (imageId: string) => void;
   zoom: number;
   cropped: boolean;
+  isSelectionMode: boolean;
+  isDeleting: boolean;
 }
 
-export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDownload, onViewFull, zoom, cropped }: ImageHistoryCardProps) {
+export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDownload, onViewFull, onDelete, zoom, cropped, isSelectionMode, isDeleting }: ImageHistoryCardProps) {
   const [imageError, setImageError] = useState(false);
   const t = useTranslations("imageHistory");
 
@@ -97,7 +100,7 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
         })}
       </div>
       {/* Ações */}
-      {image.imageUrl && image.status === "ready" && (
+      {image.imageUrl && image.status === "ready" && !isSelectionMode && (
         <div className="flex gap-2">
           {onViewFull && (
             <Button
@@ -118,6 +121,15 @@ export function ImageHistoryCard({ image, getModelBadgeColor, formatTime, onDown
           >
             <Download className="h-3 w-3 mr-1" />
             {t("download")}
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => onDelete(image.id)}
+            disabled={isDeleting}
+            className="px-2"
+          >
+            <Trash2 className="h-3 w-3" />
           </Button>
         </div>
       )}

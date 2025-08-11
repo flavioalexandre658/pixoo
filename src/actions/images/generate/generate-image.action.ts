@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { spawn } from "child_process";
 import { promisify } from "util";
+import { validateBFLDimensions } from "@/lib/utils";
 
 // Função para fazer requisição usando curl (que sabemos que funciona)
 async function makeCurlRequest(url: string, headers: Record<string, string>, body: string): Promise<{ status: number; data: any; statusText: string }> {
@@ -174,31 +175,60 @@ export const generateImage = authActionClient
 
       // Adicionar dimensões customizadas se fornecidas
       if (width && height) {
-        requestBody.width = width;
-        requestBody.height = height;
+        const { width: validWidth, height: validHeight } = validateBFLDimensions(width, height);
+        
+        console.log(`Dimensões originais: ${width}x${height}`);
+        console.log(`Dimensões ajustadas: ${validWidth}x${validHeight}`);
+        
+        requestBody.width = validWidth;
+        requestBody.height = validHeight;
         delete requestBody.aspect_ratio;
       }
 
       // Adicionar parâmetros específicos do modelo
       if (seed !== undefined && seed >= 0) {
-        requestBody.seed = seed;
+        // Garantir que o seed seja um inteiro válido
+        const validSeed = Math.floor(Math.abs(seed));
+        requestBody.seed = validSeed;
+        console.log(`Seed definido como: ${validSeed}`);
       }
 
       if (steps !== undefined && ["flux-dev", "flux-pro"].includes(model)) {
-        // Flux-dev: steps entre 1-50, padrão 28
+        // Flux-dev: steps entre 1-50, padrão 28 (baseado na documentação oficial)
         const validSteps = Math.max(1, Math.min(50, steps));
         requestBody.steps = validSteps;
+        console.log(`Steps ajustado de ${steps} para ${validSteps}`);
       }
 
       if (guidance !== undefined && ["flux-dev", "flux-pro"].includes(model)) {
-        // Flux-dev: guidance entre 1.5-10, padrão 3.5
-        const validGuidance = Math.max(1.5, Math.min(10, guidance));
+        // Flux-dev: guidance entre 2-10, padrão 3 (baseado na documentação oficial)
+        const validGuidance = Math.max(2, Math.min(10, guidance));
         requestBody.guidance = validGuidance;
+        console.log(`Guidance ajustado de ${guidance} para ${validGuidance}`);
       }
 
       // Configurar webhook
       const webhookUrl = `${process.env.WEBHOOK_URL}`;
       requestBody.webhook_url = webhookUrl;
+
+      // Validação final dos parâmetros antes do envio
+      console.log('Validando parâmetros da requisição:');
+      console.log('- Prompt:', requestBody.prompt ? 'OK' : 'ERRO: Prompt vazio');
+      console.log('- Dimensões:', requestBody.width && requestBody.height ? `${requestBody.width}x${requestBody.height}` : requestBody.aspect_ratio || 'Usando aspect_ratio padrão');
+      console.log('- Steps:', requestBody.steps || 'Padrão da API');
+      console.log('- Guidance:', requestBody.guidance || 'Padrão da API');
+      console.log('- Seed:', requestBody.seed !== undefined ? requestBody.seed : 'Aleatório');
+      console.log('- Webhook URL:', requestBody.webhook_url ? 'Configurado' : 'ERRO: Webhook não configurado');
+      
+      // Verificar se o prompt não está vazio
+      if (!requestBody.prompt || requestBody.prompt.trim().length === 0) {
+        throw new Error('Prompt não pode estar vazio');
+      }
+      
+      // Verificar se o webhook está configurado
+      if (!requestBody.webhook_url) {
+        throw new Error('Webhook URL não configurado');
+      }
 
       // Função para fazer requisição com retry e backoff exponencial usando curl
       const makeRequestWithRetry = async (
@@ -257,8 +287,18 @@ export const generateImage = authActionClient
             }
 
             if (createResponse.status < 200 || createResponse.status >= 300) {
+              // Log detalhado para erros 4xx (especialmente 422)
+              if (createResponse.status >= 400 && createResponse.status < 500) {
+                console.error('Erro 4xx da BFL API:', {
+                  status: createResponse.status,
+                  statusText: createResponse.statusText,
+                  responseBody: createResponse.data,
+                  requestBody: requestBody
+                });
+              }
+              
               throw new Error(
-                `Falha ao criar requisição: ${createResponse.statusText}`
+                `Falha ao criar requisição: ${createResponse.statusText} (${createResponse.status}). Resposta: ${JSON.stringify(createResponse.data)}`
               );
             }
 

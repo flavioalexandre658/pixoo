@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 
@@ -11,6 +11,9 @@ interface ImagePreviewProps {
   generatedImage: string | null;
   currentTime: number;
   onDownload?: () => void;
+  onDelete?: (imageId: string) => void;
+  imageId?: string;
+  isDeleting?: boolean;
   className?: string;
 }
 
@@ -21,6 +24,9 @@ function ImagePreviewComponent({
   generatedImage,
   currentTime,
   onDownload,
+  onDelete,
+  imageId,
+  isDeleting = false,
   className = "",
 }: ImagePreviewProps) {
   const t = useTranslations("imagePreview");
@@ -83,6 +89,18 @@ function ImagePreviewComponent({
                 >
                   <Download className="h-4 w-4 mr-2" />
                   <span className="text-sm">{t("download")}</span>
+                </Button>
+              )}
+              {onDelete && imageId && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDelete(imageId)}
+                  disabled={isDeleting}
+                  className="w-full sm:w-auto"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{isDeleting ? "Deletando..." : "Deletar"}</span>
                 </Button>
               )}
             </div>

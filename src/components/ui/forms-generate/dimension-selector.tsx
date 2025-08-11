@@ -23,9 +23,10 @@ const roundToMultipleOf32 = (value: number): number => {
 };
 
 // Função para validar dimensões conforme limites da API BFL
+// Limites: 256-1440px, múltiplo de 32
 const validateDimensions = (width: number, height: number) => {
-  const validWidth = Math.max(64, Math.min(4096, roundToMultipleOf32(width)));
-  const validHeight = Math.max(64, Math.min(1440, roundToMultipleOf32(height)));
+  const validWidth = Math.max(256, Math.min(1440, roundToMultipleOf32(width)));
+  const validHeight = Math.max(256, Math.min(1440, roundToMultipleOf32(height)));
   return { width: validWidth, height: validHeight };
 };
 
@@ -52,9 +53,9 @@ const ASPECT_RATIOS = [
     value: "16:9",
     label: "16:9",
     presets: [
-      { label: "Small", width: 1344, height: 768 },
-      { label: "Medium", width: 1536, height: 864 },
-      { label: "Large", width: 1920, height: 1088 },
+      { label: "Small", width: 1280, height: 736 },
+      { label: "Medium", width: 1344, height: 768 },
+      { label: "Large", width: 1440, height: 832 },
     ],
   },
 ];
@@ -71,25 +72,25 @@ interface DimensionSelectorProps {
 }
 
 const SOCIAL_PRESETS = [
-  { label: "Facebook (16:9)", aspectRatio: "16:9", width: 1920, height: 1088 },
+  { label: "Facebook (16:9)", aspectRatio: "16:9", width: 1440, height: 832 },
   { label: "Instagram (4:5)", aspectRatio: "4:5", width: 1088, height: 1344 },
-  { label: "Twitter / X (4:3)", aspectRatio: "4:3", width: 1600, height: 1216 },
+  { label: "Twitter / X (4:3)", aspectRatio: "4:3", width: 1344, height: 1024 },
   { label: "TikTok (9:16)", aspectRatio: "9:16", width: 800, height: 1440 },
 ];
 const DEVICE_PRESETS = [
-  { label: "Desktop (16:9)", aspectRatio: "16:9", width: 1920, height: 1088 },
+  { label: "Desktop (16:9)", aspectRatio: "16:9", width: 1440, height: 832 },
   { label: "Mobile (9:16)", aspectRatio: "9:16", width: 736, height: 1312 },
-  { label: "TV (2:1)", aspectRatio: "2:1", width: 2560, height: 1280 },
+  { label: "TV (2:1)", aspectRatio: "2:1", width: 1440, height: 736 },
   { label: "Square (1:1)", aspectRatio: "1:1", width: 1024, height: 1024 },
 ];
 const FILM_PRESETS = [
   {
     label: "Cinema (1.85:1)",
     aspectRatio: "1.85:1",
-    width: 1856,
-    height: 1024,
+    width: 1440,
+    height: 800,
   },
-  { label: "Wide (2.4:1)", aspectRatio: "2.4:1", width: 2400, height: 1024 },
+  { label: "Wide (2.4:1)", aspectRatio: "2.4:1", width: 1440, height: 608 },
 ];
 
 export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
@@ -243,7 +244,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 variant={selectedRatio === "16:9" ? "default" : "outline"}
                 onClick={() => {
                   setSelectedRatio("16:9");
-                  const validated = validateDimensions(1920, 1088);
+                  const validated = validateDimensions(1440, 832);
                   setCustomWidth(validated.width);
                   setCustomHeight(validated.height);
                 }}
@@ -271,7 +272,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 variant={selectedRatio === "4:3" ? "default" : "outline"}
                 onClick={() => {
                   setSelectedRatio("4:3");
-                  const validated = validateDimensions(1600, 1216);
+                  const validated = validateDimensions(1344, 1024);
                   setCustomWidth(validated.width);
                   setCustomHeight(validated.height);
                 }}
@@ -285,7 +286,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                 variant={selectedRatio === "3:4" ? "default" : "outline"}
                 onClick={() => {
                   setSelectedRatio("3:4");
-                  const validated = validateDimensions(1216, 1600);
+                  const validated = validateDimensions(1024, 1344);
                   setCustomWidth(validated.width);
                   setCustomHeight(validated.height);
                 }}
@@ -311,8 +312,8 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                   <Input
                     id="custom-width"
                     type="number"
-                    min={64}
-                    max={4096}
+                    min={256}
+                    max={1440}
                     step={32}
                     value={customWidth}
                     onChange={(e) => {
@@ -328,7 +329,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                   <Input
                     id="custom-height"
                     type="number"
-                    min={64}
+                    min={256}
                     max={1440}
                     step={32}
                     value={customHeight}

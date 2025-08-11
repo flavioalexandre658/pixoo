@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../db";
-import { generatedImages, creditReservations, creditTransactions } from "../../../db/schema";
+import {
+  generatedImages,
+  creditReservations,
+  creditTransactions,
+} from "../../../db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getModelCost } from "@/config/model-costs";
@@ -8,8 +12,10 @@ import { CreditsMiddleware } from "@/lib/credits-middleware";
 import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action";
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
 import { eq } from "drizzle-orm";
+import { validateBFLDimensions } from "@/lib/utils";
 
-const BFL_API_KEY = process.env.BFL_API_KEY || "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
+const BFL_API_KEY =
+  process.env.BFL_API_KEY || "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
 
 // Mapeamento dos modelos para os endpoints da BFL
@@ -60,7 +66,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body: TextToImageRequest = await request.json();
-    const { prompt, model, aspectRatio = "1:1", width, height, seed, steps, guidance } = body;
+    const {
+      prompt,
+      model,
+      aspectRatio = "1:1",
+      width,
+      height,
+      seed,
+      steps,
+      guidance,
+    } = body;
 
     console.log("📐 Received dimensions:", { width, height, aspectRatio });
 
@@ -99,20 +114,31 @@ export async function POST(request: NextRequest) {
           modelId: model,
           description: `Geração de imagem - ${model}`,
         });
-        
+
         if (!reservationResult?.data?.success) {
           return NextResponse.json(
-            { error: reservationResult?.data?.errors?._form?.[0] || "Erro ao reservar créditos" },
+            {
+              error:
+                reservationResult?.data?.errors?._form?.[0] ||
+                "Erro ao reservar créditos",
+            },
             { status: 402 }
           );
         }
-        
+
         reservationId = reservationResult.data?.data?.reservationId || null;
-        console.log(`✅ Créditos reservados: ${modelCost.credits} (ID: ${reservationId})`);
+        console.log(
+          `✅ Créditos reservados: ${modelCost.credits} (ID: ${reservationId})`
+        );
       } catch (error) {
         console.error("❌ Erro ao reservar créditos:", error);
         return NextResponse.json(
-          { error: error instanceof Error ? error.message : "Erro ao reservar créditos" },
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erro ao reservar créditos",
+          },
           { status: 402 }
         );
       }
@@ -129,22 +155,42 @@ export async function POST(request: NextRequest) {
 
     // Adiciona dimensões customizadas se fornecidas
     if (width !== undefined && height !== undefined) {
-      requestBody.width = width;
-      requestBody.height = height;
-      console.log("✅ Added custom dimensions to request:", { width, height });
+      const { width: validWidth, height: validHeight } = validateBFLDimensions(
+        width,
+        height
+      );
+
+      console.log(`Dimensões originais: ${width}x${height}`);
+      console.log(`Dimensões ajustadas: ${validWidth}x${validHeight}`);
+
+      requestBody.width = validWidth;
+      requestBody.height = validHeight;
+      // Remove aspect_ratio quando usando dimensões customizadas
+      delete requestBody.aspect_ratio;
+      console.log("✅ Added custom dimensions to request:", {
+        width: validWidth,
+        height: validHeight,
+      });
     } else {
-      console.log("⚠️ No custom dimensions provided, using aspect_ratio only:", aspectRatio);
+      console.log(
+        "⚠️ No custom dimensions provided, using aspect_ratio only:",
+        aspectRatio
+      );
     }
 
     // Adiciona parâmetros opcionais se fornecidos
-    if (seed !== undefined) {
+    if (seed) {
       requestBody.seed = seed;
+    } else {
+      requestBody.seed = 1;
     }
 
     // Para modelos que suportam steps e guidance (exceto flux-schnell e flux-kontext-pro)
     if (model !== "flux-schnell" && model !== "flux-kontext-pro") {
-      if (steps !== undefined) {
+      if (steps) {
         requestBody.steps = steps;
+      } else {
+        requestBody.steps = 25;
       }
       if (guidance !== undefined) {
         requestBody.guidance_scale = guidance;
@@ -275,11 +321,16 @@ export async function POST(request: NextRequest) {
             modelId: model,
             description: `Geração de imagem concluída - ${model}`,
           });
-          
+
           if (confirmResult?.data?.success) {
-            console.log(`✅ Créditos confirmados para reserva: ${reservationId}`);
+            console.log(
+              `✅ Créditos confirmados para reserva: ${reservationId}`
+            );
           } else {
-            console.error("❌ Erro ao confirmar créditos:", confirmResult?.data?.errors);
+            console.error(
+              "❌ Erro ao confirmar créditos:",
+              confirmResult?.data?.errors
+            );
           }
         } catch (error) {
           console.error("❌ Erro ao confirmar créditos:", error);
@@ -324,12 +375,14 @@ export async function POST(request: NextRequest) {
           try {
             await db
               .update(creditReservations)
-              .set({ 
-                status: 'cancelled',
-                updatedAt: new Date()
+              .set({
+                status: "cancelled",
+                updatedAt: new Date(),
               })
               .where(eq(creditReservations.id, reservationId));
-            console.log(`🔄 Reserva cancelada devido a erro no banco: ${reservationId}`);
+            console.log(
+              `🔄 Reserva cancelada devido a erro no banco: ${reservationId}`
+            );
           } catch (cancelError) {
             console.error("❌ Erro ao cancelar reserva:", cancelError);
           }

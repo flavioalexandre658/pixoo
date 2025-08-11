@@ -47,8 +47,8 @@ const formTextToImageSchema = z.object({
   seed: z.number().optional(),
   steps: z.number().min(1).max(50).optional(),
   guidance: z.number().min(1).max(20).optional(),
-  width: z.number(),
-  height: z.number(),
+  width: z.number().min(256).max(1440),
+  height: z.number().min(256).max(1440),
 });
 
 type FormTextToImageForm = z.infer<typeof formTextToImageSchema>;
@@ -159,9 +159,9 @@ export function FormTextToImage({
         width: dimension.width,
         height: dimension.height,
         aspectRatio: dimension.aspectRatio,
-        seed: data.seed ?? -1,
-        steps: data.steps ?? 4,
-        guidance: data.guidance ?? 1,
+        seed: data.seed ?? 1,
+        steps: data.steps ?? 25,
+        guidance: data.guidance ?? 3,
         imagePublic: data.imagePublic ?? false,
       });
 
@@ -310,6 +310,7 @@ export function FormTextToImage({
                 id="seed"
                 type="number"
                 placeholder={t("seedPlaceholder")}
+                defaultValue={"-1"}
                 {...form.register("seed", { valueAsNumber: true })}
               />
             </div>
@@ -322,7 +323,7 @@ export function FormTextToImage({
                 type="number"
                 min="1"
                 max="50"
-                defaultValue="20"
+                defaultValue="25"
                 {...form.register("steps", { valueAsNumber: true })}
               />
             </div>
@@ -336,7 +337,7 @@ export function FormTextToImage({
                 min="1"
                 max="20"
                 step="0.1"
-                defaultValue="7.5"
+                defaultValue="3"
                 {...form.register("guidance", { valueAsNumber: true })}
               />
             </div>

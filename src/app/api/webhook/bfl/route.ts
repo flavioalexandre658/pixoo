@@ -7,6 +7,7 @@ import {
   cancelReservationWebhook,
 } from "../../../../actions/credits";
 import { getImageByTaskIdInternal } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
+import { uploadImageToS3, downloadImageFromUrl, generateS3FileName } from "@/lib/s3";
 
 // Interface para o payload do webhook da BFL
 interface WebhookPayload {
@@ -39,6 +40,33 @@ export async function POST(request: NextRequest) {
     console.log("📦 Payload recebido:", body);
 
     const payload: WebhookPayload = JSON.parse(body);
+
+    console.log("📥 Webhook BFL recebido:", {
+      taskId: payload.task_id,
+      status: payload.status,
+      hasResult: !!payload.result,
+      resultSample: payload.result?.sample,
+      resultSampleLength: payload.result?.sample?.length,
+      resultSampleValid: payload.result?.sample ? /^https?:\/\/.+/.test(payload.result.sample) : false,
+      error: payload.error,
+      progress: payload.progress,
+      fullPayload: JSON.stringify(payload, null, 2)
+    });
+
+    // Log adicional para debug de URLs problemáticas
+    if (payload.result?.sample) {
+      console.log('🔍 Análise detalhada da URL da BFL:', {
+        taskId: payload.task_id,
+        url: payload.result.sample,
+        urlType: typeof payload.result.sample,
+        urlLength: payload.result.sample.length,
+        startsWithHttp: payload.result.sample.startsWith('http'),
+        startsWithHttps: payload.result.sample.startsWith('https'),
+        containsDelivery: payload.result.sample.includes('delivery'),
+        containsBfl: payload.result.sample.includes('bfl'),
+        urlParts: payload.result.sample.split('/').slice(0, 5), // Primeiras 5 partes da URL
+      });
+    }
 
     const mappedStatus =
       payload.status === "SUCCESS"
@@ -101,22 +129,83 @@ export async function POST(request: NextRequest) {
 
         const imageRecord = res.data;
 
-        const updateData: any = {
-          status: mappedStatus.toLowerCase(),
-        };
-        if (payload.result?.sample) {
-          updateData.imageUrl = payload.result.sample;
-          updateData.completedAt = new Date();
-          if (payload.result.start_time && payload.result.end_time) {
-            updateData.generationTimeMs = Math.round(
-              (payload.result.end_time - payload.result.start_time) * 1000
+        let s3ImageUrl = payload.result?.sample || null;
+        let uploadSuccess = false;
+        
+        // Validar e fazer upload da imagem para o S3
+        if (payload.result?.sample && imageRecord) {
+          try {
+            // Validar a URL da BFL primeiro
+            const bflUrl = payload.result.sample;
+
+            console.log('🔄 Iniciando upload da imagem para S3:', {
+              taskId: payload.task_id,
+              originalUrl: bflUrl,
+              userId: imageRecord.userId
+            });
+
+            // Baixar a imagem da URL da BFL com retry e timeout configurados
+            const imageBuffer = await downloadImageFromUrl(
+              bflUrl,
+              1, // 3 tentativas
+              45000 // 45 segundos de timeout
             );
-          } else if (payload.result.duration) {
-            updateData.generationTimeMs = Math.round(
-              payload.result.duration * 1000
+            
+            // Gerar nome único para o arquivo no S3
+            const s3FileName = generateS3FileName(
+              payload.task_id,
+              imageRecord.userId,
+              'jpg'
             );
+            
+            // Fazer upload para o S3
+            s3ImageUrl = await uploadImageToS3(
+              imageBuffer,
+              s3FileName,
+              'image/jpeg'
+            );
+            
+            uploadSuccess = true;
+            
+            console.log('✅ Upload para S3 concluído:', {
+              taskId: payload.task_id,
+              s3Url: s3ImageUrl,
+              fileName: s3FileName,
+              uploadSuccess
+            });
+          } catch (s3Error) {
+            console.error('❌ Erro no upload para S3, usando URL original:', {
+              taskId: payload.task_id,
+              error: s3Error instanceof Error ? s3Error.message : 'Erro desconhecido',
+              originalUrl: payload.result.sample,
+              uploadSuccess: false
+            });
+            // Em caso de erro no S3, manter a URL original da BFL
+            s3ImageUrl = payload.result.sample;
           }
         }
+
+        const updateData: any = {
+          status: "ready",
+          imageUrl: s3ImageUrl,
+          completedAt: new Date(),
+        };
+
+        if (payload.result?.seed) {
+          updateData.seed = payload.result.seed;
+        }
+
+        if (payload.result?.duration) {
+          updateData.generationTimeMs = Math.round(payload.result.duration * 1000);
+        }
+
+        console.log(`✅ Atualizando imagem para status ready:`, {
+          taskId: payload.task_id,
+          imageUrl: updateData.imageUrl,
+          completedAt: updateData.completedAt,
+          uploadedToS3: uploadSuccess,
+          usingS3Url: s3ImageUrl !== payload.result?.sample
+        });
 
         // Atualizar registro da imagem
         await db
