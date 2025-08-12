@@ -10,69 +10,97 @@ import { cancelReservation } from "@/actions/credits";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { spawn } from "child_process";
-import { promisify } from "util";
+import { writeFileSync, unlinkSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { validateBFLDimensions } from "@/lib/utils";
 
 // Função para fazer requisição usando curl (que sabemos que funciona)
-async function makeCurlRequest(url: string, headers: Record<string, string>, body: string): Promise<{ status: number; data: any; statusText: string }> {
+async function makeCurlRequest(
+  url: string,
+  headers: Record<string, string>,
+  body: string
+): Promise<{ status: number; data: any; statusText: string }> {
   return new Promise((resolve, reject) => {
-    const curlArgs = [
-      '-4', // Forçar IPv4
-      '-X', 'POST',
-      url,
-      '--connect-timeout', '60',
-      '--max-time', '120',
-      '-H', 'Content-Type: application/json',
-      '-d', body
-    ];
+    // Criar arquivo temporário para o corpo da requisição
+    const tempFile = join(tmpdir(), `curl-body-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.json`);
     
+    try {
+      writeFileSync(tempFile, body, 'utf8');
+    } catch (error) {
+      reject(new Error(`Erro ao criar arquivo temporário: ${error}`));
+      return;
+    }
+
+    const curlArgs = [
+      "-4", // Forçar IPv4
+      "-X",
+      "POST",
+      url,
+      "--connect-timeout",
+      "60",
+      "--max-time",
+      "120",
+      "-H",
+      "Content-Type: application/json",
+      "--data-binary",
+      `@${tempFile}`,
+    ];
+
     // Adicionar headers
     Object.entries(headers).forEach(([key, value]) => {
-      curlArgs.push('-H', `${key}: ${value}`);
+      curlArgs.push("-H", `${key}: ${value}`);
     });
-    
-    curlArgs.push('-w', '%{http_code}'); // Adicionar código de status
-    curlArgs.push('-s'); // Silent mode
-    
-    console.log('Executando curl:', curlArgs.join(' '));
-    
-    const curl = spawn('curl', curlArgs);
-    let stdout = '';
-    let stderr = '';
-    
-    curl.stdout.on('data', (data) => {
+
+    curlArgs.push("-w", "%{http_code}"); // Adicionar código de status
+    curlArgs.push("-s"); // Silent mode
+
+    console.log("Executando curl:", curlArgs.join(" "));
+
+    const curl = spawn("curl", curlArgs);
+    let stdout = "";
+    let stderr = "";
+
+    curl.stdout.on("data", (data) => {
       stdout += data.toString();
     });
-    
-    curl.stderr.on('data', (data) => {
+
+    curl.stderr.on("data", (data) => {
       stderr += data.toString();
     });
-    
-    curl.on('close', (code) => {
+
+    curl.on("close", (code) => {
+      // Limpar arquivo temporário
+      try {
+        unlinkSync(tempFile);
+      } catch (error) {
+        console.warn(`Erro ao remover arquivo temporário: ${error}`);
+      }
+
       if (code !== 0) {
         reject(new Error(`Curl failed with code ${code}: ${stderr}`));
         return;
       }
-      
+
       try {
         // O último número é o status code
         const statusMatch = stdout.match(/(\d{3})$/);
         const status = statusMatch ? parseInt(statusMatch[1]) : 0;
-        
+
         // Remover o status code do final
-        const responseBody = stdout.replace(/(\d{3})$/, '');
-        
+        const responseBody = stdout.replace(/(\d{3})$/, "");
+
         let data;
         try {
           data = JSON.parse(responseBody);
         } catch {
           data = responseBody;
         }
-        
+
         resolve({
           status,
           data,
-          statusText: status >= 200 && status < 300 ? 'OK' : 'Error'
+          statusText: status >= 200 && status < 300 ? "OK" : "Error",
         });
       } catch (error) {
         reject(error);
@@ -80,7 +108,6 @@ async function makeCurlRequest(url: string, headers: Record<string, string>, bod
     });
   });
 }
-
 
 const BFL_API_KEY = "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
@@ -115,6 +142,7 @@ export const generateImage = authActionClient
       const {
         prompt,
         model,
+        inputImage,
         aspectRatio = "1:1",
         width,
         height,
@@ -175,11 +203,12 @@ export const generateImage = authActionClient
 
       // Adicionar dimensões customizadas se fornecidas
       if (width && height) {
-        const { width: validWidth, height: validHeight } = validateBFLDimensions(width, height);
-        
+        const { width: validWidth, height: validHeight } =
+          validateBFLDimensions(width, height);
+
         console.log(`Dimensões originais: ${width}x${height}`);
         console.log(`Dimensões ajustadas: ${validWidth}x${validHeight}`);
-        
+
         requestBody.width = validWidth;
         requestBody.height = validHeight;
         delete requestBody.aspect_ratio;
@@ -211,23 +240,28 @@ export const generateImage = authActionClient
       const webhookUrl = `${process.env.WEBHOOK_URL}`;
       requestBody.webhook_url = webhookUrl;
 
-      // Validação final dos parâmetros antes do envio
-      console.log('Validando parâmetros da requisição:');
-      console.log('- Prompt:', requestBody.prompt ? 'OK' : 'ERRO: Prompt vazio');
-      console.log('- Dimensões:', requestBody.width && requestBody.height ? `${requestBody.width}x${requestBody.height}` : requestBody.aspect_ratio || 'Usando aspect_ratio padrão');
-      console.log('- Steps:', requestBody.steps || 'Padrão da API');
-      console.log('- Guidance:', requestBody.guidance || 'Padrão da API');
-      console.log('- Seed:', requestBody.seed !== undefined ? requestBody.seed : 'Aleatório');
-      console.log('- Webhook URL:', requestBody.webhook_url ? 'Configurado' : 'ERRO: Webhook não configurado');
-      
       // Verificar se o prompt não está vazio
       if (!requestBody.prompt || requestBody.prompt.trim().length === 0) {
-        throw new Error('Prompt não pode estar vazio');
+        throw new Error("Prompt não pode estar vazio");
       }
-      
+
       // Verificar se o webhook está configurado
       if (!requestBody.webhook_url) {
-        throw new Error('Webhook URL não configurado');
+        throw new Error("Webhook URL não configurado");
+      }
+
+      // Adicionar imagem de entrada baseado no modelo
+      if (inputImage) {
+        // Remover o prefixo data:image/... se presente, pois a API BFL espera apenas o base64 puro
+        const base64Data = inputImage.includes(',') ? inputImage.split(',')[1] : inputImage;
+        
+        if (model === "flux-kontext-pro") {
+          // Para flux-kontext-pro, usar input_image
+          requestBody.input_image = base64Data;
+        } else {
+          // Para outros modelos (flux-pro, flux-dev, etc.), usar image_prompt
+          requestBody.image_prompt = base64Data;
+        }
       }
 
       // Função para fazer requisição com retry e backoff exponencial usando curl
@@ -235,17 +269,17 @@ export const generateImage = authActionClient
         maxRetries = 5
       ): Promise<{ status: number; data: any; statusText: string }> => {
         const requestUrl = `${BFL_BASE_URL}${endpoint}`;
-        
+
         console.log(`Iniciando requisição para BFL API: ${requestUrl}`);
         console.log(`Request body:`, JSON.stringify(requestBody, null, 2));
-        
+
         const headers = {
           "x-key": BFL_API_KEY,
-          "accept": "application/json",
+          accept: "application/json",
           "User-Agent": "Pixoo/1.0",
-          "Connection": "close"
+          Connection: "close",
         };
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           console.log(`Tentativa ${attempt}/${maxRetries}`);
 
@@ -255,8 +289,8 @@ export const generateImage = authActionClient
               headers,
               JSON.stringify(requestBody)
             );
-            
-            console.log('Resposta recebida da BFL API via curl');
+
+            console.log("Resposta recebida da BFL API via curl");
 
             console.log(
               `BFL API Response Status (attempt ${attempt}):`,
@@ -289,38 +323,43 @@ export const generateImage = authActionClient
             if (createResponse.status < 200 || createResponse.status >= 300) {
               // Log detalhado para erros 4xx (especialmente 422)
               if (createResponse.status >= 400 && createResponse.status < 500) {
-                console.error('Erro 4xx da BFL API:', {
+                console.error("Erro 4xx da BFL API:", {
                   status: createResponse.status,
                   statusText: createResponse.statusText,
                   responseBody: createResponse.data,
-                  requestBody: requestBody
+                  requestBody: requestBody,
                 });
               }
-              
+
               throw new Error(
-                `Falha ao criar requisição: ${createResponse.statusText} (${createResponse.status}). Resposta: ${JSON.stringify(createResponse.data)}`
+                `Falha ao criar requisição: ${createResponse.statusText} (${
+                  createResponse.status
+                }). Resposta: ${JSON.stringify(createResponse.data)}`
               );
             }
 
             return createResponse;
           } catch (error) {
             console.error(`Erro na tentativa ${attempt}:`, error);
-            
+
             // Se for erro de timeout ou conectividade, tenta novamente
-            if (error instanceof Error && 
-                (error.message.includes('timeout') ||
-                 error.message.includes('ConnectTimeoutError') ||
-                 error.message.includes('Curl failed') ||
-                 error.message.includes('fetch failed'))) {
-              
+            if (
+              error instanceof Error &&
+              (error.message.includes("timeout") ||
+                error.message.includes("ConnectTimeoutError") ||
+                error.message.includes("Curl failed") ||
+                error.message.includes("fetch failed"))
+            ) {
               if (attempt < maxRetries) {
                 const waitTime = Math.min(Math.pow(2, attempt) * 2000, 10000); // Max 10s
-                console.log(`Aguardando ${waitTime}ms antes da próxima tentativa...`);
+                console.log(
+                  `Aguardando ${waitTime}ms antes da próxima tentativa...`
+                );
                 await new Promise((resolve) => setTimeout(resolve, waitTime));
                 continue;
               }
             }
-            
+
             if (attempt === maxRetries) {
               throw error;
             }
@@ -332,7 +371,7 @@ export const generateImage = authActionClient
       };
 
       const createResponse = await makeRequestWithRetry();
-      
+
       const createData = createResponse.data;
       // Se a resposta já contém o resultado (para modelos rápidos como flux-schnell)
       if (createData.result && createData.result.sample) {

@@ -45,6 +45,9 @@
   "textToImage": {
     "title": "Texto para Imagem"
   },
+  "imageEditing": {
+    "title": "Edição de Imagem"
+  },
   "formTextToImage": {
     "title": "Geração de Imagem com IA",
     "modelSelection": "Seleção do Modelo",
@@ -68,6 +71,43 @@
     "steps": "Passos (1-50)",
     "guidance": "Escala de Orientação (1-20)",
     "costCredits": "Isso custará {credits} créditos"
+  },
+  "formImageEditing": {
+    "startingGeneration": "Iniciando geração de imagem...",
+    "inputImage": "Imagem",
+    "dragDropImage": "Arraste sua imagem aqui",
+    "selectImage": "Selecionar imagem",
+    "title": "Edição de Imagem com IA",
+    "modelSelection": "Seleção do Modelo",
+    "prompt": "Prompt",
+    "promptDescription": "Descreva como você quer editar a imagem...",
+    "promptPlaceholder": "Descreva como você quer editar a imagem...",
+    "uploadImage": "Enviar Imagem",
+    "uploadImageDescription": "Arraste e solte uma imagem ou clique para selecionar",
+    "supportedFormats": "Formatos suportados: JPG, PNG, WebP (máx. 10MB)",
+    "aspectRatio": "Proporção da Imagem",
+    "advancedOptions": "Opções Avançadas",
+    "imagePublic": "Imagem Pública",
+    "imagePublicDescription": "Tornar esta imagem visível para outros usuários",
+    "editImage": "Editar Imagem",
+    "editing": "Editando...",
+    "noImageGenerated": "Nenhuma imagem editada",
+    "startingEditing": "Iniciando edição de imagem...",
+    "checkingStatus": "Verificando status...",
+    "imageEditedSuccess": "Imagem editada com sucesso!",
+    "insufficientCredits": "Créditos insuficientes. Adicione mais créditos para continuar.",
+    "rateLimitExceeded": "Limite de taxa excedido. Tente novamente em alguns minutos.",
+    "editingFailed": "Falha ao editar imagem. Tente novamente.",
+    "seed": "Seed (Opcional)",
+    "seedPlaceholder": "Seed aleatória para resultados reproduzíveis",
+    "steps": "Passos (1-50)",
+    "guidance": "Escala de Orientação (1-20)",
+    "costCredits": "Isso custará {credits} créditos",
+    "removeImage": "Remover Imagem",
+    "imageRequired": "Uma imagem é obrigatória para edição",
+    "invalidFileType": "Tipo de arquivo inválido. Use JPG, PNG ou WebP.",
+    "fileTooLarge": "Arquivo muito grande. Máximo 10MB.",
+    "uploadError": "Erro ao fazer upload da imagem"
   },
   "imagePreview": {
     "noImageGenerated": "Nenhuma imagem gerada",

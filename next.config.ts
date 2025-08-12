@@ -6,6 +6,7 @@ const nextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ["localhost:3000", "192.168.0.120:3000"],
+      bodySizeLimit: "25mb" as const,
     },
   },
 

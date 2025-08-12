@@ -70,6 +70,12 @@ const getNavigationSections = (t: any): NavSection[] => [
         isActive: false,
       },
       {
+        icon: Wand2,
+        label: "Image Editing",
+        href: "/image-editing",
+        isActive: false,
+      },
+      {
         icon: MessageSquare,
         label: t("imageToPrompt"),
         href: "/image-to-prompt",

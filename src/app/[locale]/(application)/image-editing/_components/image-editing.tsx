@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { FormTextToImage } from "@/components/ui/forms-generate/form-text-to-image";
+import { FormImageEditing } from "@/components/ui/forms-generate/form-image-editing";
 import { ImageHistory } from "@/components/ui/image-history/image-history";
 import {
   PageContainer,
@@ -17,19 +17,21 @@ import toast from "react-hot-toast";
 import { useAction } from "next-safe-action/hooks";
 import { getImageByTaskId } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 import { ModelCost } from "@/db/schema";
-interface TextToImage {
+
+interface ImageEditingProps {
   models: ModelCost[];
 }
-export default function TextToImage({ models }: TextToImage) {
-  const t = useTranslations("textToImage");
+
+export default function ImageEditing({ models }: ImageEditingProps) {
+  const t = useTranslations("imageEditing");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [promptValue, setPromptValue] = useState<string | undefined>(undefined);
 
   const handleImageGenerated = (imageUrl: string) => {
     console.log("🖼️ handleImageGenerated called with imageUrl:", imageUrl);
     setGeneratedImage(imageUrl);
     console.log("🖼️ generatedImage state updated to:", imageUrl);
   };
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isWaitingWebhook, setIsWaitingWebhook] = useState(false);
   const generationStartTimeRef = useRef<number | null>(null);
@@ -119,7 +121,7 @@ export default function TextToImage({ models }: TextToImage) {
       const a = document.createElement("a");
       a.style.display = "none";
       a.href = url;
-      a.download = `generated-image-${Date.now()}.png`;
+      a.download = `edited-image-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
 
@@ -195,7 +197,7 @@ export default function TextToImage({ models }: TextToImage) {
 
             // Atualizar UI
             handleImageGenerated(data.imageUrl);
-            toast.success("Image generated successfully!");
+            toast.success("Image edited successfully!");
 
             console.log(generationStartTimeRef.current);
             // Calcular tempo de geração
@@ -218,7 +220,7 @@ export default function TextToImage({ models }: TextToImage) {
               try {
                 await cancelReservation(
                   currentReservation.reservationId,
-                  `Falha na geração - ${currentReservation.modelId}`
+                  `Falha na edição - ${currentReservation.modelId}`
                 );
                 console.log("✅ Reservation cancelled successfully!");
                 // Atualizar saldo na UI
@@ -242,7 +244,7 @@ export default function TextToImage({ models }: TextToImage) {
             setIsWaitingWebhook(false);
 
             toast.error(
-              response.data?.errors?._form[0] || "Image generation failed"
+              response.data?.errors?._form[0] || "Image editing failed"
             );
             setIsGenerating(false);
             setCurrentTaskId(null);
@@ -273,7 +275,7 @@ export default function TextToImage({ models }: TextToImage) {
             try {
               await cancelReservation(
                 currentReservation.reservationId,
-                `Erro de rede na geração - ${currentReservation.modelId}`
+                `Erro de rede na edição - ${currentReservation.modelId}`
               );
               console.log("✅ Reservation cancelled due to network error!");
               // Atualizar saldo na UI
@@ -287,7 +289,7 @@ export default function TextToImage({ models }: TextToImage) {
             setCurrentReservation(null);
           }
 
-          toast.error("Network error during generation. Please try again.");
+          toast.error("Network error during editing. Please try again.");
           setIsGenerating(false);
           setIsWaitingWebhook(false);
           setCurrentTaskId(null);
@@ -298,7 +300,7 @@ export default function TextToImage({ models }: TextToImage) {
     // Verificar imediatamente
     checkStatus();
 
-    // Configurar polling a cada 2 segundos
+    // Configurar polling a cada 6 segundos
     pollingIntervalRef.current = setInterval(checkStatus, 6000);
 
     // Timeout de segurança (5 minutos)
@@ -310,10 +312,9 @@ export default function TextToImage({ models }: TextToImage) {
           // Reembolsar créditos em caso de timeout
           if (currentReservation) {
             const modelCosts = {
-              "flux-schnell": 1,
               "flux-dev": 10,
-              "flux-pro": 25,
-              "flux-pro-1.1": 40,
+              "flux-kontext-pro": 25,
+              "flux-kontext-max": 40,
             };
             const cost =
               modelCosts[
@@ -321,7 +322,7 @@ export default function TextToImage({ models }: TextToImage) {
               ] || 10;
             refundCredits(
               cost,
-              `Timeout na geração - ${currentReservation.modelId}`,
+              `Timeout na edição - ${currentReservation.modelId}`,
               taskId
             )
               .then(async () => {
@@ -337,27 +338,24 @@ export default function TextToImage({ models }: TextToImage) {
             setCurrentReservation(null);
           }
 
-          toast.error("Generation timeout. Please try again.");
+          toast.error("Editing timeout. Please try again.");
           setIsGenerating(false);
           setIsWaitingWebhook(false);
           setCurrentTaskId(null);
         }
       }
-    }, 30000); // 5 minutos
+    }, 300000); // 5 minutos
   };
 
   return (
     <PageContainer>
       <PageContainerHeader>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground">
-          Generate stunning images with AI using advanced Flux models
-        </p>
       </PageContainerHeader>
       <PageContainerContent>
         {/* Left side - Form */}
         <PageContainerLeft>
-          <FormTextToImage
+          <FormImageEditing
             models={models}
             onImageGenerated={handleImageGenerated}
             onGenerationStart={() => {
@@ -381,7 +379,6 @@ export default function TextToImage({ models }: TextToImage) {
               handleGenerationStart(now);
             }}
             isGenerating={isGenerating}
-            promptValue={promptValue}
           />
         </PageContainerLeft>
 
@@ -399,14 +396,7 @@ export default function TextToImage({ models }: TextToImage) {
 
       {/* Histórico de Imagens */}
       <div className="mt-8">
-        <ImageHistory 
-          refreshTrigger={historyRefreshTrigger} 
-          onPromptReuse={(prompt: string) => {
-            setPromptValue(prompt);
-            // Reset promptValue after a short delay to allow for future reuses
-            setTimeout(() => setPromptValue(undefined), 100);
-          }}
-        />
+        <ImageHistory refreshTrigger={historyRefreshTrigger} />
       </div>
     </PageContainer>
   );

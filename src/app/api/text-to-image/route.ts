@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../db";
-import {
-  generatedImages,
-  creditReservations,
-  creditTransactions,
-} from "../../../db/schema";
+import { generatedImages, creditReservations } from "../../../db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getModelCost } from "@/config/model-costs";
+import { getModelCost } from "@/actions/credits/get/get-model-cost.action";
 import { CreditsMiddleware } from "@/lib/credits-middleware";
 import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action";
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
@@ -96,13 +92,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar custo do modelo e reservar créditos
-    const modelCost = getModelCost(model);
-    if (!modelCost) {
+    const modelCostResult = await getModelCost({ modelId: model });
+    if (!modelCostResult.data?.success || !modelCostResult.data.result) {
       return NextResponse.json(
         { error: `Modelo ${model} não encontrado no sistema de créditos` },
         { status: 400 }
       );
     }
+
+    const modelCost = modelCostResult.data.result;
 
     // Reservar créditos se necessário
     let reservationId: string | null = null;

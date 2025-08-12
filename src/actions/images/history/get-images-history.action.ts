@@ -4,7 +4,7 @@ import { desc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { authActionClient } from '@/lib/safe-action';
-import { generatedImages } from '@/db/schema';
+import { generatedImages, modelCosts } from '@/db/schema';
 
 import { getImagesHistorySchema } from './get-images-history.action.schema';
 
@@ -21,10 +21,29 @@ export const getImagesHistory = authActionClient
                 timestamp: new Date().toISOString()
             });
 
-            // Buscar imagens do usuário
+            // Buscar imagens do usuário com informações do modelo
             const images = await db
-                .select()
+                .select({
+                    id: generatedImages.id,
+                    prompt: generatedImages.prompt,
+                    model: generatedImages.model,
+                    modelName: modelCosts.modelName,
+                    aspectRatio: generatedImages.aspectRatio,
+                    imageUrl: generatedImages.imageUrl,
+                    status: generatedImages.status,
+                    creditsUsed: generatedImages.creditsUsed,
+                    generationTimeMs: generatedImages.generationTimeMs,
+                    createdAt: generatedImages.createdAt,
+                    userId: generatedImages.userId,
+                    taskId: generatedImages.taskId,
+                    reservationId: generatedImages.reservationId,
+                    seed: generatedImages.seed,
+                    steps: generatedImages.steps,
+                    guidance: generatedImages.guidance,
+                    completedAt: generatedImages.completedAt
+                })
                 .from(generatedImages)
+                .leftJoin(modelCosts, eq(generatedImages.model, modelCosts.modelId))
                 .where(eq(generatedImages.userId, userId))
                 .orderBy(desc(generatedImages.createdAt))
                 .limit(limit);

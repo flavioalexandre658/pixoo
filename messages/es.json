@@ -109,5 +109,40 @@
     "historyRecords": "Registros de Historial",
     "permanentHistory": "Historial Permanente",
     "choosePlan": "Elegir Plan"
+  },
+  "imageEditing": {
+    "title": "Edición de Imagen"
+  },
+  "formImageEditing": {
+    "title": "Edición de Imagen con IA",
+    "modelSelection": "Selección de Modelo",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe cómo quieres editar la imagen...",
+    "uploadImage": "Subir Imagen",
+    "uploadImageDescription": "Arrastra y suelta una imagen o haz clic para seleccionar",
+    "supportedFormats": "Formatos soportados: JPG, PNG, WebP (máx. 10MB)",
+    "aspectRatio": "Relación de Aspecto",
+    "advancedOptions": "Opciones Avanzadas",
+    "imagePublic": "Imagen Pública",
+    "imagePublicDescription": "Hacer esta imagen visible para otros usuarios",
+    "editImage": "Editar Imagen",
+    "editing": "Editando...",
+    "noImageGenerated": "Ninguna imagen editada",
+    "startingEditing": "Iniciando edición de imagen...",
+    "checkingStatus": "Verificando estado...",
+    "imageEditedSuccess": "¡Imagen editada con éxito!",
+    "insufficientCredits": "Créditos insuficientes. Agrega más créditos para continuar.",
+    "rateLimitExceeded": "Límite de velocidad excedido. Inténtalo de nuevo en unos minutos.",
+    "editingFailed": "Error al editar imagen. Inténtalo de nuevo.",
+    "seed": "Seed (Opcional)",
+    "seedPlaceholder": "Seed aleatoria para resultados reproducibles",
+    "steps": "Pasos (1-50)",
+    "guidance": "Escala de Orientación (1-20)",
+    "costCredits": "Esto costará {credits} créditos",
+    "removeImage": "Eliminar Imagen",
+    "imageRequired": "Se requiere una imagen para editar",
+    "invalidFileType": "Tipo de archivo inválido. Usa JPG, PNG o WebP.",
+    "fileTooLarge": "Archivo demasiado grande. Máximo 10MB.",
+    "uploadError": "Error al subir imagen"
   }
 }

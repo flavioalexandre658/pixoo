@@ -31,6 +31,7 @@ interface GeneratedImage {
   taskId: string;
   prompt: string;
   model: string;
+  modelName: string | null;
   aspectRatio: string;
   imageUrl: string | null;
   status: string;
@@ -42,9 +43,10 @@ interface GeneratedImage {
 
 interface ImageHistoryProps {
   refreshTrigger?: number;
+  onPromptReuse?: (prompt: string) => void;
 }
 
-export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
+export function ImageHistory({ refreshTrigger, onPromptReuse }: ImageHistoryProps) {
   const t = useTranslations("imageHistory");
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,6 +235,14 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
         return "bg-orange-100 text-orange-800";
       case "flux-pro-1.1-ultra":
         return "bg-red-100 text-red-800";
+      case "flux-realism":
+        return "bg-teal-100 text-teal-800";
+      case "flux-kontext-dev":
+        return "bg-indigo-100 text-indigo-800";
+      case "flux-kontext-pro":
+        return "bg-violet-100 text-violet-800";
+      case "flux-kontext-max":
+        return "bg-pink-100 text-pink-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -328,7 +338,13 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
             </div>
             <FilterSelect
               options={[...new Set(images.map((img) => img.model))].map(
-                (model) => ({ label: model, value: model })
+                (model) => {
+                  const image = images.find(img => img.model === model);
+                  return { 
+                    label: image?.modelName || model, 
+                    value: model 
+                  };
+                }
               )}
               value={modelFilter}
               onChange={setModelFilter}
@@ -383,6 +399,7 @@ export function ImageHistory({ refreshTrigger }: ImageHistoryProps) {
                   cropped={cropped}
                   isSelectionMode={isSelectionMode}
                   isDeleting={isDeleting}
+                  onPromptReuse={onPromptReuse}
                 />
               </div>
             ))}

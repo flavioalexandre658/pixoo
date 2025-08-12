@@ -138,5 +138,40 @@
     "historyRecords": "History Records",
     "permanentHistory": "Permanent History",
     "choosePlan": "Choose Plan"
+  },
+  "imageEditing": {
+    "title": "Image Editing"
+  },
+  "formImageEditing": {
+    "title": "AI Image Editing",
+    "modelSelection": "Model Selection",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe how you want to edit the image...",
+    "uploadImage": "Upload Image",
+    "uploadImageDescription": "Drag and drop an image or click to select",
+    "supportedFormats": "Supported formats: JPG, PNG, WebP (max 10MB)",
+    "aspectRatio": "Aspect Ratio",
+    "advancedOptions": "Advanced Options",
+    "imagePublic": "Public Image",
+    "imagePublicDescription": "Make this image visible to other users",
+    "editImage": "Edit Image",
+    "editing": "Editing...",
+    "noImageGenerated": "No image edited",
+    "startingEditing": "Starting image editing...",
+    "checkingStatus": "Checking status...",
+    "imageEditedSuccess": "Image edited successfully!",
+    "insufficientCredits": "Insufficient credits. Add more credits to continue.",
+    "rateLimitExceeded": "Rate limit exceeded. Try again in a few minutes.",
+    "editingFailed": "Failed to edit image. Please try again.",
+    "seed": "Seed (Optional)",
+    "seedPlaceholder": "Random seed for reproducible results",
+    "steps": "Steps (1-50)",
+    "guidance": "Guidance Scale (1-20)",
+    "costCredits": "This will cost {credits} credits",
+    "removeImage": "Remove Image",
+    "imageRequired": "An image is required for editing",
+    "invalidFileType": "Invalid file type. Use JPG, PNG or WebP.",
+    "fileTooLarge": "File too large. Maximum 10MB.",
+    "uploadError": "Error uploading image"
   }
 }

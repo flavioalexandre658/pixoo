@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +25,9 @@ import {
   Settings,
   WandSparkles,
   Coins,
+  Upload,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,26 +37,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DimensionSelector, Dimension } from "./dimension-selector";
 import { useCredits } from "@/hooks/use-credits";
 import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
+import Image from "next/image";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 
-const formTextToImageSchema = z.object({
-  prompt: z.string().min(1, "Prompt is required"),
+const formImageEditingSchema = z.object({
+  prompt: z.string().min(1, "Edit instruction is required"),
   model: z.string(),
   imagePublic: z.boolean(),
   seed: z.number().optional(),
-  steps: z.number().min(1).max(50).optional(),
-  guidance: z.number().min(1).max(20).optional(),
-  width: z.number().min(256).max(1440),
-  height: z.number().min(256).max(1440),
+  aspectRatio: z.string().optional(),
+  inputImage: z.string().min(1, "Input image is required"),
 });
 
-type FormTextToImageForm = z.infer<typeof formTextToImageSchema>;
+type FormImageEditingForm = z.infer<typeof formImageEditingSchema>;
 
-interface FormTextToImageProps {
+interface FormImageEditingProps {
   models: ModelCost[];
   onImageGenerated: (imageUrl: string) => void;
   onGenerationStart?: () => void;
@@ -64,20 +65,17 @@ interface FormTextToImageProps {
   onGenerationComplete?: () => void;
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
-  promptValue?: string;
 }
 
-export function FormTextToImage({
+export function FormImageEditing({
   models,
-  onImageGenerated,
   onGenerationStart,
   onStartPolling,
   onGenerationComplete,
   onGenerationButtonClick,
   isGenerating,
-  promptValue,
-}: FormTextToImageProps) {
-  const t = useTranslations("formTextToImage");
+}: FormImageEditingProps) {
+  const t = useTranslations("formImageEditing");
   const {
     credits,
     hasEnoughCredits,
@@ -92,6 +90,12 @@ export function FormTextToImage({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [startedGeneration, setStartedGeneration] = useState(isGenerating);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [detectedAspectRatio, setDetectedAspectRatio] = useState<string | null>(
+    null
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
 
   // Reset startedGeneration when generation is complete
@@ -102,31 +106,142 @@ export function FormTextToImage({
     }
   }, [isGenerating, startedGeneration, onGenerationComplete]);
 
-  const [dimension, setDimension] = useState<Dimension>({
-    aspectRatio: "1:1",
-    width: 1024,
-    height: 1024,
-  });
-
-  const form = useForm<FormTextToImageForm>({
-    resolver: zodResolver(formTextToImageSchema),
+  const form = useForm<FormImageEditingForm>({
+    resolver: zodResolver(formImageEditingSchema),
     defaultValues: {
       prompt: "",
-      model: "flux-pro",
+      model: "flux-context-pro",
       imagePublic: false,
-      width: 1024,
-      height: 1024,
+      aspectRatio: "auto",
+      inputImage: "",
     },
   });
 
-  // Update prompt when promptValue prop changes
-  useEffect(() => {
-    if (promptValue !== undefined) {
-      form.setValue("prompt", promptValue);
-    }
-  }, [promptValue, form]);
+  // Convert file to base64 directly
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
-  const onSubmit = async (data: FormTextToImageForm) => {
+  // Calculate aspect ratio from image dimensions
+  const calculateAspectRatio = (width: number, height: number): string => {
+    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+    const divisor = gcd(width, height);
+    const aspectWidth = width / divisor;
+    const aspectHeight = height / divisor;
+
+    // Map to common aspect ratios
+    const ratio = aspectWidth / aspectHeight;
+    if (Math.abs(ratio - 1) < 0.1) return "1:1";
+    if (Math.abs(ratio - 16 / 9) < 0.1) return "16:9";
+    if (Math.abs(ratio - 9 / 16) < 0.1) return "9:16";
+    if (Math.abs(ratio - 4 / 3) < 0.1) return "4:3";
+    if (Math.abs(ratio - 3 / 4) < 0.1) return "3:4";
+    if (Math.abs(ratio - 21 / 9) < 0.1) return "21:9";
+
+    // Return custom ratio if no match
+    return `${aspectWidth}:${aspectHeight}`;
+  };
+
+  // Get image dimensions from file
+  const getImageDimensions = (
+    file: File
+  ): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file");
+      return;
+    }
+
+    // Validate file size (20MB limit as per BFL docs)
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image size must be less than 20MB");
+      return;
+    }
+
+    try {
+      toast.info("Processing image...");
+
+      // Get image dimensions and calculate aspect ratio
+      const dimensions = await getImageDimensions(file);
+      const aspectRatio = calculateAspectRatio(
+        dimensions.width,
+        dimensions.height
+      );
+      setDetectedAspectRatio(aspectRatio);
+
+      // If current aspect ratio is "auto", keep it as auto
+      // The actual aspect ratio will be used when submitting
+
+      const base64Data = await fileToBase64(file);
+      const imageUrl = URL.createObjectURL(file);
+
+      setUploadedImage(imageUrl);
+      form.setValue("inputImage", base64Data);
+      toast.success(`Image processed successfully (${aspectRatio})`);
+    } catch (error) {
+      console.error("Error processing image:", error);
+      toast.error("Failed to process image");
+    }
+  };
+
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  // Remove uploaded image
+  const removeUploadedImage = () => {
+    setUploadedImage(null);
+    setDetectedAspectRatio(null);
+    form.setValue("inputImage", "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    // Image data is now handled as base64, no external cleanup needed
+  };
+
+  const onSubmit = async (data: FormImageEditingForm) => {
     if (startedGeneration || isGenerating) {
       return false;
     }
@@ -158,50 +273,48 @@ export function FormTextToImage({
     }
 
     try {
+      // Validate that if "auto" is selected, we have a detected aspect ratio
+      if (data.aspectRatio === "auto" && !detectedAspectRatio) {
+        toast.error(
+          "Please upload an image to use auto aspect ratio detection"
+        );
+        setStartedGeneration(false);
+        return false;
+      }
+
       toast.success(t("startingGeneration"));
       console.log(data);
+
+      // Use detected aspect ratio if "auto" is selected
+      const finalAspectRatio =
+        data.aspectRatio === "auto" && detectedAspectRatio
+          ? detectedAspectRatio
+          : data.aspectRatio;
+
       const response = await executeGenerateImage({
         prompt: data.prompt,
         model: data.model,
-        width: dimension.width,
-        height: dimension.height,
-        aspectRatio: dimension.aspectRatio,
+        inputImage: data.inputImage,
+        aspectRatio: finalAspectRatio,
         seed: data.seed ?? 1,
-        steps: data.steps ?? 25,
-        guidance: data.guidance ?? 3,
         imagePublic: data.imagePublic ?? false,
       });
 
-      if (!response.serverError && response.data?.success) {
+      if (response.serverError || response.data?.error) {
         setStartedGeneration(false);
 
         // Cancelar reserva em caso de erro na API (usuário não foi cobrado ainda)
         if (reservation) {
           await cancelReservation(
             reservation.reservationId,
-            `Falha na API de geração - Status ${response.data?.status}`
+            "Falha na API de edição"
           );
           setCurrentReservation(null);
         }
 
-        if (response.data?.status === 429) {
-          toast.error("Rate limit exceeded. Please try again later.");
-        } else if (
-          response.data?.status === 502 ||
-          response.data?.status === 503 ||
-          response.data?.status === 504
-        ) {
-          toast.error(
-            "Service temporarily unavailable. The system is automatically retrying..."
-          );
-        } else if (response.data?.status === 400) {
-          toast.error("Bad request. Please check your input.");
-        } else {
-          const errorData = response.data?.error;
-          onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-          throw new Error(errorData || "Failed to generate image");
-        }
-        return;
+        const errorData = response.data?.error || response.serverError;
+        onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+        throw new Error(errorData || "Failed to edit image");
       }
 
       const result = response.data;
@@ -220,21 +333,20 @@ export function FormTextToImage({
               }
             : undefined
         );
-      } else if (result?.success && result?.imageUrl) {
+      } else if (result?.success) {
         setStartedGeneration(false);
 
         // Nota: A confirmação de créditos será feita automaticamente via webhook
         // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
           console.log(
-            `✅ Imagem iniciada com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
+            `✅ Edição concluída com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
           );
           setCurrentReservation(null);
         }
 
-        onImageGenerated(result.imageUrl);
         fetchCredits();
-        toast.success(t("imageGeneratedSuccess"));
+        toast.success(t("imageEditedSuccess"));
       } else {
         setStartedGeneration(false);
 
@@ -257,19 +369,19 @@ export function FormTextToImage({
       if (currentReservation) {
         await cancelReservation(
           currentReservation.reservationId,
-          `Erro na geração: ${error.message}`
+          `Erro na edição: ${error.message}`
         );
         setCurrentReservation(null);
       }
 
       onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-      console.error("Generation error:", error);
+      console.error("Editing error:", error);
       if (error.message.includes("credits")) {
         toast.error(t("insufficientCredits"));
       } else if (error.message.includes("rate limit")) {
         toast.error(t("rateLimitExceeded"));
       } else {
-        toast.error(error.message || t("generationFailed"));
+        toast.error(error.message || t("editingFailed"));
       }
     }
   };
@@ -296,17 +408,31 @@ export function FormTextToImage({
 
         {showAdvanced && (
           <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-            {/* Dimension Selector */}
+            {/* Aspect Ratio */}
             <div className="space-y-2">
               <Label>{t("aspectRatio")}</Label>
-              <DimensionSelector
-                value={dimension}
-                onChange={(newDimension) => {
-                  setDimension(newDimension);
-                  form.setValue("width", newDimension.width);
-                  form.setValue("height", newDimension.height);
-                }}
-              />
+              <Select
+                value={form.watch("aspectRatio")}
+                onValueChange={(value) => form.setValue("aspectRatio", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    Auto{" "}
+                    {detectedAspectRatio
+                      ? `(${detectedAspectRatio})`
+                      : "(detect from image)"}
+                  </SelectItem>
+                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                  <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
+                  <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
+                  <SelectItem value="4:3">4:3 (Standard)</SelectItem>
+                  <SelectItem value="3:4">3:4 (Portrait)</SelectItem>
+                  <SelectItem value="21:9">21:9 (Ultrawide)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Seed */}
@@ -318,33 +444,6 @@ export function FormTextToImage({
                 placeholder={t("seedPlaceholder")}
                 defaultValue={"-1"}
                 {...form.register("seed", { valueAsNumber: true })}
-              />
-            </div>
-
-            {/* Steps */}
-            <div className="space-y-2">
-              <Label htmlFor="steps">{t("steps")}</Label>
-              <Input
-                id="steps"
-                type="number"
-                min="1"
-                max="50"
-                defaultValue="25"
-                {...form.register("steps", { valueAsNumber: true })}
-              />
-            </div>
-
-            {/* Guidance */}
-            <div className="space-y-2">
-              <Label htmlFor="guidance">{t("guidance")}</Label>
-              <Input
-                id="guidance"
-                type="number"
-                min="1"
-                max="20"
-                step="0.1"
-                defaultValue="3"
-                {...form.register("guidance", { valueAsNumber: true })}
               />
             </div>
           </div>
@@ -469,6 +568,75 @@ export function FormTextToImage({
             </div>
           </div>
 
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <Label>{t("inputImage")}</Label>
+            {!uploadedImage ? (
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="p-4 rounded-full bg-muted">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">{t("dragDropImage")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("supportedFormats")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    {t("selectImage")}
+                  </Button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileInputChange}
+                />
+              </div>
+            ) : (
+              <div className="relative border rounded-lg overflow-hidden">
+                <div className="aspect-video relative">
+                  <Image
+                    src={uploadedImage}
+                    alt="Uploaded image"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={removeUploadedImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            {form.formState.errors.inputImage && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.inputImage.message}
+              </p>
+            )}
+          </div>
+
           {/* Prompt (Common for both views) */}
           <div className="space-y-2">
             <Label htmlFor="prompt">{t("prompt")}</Label>
@@ -478,6 +646,9 @@ export function FormTextToImage({
               className="min-h-[100px] resize-none"
               {...form.register("prompt")}
             />
+            <p className="text-xs text-muted-foreground">
+              {t("promptDescription")}
+            </p>
             {form.formState.errors.prompt && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.prompt.message}
@@ -486,9 +657,7 @@ export function FormTextToImage({
           </div>
 
           {/* Desktop Settings - Moved to end */}
-          <div className="hidden md:block">
-            {settingsContent}
-          </div>
+          <div className="hidden md:block">{settingsContent}</div>
 
           {/* Generate Button (Common for both views) */}
           <div className="space-y-2">
@@ -525,7 +694,7 @@ export function FormTextToImage({
               disabled={
                 isGenerating ||
                 startedGeneration ||
-                // creditsLoading ||
+                !form.watch("inputImage") ||
                 (selectedModel &&
                   selectedModel.credits > 0 &&
                   !hasEnoughCredits(selectedModel.credits))
@@ -534,7 +703,7 @@ export function FormTextToImage({
               {isGenerating || startedGeneration ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  {t("generating")}
+                  {t("editing")}
                 </>
               ) : selectedModel &&
                 selectedModel.credits > 0 &&
@@ -546,7 +715,7 @@ export function FormTextToImage({
               ) : (
                 <>
                   <WandSparkles className="mr-2" />
-                  {t("generateImage")}
+                  {t("editImage")}
                   {selectedModel && selectedModel.credits > 0 && (
                     <span className="ml-2 opacity-75">
                       (-{selectedModel.credits})

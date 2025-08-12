@@ -1,7 +1,8 @@
 import { getModelCosts } from "@/actions/credits/get/get-model-costs.action";
-import TextToImage from "./_components/text-to-image";
+import ImageEditing from "./_components/image-editing";
 import { ModelCost } from "@/db/schema";
-export default async function Home() {
+
+export default async function ImageEditingPage() {
   let models: ModelCost[] = [];
   const res = await getModelCosts({});
 
@@ -11,15 +12,8 @@ export default async function Home() {
 
   // Filter models to only allow flux-dev, flux-kontext-pro, and flux-kontext-max
   const allowedModels = models.filter((model: ModelCost) =>
-    [
-      "flux-schnell",
-      "flux-dev",
-      "flux-pro",
-      "flux-pro-1.1",
-      "flux-pro-1.1-ultra",
-      "flux-realism",
-    ].includes(model.modelId)
+    ["flux-kontext-pro", "flux-kontext-max"].includes(model.modelId)
   );
 
-  return <TextToImage models={allowedModels} />;
+  return <ImageEditing models={allowedModels} />;
 }
