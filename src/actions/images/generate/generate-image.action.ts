@@ -14,6 +14,7 @@ import { writeFileSync, unlinkSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { validateBFLDimensions } from "@/lib/utils";
+import Together from "together-ai";
 
 // Função para fazer requisição usando curl (que sabemos que funciona)
 async function makeCurlRequest(
@@ -109,6 +110,97 @@ async function makeCurlRequest(
   });
 }
 
+// Função para gerar imagens usando Together.ai (específico para flux-schnell)
+async function generateImageWithTogether(
+  prompt: string,
+  steps: number = 10,
+  n: number = 1
+): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
+  try {
+    // Verificar se a API key está configurada
+    if (!process.env.TOGETHER_API_KEY) {
+      console.error('TOGETHER_API_KEY não está configurada');
+      return {
+        success: false,
+        error: "Chave da API Together.ai não configurada",
+      };
+    }
+
+    const together = new Together({
+      apiKey: process.env.TOGETHER_API_KEY,
+    });
+
+    console.log('Gerando imagem com Together.ai:', {
+      model: 'black-forest-labs/FLUX.1-schnell-Free',
+      prompt,
+      steps,
+      n,
+      apiKeyConfigured: !!process.env.TOGETHER_API_KEY
+    });
+
+    const response = await together.images.create({
+      model: "black-forest-labs/FLUX.1-schnell-Free",
+      prompt,
+      steps,
+      n,
+    });
+
+    const responseData = response.data[0];
+        console.log("Resposta da Together.ai recebida:", {
+          success: !!responseData,
+          hasUrl: !!(responseData as any)?.url,
+          hasB64: !!(responseData as any)?.b64_json,
+          responseKeys: Object.keys(responseData || {})
+        });
+
+    if (response.data && response.data.length > 0) {
+      const imageData = response.data[0];
+      
+      // Verificar se é base64 ou URL
+      let imageUrl: string;
+      if ('b64_json' in imageData && imageData.b64_json) {
+        // Converter base64 para data URL
+        imageUrl = `data:image/png;base64,${imageData.b64_json}`;
+      } else if ('url' in imageData && imageData.url) {
+        // Usar URL diretamente
+        imageUrl = imageData.url;
+      } else {
+        return {
+          success: false,
+          error: "Formato de resposta inválido da API Together.ai",
+        };
+      }
+      
+      return {
+        success: true,
+        imageUrl,
+      };
+    }
+
+    return {
+      success: false,
+      error: "Nenhuma imagem foi gerada pela Together.ai",
+    };
+  } catch (error) {
+    console.error('Erro ao gerar imagem com Together.ai:', error);
+    
+    // Extrair mensagem de erro mais específica
+    let errorMessage = "Erro desconhecido";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      // Se for um erro da API, tentar extrair a mensagem específica
+      if (error.message.includes('400') && error.message.includes('steps')) {
+        errorMessage = "Steps deve estar entre 1 e 4 para o modelo FLUX.1-schnell-Free";
+      }
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
 const BFL_API_KEY = "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
 const BFL_BASE_URL = "https://api.bfl.ai/v1";
 
@@ -192,6 +284,91 @@ export const generateImage = authActionClient
 
       reservationId = reserveResult.data?.data?.reservationId || null;
 
+      // Se for flux-schnell, usar Together.ai
+      if (model === "flux-schnell") {
+        console.log('Usando Together.ai para flux-schnell');
+        
+        const togetherResult = await generateImageWithTogether(
+          prompt,
+          Math.min(steps || 4, 4), // Together.ai aceita apenas steps entre 1 e 4
+          1
+        );
+
+        if (togetherResult.success && togetherResult.imageUrl) {
+          // Salvar no banco de dados com URL original da Together.ai (sem upload S3)
+          const taskId = randomUUID();
+          const imageId = randomUUID();
+          
+          // Confirmar créditos se houve reserva
+          if (reservationId) {
+            const confirmResult = await confirmCredits({
+              reservationId: reservationId,
+              modelId: model,
+              imageId: imageId,
+              description: `Geração de imagem concluída via Together.ai - ${model}`,
+            });
+
+            if (confirmResult.serverError || !confirmResult.data?.success) {
+              console.error(
+                "Erro ao confirmar créditos:",
+                confirmResult.data?.errors || confirmResult.serverError
+              );
+            }
+          }
+
+          console.log('Salvando imagem no banco com URL original da Together.ai:', {
+            imageId,
+            taskId,
+            userId,
+            imageUrl: togetherResult.imageUrl
+          });
+          
+          try {
+            await db.insert(generatedImages).values({
+              id: imageId,
+              userId,
+              taskId: taskId,
+              prompt,
+              model,
+              aspectRatio,
+              seed: seed || null,
+              steps: steps || null,
+              guidance: guidance ? guidance.toString() : null,
+              status: "completed",
+              imageUrl: togetherResult.imageUrl, // URL original da Together.ai
+              creditsUsed: modelCost.credits,
+              reservationId: reservationId,
+              completedAt: new Date(),
+              generationTimeMs: 0, // Together.ai é instantâneo
+            });
+          } catch (dbError) {
+            console.error("Erro ao salvar no banco:", dbError);
+          }
+
+          return {
+            success: true,
+            imageUrl: togetherResult.imageUrl,
+            taskId: taskId,
+            imageId: imageId,
+          };
+        } else {
+          // Se falhou com Together.ai, cancelar reserva
+          if (reservationId) {
+            await cancelReservation({
+              reservationId: reservationId,
+              reason: `Falha na geração via Together.ai - ${togetherResult.error}`,
+              userId: "",
+            });
+          }
+          
+          return {
+            success: false,
+            error: togetherResult.error || "Falha ao gerar imagem via Together.ai",
+          };
+        }
+      }
+
+      // Para outros modelos, continuar com BFL API
       // Preparar parâmetros da requisição
       const requestBody: any = {
         prompt,

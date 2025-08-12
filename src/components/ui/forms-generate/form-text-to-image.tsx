@@ -112,7 +112,7 @@ export function FormTextToImage({
     resolver: zodResolver(formTextToImageSchema),
     defaultValues: {
       prompt: "",
-      model: "flux-pro",
+      model: "flux-schnell",
       imagePublic: false,
       width: 1024,
       height: 1024,
@@ -172,7 +172,7 @@ export function FormTextToImage({
         imagePublic: data.imagePublic ?? false,
       });
 
-      if (!response.serverError && response.data?.success) {
+      if (response.serverError || !response.data?.success) {
         setStartedGeneration(false);
 
         // Cancelar reserva em caso de erro na API (usuário não foi cobrado ainda)
@@ -184,17 +184,18 @@ export function FormTextToImage({
           setCurrentReservation(null);
         }
 
-        if (response.data?.status === 429) {
+        const statusCode = Number(response.data?.status);
+        if (statusCode === 429) {
           toast.error("Rate limit exceeded. Please try again later.");
         } else if (
-          response.data?.status === 502 ||
-          response.data?.status === 503 ||
-          response.data?.status === 504
+          statusCode === 502 ||
+          statusCode === 503 ||
+          statusCode === 504
         ) {
           toast.error(
             "Service temporarily unavailable. The system is automatically retrying..."
           );
-        } else if (response.data?.status === 400) {
+        } else if (statusCode === 400) {
           toast.error("Bad request. Please check your input.");
         } else {
           const errorData = response.data?.error;
@@ -206,7 +207,25 @@ export function FormTextToImage({
 
       const result = response.data;
 
-      if (result?.taskId) {
+      // Verificar primeiro se a imagem foi gerada com sucesso (Together.ai)
+      if (result?.success && result?.imageUrl) {
+        setStartedGeneration(false);
+
+        // Nota: A confirmação de créditos será feita automaticamente via webhook
+        // quando a imagem for processada com sucesso. Isso evita race conditions.
+        if (reservation) {
+          console.log(
+            `✅ Imagem iniciada com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
+          );
+          setCurrentReservation(null);
+        }
+
+        onImageGenerated(result.imageUrl);
+        onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+        fetchCredits();
+        toast.success(t("imageGeneratedSuccess"));
+      } else if (result?.taskId) {
+        // Fallback para modelos que usam BFL API (não Together.ai)
         toast.info(t("checkingStatus"));
         onGenerationStart?.();
 
@@ -220,21 +239,6 @@ export function FormTextToImage({
               }
             : undefined
         );
-      } else if (result?.success && result?.imageUrl) {
-        setStartedGeneration(false);
-
-        // Nota: A confirmação de créditos será feita automaticamente via webhook
-        // quando a imagem for processada com sucesso. Isso evita race conditions.
-        if (reservation) {
-          console.log(
-            `✅ Imagem iniciada com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
-          );
-          setCurrentReservation(null);
-        }
-
-        onImageGenerated(result.imageUrl);
-        fetchCredits();
-        toast.success(t("imageGeneratedSuccess"));
       } else {
         setStartedGeneration(false);
 
@@ -486,9 +490,7 @@ export function FormTextToImage({
           </div>
 
           {/* Desktop Settings - Moved to end */}
-          <div className="hidden md:block">
-            {settingsContent}
-          </div>
+          <div className="hidden md:block">{settingsContent}</div>
 
           {/* Generate Button (Common for both views) */}
           <div className="space-y-2">

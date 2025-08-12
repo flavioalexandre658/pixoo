@@ -85,7 +85,7 @@ export function ImageHistoryCard({
           overflow: "hidden",
         }}
       >
-        {image.imageUrl && image.status === "ready" && !imageError ? (
+        {image.imageUrl && (image.status === "ready" || image.status === "completed") && !imageError ? (
           <Image
             src={image.imageUrl}
             alt={image.prompt}
@@ -143,7 +143,7 @@ export function ImageHistoryCard({
         })}
       </div>
       {/* Ações */}
-      {image.imageUrl && image.status === "ready" && !isSelectionMode && (
+      {image.imageUrl && (image.status === "ready" || image.status === "completed") && !isSelectionMode && (
         <div className="flex gap-1 sm:gap-2 mt-auto">
           <Button
             variant="outline"

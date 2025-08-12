@@ -147,26 +147,12 @@ function ImagePreviewComponent({
                 className="transition-transform duration-300"
                 unoptimized={true}
                 onLoad={() => {
-                  console.log("✅ Image loaded successfully:", useProxy ? "via proxy" : "direct", generatedImage);
                   setImageError(false);
                 }}
                 onError={(e) => {
-                  console.error(
-                    "❌ Image failed to load:",
-                    e,
-                    "src:",
-                    generatedImage,
-                    "useProxy:",
-                    useProxy
-                  );
-                  
                   if (!useProxy) {
-                    // Primeira tentativa falhou, tentar com proxy
-                    console.log("🔄 Tentando carregar via proxy...");
                     setUseProxy(true);
                   } else {
-                    // Proxy também falhou
-                    console.error("❌ Falha no carregamento mesmo via proxy");
                     setImageError(true);
                   }
                 }}

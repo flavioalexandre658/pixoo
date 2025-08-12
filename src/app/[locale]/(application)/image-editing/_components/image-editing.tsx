@@ -27,9 +27,12 @@ export default function ImageEditing({ models }: ImageEditingProps) {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   const handleImageGenerated = (imageUrl: string) => {
-    console.log("🖼️ handleImageGenerated called with imageUrl:", imageUrl);
     setGeneratedImage(imageUrl);
-    console.log("🖼️ generatedImage state updated to:", imageUrl);
+    // Calcular tempo de geração e atualizar histórico
+    const timeMs = generationStartTimeRef.current 
+      ? Date.now() - generationStartTimeRef.current 
+      : 0;
+    handleGenerationComplete(timeMs);
   };
 
   const [isGenerating, setIsGenerating] = useState(false);
