@@ -173,5 +173,14 @@
     "invalidFileType": "Invalid file type. Use JPG, PNG or WebP.",
     "fileTooLarge": "File too large. Maximum 10MB.",
     "uploadError": "Error uploading image"
+  },
+  "history": {
+    "title": "Image History",
+    "description": "View and manage all your generated images"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "errorLoadingHistory": "An error occurred while loading the image history.",
+    "tryAgain": "Try Again"
   }
 }

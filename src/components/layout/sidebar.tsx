@@ -10,11 +10,9 @@ import {
   Home,
   Search,
   Image,
-  ImageIcon,
   MessageSquare,
   Sparkles,
   Wand2,
-  Video,
   History,
   Menu,
   ChevronLeft,
@@ -70,12 +68,6 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
         href: "/image-editing",
         isActive: currentPath === "/image-editing",
       },
-      {
-        icon: MessageSquare,
-        label: t("imageToPrompt"),
-        href: "/image-to-prompt",
-        isActive: currentPath === "/image-to-prompt",
-      },
     ],
   },
   {
@@ -96,13 +88,14 @@ export function Sidebar({ className }: SidebarProps) {
   const [currentPath, setCurrentPath] = useState("/");
   const t = useTranslations("navigation");
   const pathname = usePathname();
-  
+
   useEffect(() => {
     // Remove locale from pathname (e.g., /pt/text-to-image -> /text-to-image)
-    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
+    const pathWithoutLocale =
+      pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
     setCurrentPath(pathWithoutLocale);
   }, [pathname]);
-  
+
   const navigationSections = getNavigationSections(t, currentPath);
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (

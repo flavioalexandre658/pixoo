@@ -144,5 +144,14 @@
     "invalidFileType": "Tipo de archivo inválido. Usa JPG, PNG o WebP.",
     "fileTooLarge": "Archivo demasiado grande. Máximo 10MB.",
     "uploadError": "Error al subir imagen"
+  },
+  "history": {
+    "title": "Historial de Imágenes",
+    "description": "Ver y gestionar todas tus imágenes generadas"
+  },
+  "errors": {
+    "somethingWentWrong": "Algo salió mal",
+    "errorLoadingHistory": "Ocurrió un error al cargar el historial de imágenes.",
+    "tryAgain": "Intentar de Nuevo"
   }
 }

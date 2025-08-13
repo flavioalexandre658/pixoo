@@ -247,5 +247,14 @@
     "historyRecords": "Histórico de Registros",
     "permanentHistory": "Histórico Permanente",
     "choosePlan": "Escolher Plano"
+  },
+  "history": {
+    "title": "Histórico de Imagens",
+    "description": "Visualize e gerencie todas as suas imagens geradas"
+  },
+  "errors": {
+    "somethingWentWrong": "Algo deu errado",
+    "errorLoadingHistory": "Ocorreu um erro ao carregar o histórico de imagens.",
+    "tryAgain": "Tentar Novamente"
   }
 }

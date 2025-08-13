@@ -314,15 +314,12 @@ export default function ImageEditing({ models }: ImageEditingProps) {
         if (currentTaskId === taskId) {
           // Reembolsar créditos em caso de timeout
           if (currentReservation) {
-            const modelCosts = {
-              "flux-dev": 10,
-              "flux-kontext-pro": 25,
-              "flux-kontext-max": 40,
-            };
-            const cost =
-              modelCosts[
-                currentReservation.modelId as keyof typeof modelCosts
-              ] || 10;
+            // Buscar o custo do modelo dinamicamente do banco de dados
+            const modelCost = models.find(
+              (model) => model.modelId === currentReservation.modelId
+            );
+            const cost = modelCost?.credits || 10; // Fallback para 10 créditos se não encontrar
+            
             refundCredits(
               cost,
               `Timeout na edição - ${currentReservation.modelId}`,
