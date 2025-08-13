@@ -51,13 +51,13 @@ import { SubscriptionRequiredModal } from "@/components/modals/subscription-requ
 import { useParams } from "next/navigation";
 
 const formImageEditingSchema = z.object({
-  prompt: z.string().min(1, "Edit instruction is required"),
+  prompt: z.string().min(1, "editInstructionRequired"),
   model: z.string(),
   imagePublic: z.boolean(),
   promptUpsampling: z.boolean(),
   seed: z.number().optional(),
   aspectRatio: z.string().optional(),
-  inputImage: z.string().min(1, "Input image is required"),
+  inputImage: z.string().min(1, "inputImageRequired"),
 });
 
 type FormImageEditingForm = z.infer<typeof formImageEditingSchema>;
@@ -83,7 +83,7 @@ export function FormImageEditing({
   onGenerationButtonClick,
   isGenerating,
 }: FormImageEditingProps) {
-  const t = useTranslations("formImageEditing");
+  const t = useTranslations("imageEditingForm");
   const {
     credits,
     hasEnoughCredits,
@@ -106,6 +106,7 @@ export function FormImageEditing({
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const { subscription } = useSubscription();
@@ -182,18 +183,18 @@ export function FormImageEditing({
   const handleFileUpload = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file");
+      toast.error(t("pleaseUploadValidImage"));
       return;
     }
 
     // Validate file size (20MB limit as per BFL docs)
     if (file.size > 20 * 1024 * 1024) {
-      toast.error("Image size must be less than 20MB");
+      toast.error(t("imageSizeMustBeLess"));
       return;
     }
 
     try {
-      toast.info("Processing image...");
+      toast.info(t("processingImage"));
 
       // Get image dimensions and calculate aspect ratio
       const dimensions = await getImageDimensions(file);
@@ -211,10 +212,10 @@ export function FormImageEditing({
 
       setUploadedImage(imageUrl);
       form.setValue("inputImage", base64Data);
-      toast.success(`Image processed successfully (${aspectRatio})`);
+      toast.success(`${t("imageProcessedSuccessfully")} (${aspectRatio})`);
     } catch (error) {
       console.error("Error processing image:", error);
-      toast.error("Failed to process image");
+      toast.error(t("failedToProcessImage"));
     }
   };
 
@@ -277,17 +278,17 @@ export function FormImageEditing({
     const currentInputImage = form.getValues("inputImage");
 
     if (!currentPrompt.trim()) {
-      toast.error("Digite um prompt primeiro");
+      toast.error(t("enterPromptFirst"));
       return;
     }
 
     if (!currentInputImage) {
-      toast.error("Faça upload de uma imagem primeiro");
+      toast.error(t("uploadImageFirst"));
       return;
     }
 
     setIsOptimizingPrompt(true);
-    toast.info("Otimizando prompt para edição de imagem...");
+    toast.info(t("optimizingPromptForImageEditing"));
 
     try {
       const result = await executeOptimizePrompt({
@@ -299,13 +300,13 @@ export function FormImageEditing({
 
       if (result?.data?.success && result.data.optimizedPrompt) {
         form.setValue("prompt", result.data.optimizedPrompt);
-        toast.success("Prompt otimizado com sucesso para edição de imagem!");
+        toast.success(t("promptOptimizedSuccessfully"));
       } else {
-        toast.error(result?.data?.error || "Erro ao otimizar prompt");
+        toast.error(result?.data?.error || t("errorOptimizingPrompt"));
       }
     } catch (error) {
       console.error("Error optimizing prompt:", error);
-      toast.error("Erro ao otimizar prompt");
+      toast.error(t("errorOptimizingPrompt"));
     } finally {
       setIsOptimizingPrompt(false);
     }
@@ -325,7 +326,13 @@ export function FormImageEditing({
     // Verificar se o modelo selecionado requer créditos
     const selectedModel = models.find((m) => m.modelId === data.model);
     if (!selectedModel) {
-      toast.error("Modelo não encontrado");
+      toast.error(t("modelNotFound"));
+      return false;
+    }
+
+    // Sempre exibir modal de planos se não tiver assinatura ativa
+    if (!subscription) {
+      setShowPlansModal(true);
       return false;
     }
 
@@ -345,7 +352,7 @@ export function FormImageEditing({
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
-          `Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`
+          t("insufficientCreditsModel", { credits: selectedModel.credits })
         );
         setStartedGeneration(false);
         return false;
@@ -357,7 +364,7 @@ export function FormImageEditing({
       // Validate that if "auto" is selected, we have a detected aspect ratio
       if (data.aspectRatio === "auto" && !detectedAspectRatio) {
         toast.error(
-          "Please upload an image to use auto aspect ratio detection"
+          t("pleaseUploadImageForAuto")
         );
         setStartedGeneration(false);
         return false;
@@ -390,14 +397,14 @@ export function FormImageEditing({
         if (reservation) {
           await cancelReservation(
             reservation.reservationId,
-            "Falha na API de edição"
+            t("apiEditingFailure")
           );
           setCurrentReservation(null);
         }
 
         const errorData = response.data?.error || response.serverError;
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-        throw new Error(errorData || "Failed to edit image");
+        throw new Error(errorData || t("failedToEditImage"));
       }
 
       const result = response.data;
@@ -411,9 +418,9 @@ export function FormImageEditing({
           result.taskId,
           reservation
             ? {
-                reservationId: reservation.reservationId,
-                modelId: selectedModel.modelId,
-              }
+              reservationId: reservation.reservationId,
+              modelId: selectedModel.modelId,
+            }
             : undefined
         );
       } else if (result?.success) {
@@ -423,7 +430,7 @@ export function FormImageEditing({
         // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
           console.log(
-            `✅ Edição concluída com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
+            `✅ ${t("editingCompletedSuccessfully")} ${reservation.reservationId}`
           );
           setCurrentReservation(null);
         }
@@ -437,13 +444,13 @@ export function FormImageEditing({
         if (reservation) {
           await cancelReservation(
             reservation.reservationId,
-            "Resposta inválida do servidor"
+            t("invalidServerResponse")
           );
           setCurrentReservation(null);
         }
 
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-        throw new Error("Invalid response from server");
+        throw new Error(t("invalidServerResponse"));
       }
     } catch (error: any) {
       setStartedGeneration(false);
@@ -452,7 +459,7 @@ export function FormImageEditing({
       if (currentReservation) {
         await cancelReservation(
           currentReservation.reservationId,
-          `Erro na edição: ${error.message}`
+          `${t("editingError")} ${error.message}`
         );
         setCurrentReservation(null);
       }
@@ -509,14 +516,14 @@ export function FormImageEditing({
                     Auto{" "}
                     {detectedAspectRatio
                       ? `(${detectedAspectRatio})`
-                      : "(detect from image)"}
+                      : t("autoDetectFromImage")}
                   </SelectItem>
-                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                  <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
-                  <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                  <SelectItem value="4:3">4:3 (Standard)</SelectItem>
-                  <SelectItem value="3:4">3:4 (Portrait)</SelectItem>
-                  <SelectItem value="21:9">21:9 (Ultrawide)</SelectItem>
+                  <SelectItem value="1:1">1:1 ({t("square")})</SelectItem>
+                  <SelectItem value="16:9">16:9 ({t("landscape")})</SelectItem>
+                  <SelectItem value="9:16">9:16 ({t("portrait")})</SelectItem>
+                  <SelectItem value="4:3">4:3 ({t("standard")})</SelectItem>
+                  <SelectItem value="3:4">3:4 ({t("portrait")})</SelectItem>
+                  <SelectItem value="21:9">21:9 ({t("ultrawide")})</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -536,9 +543,9 @@ export function FormImageEditing({
             {/* Prompt Upsampling */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="promptUpsampling">Prompt Upsampling</Label>
+                <Label htmlFor="promptUpsampling">{t("promptUpsampling")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Modifica automaticamente o prompt para geração mais criativa
+                  {t("promptUpsamplingDescription")}
                 </p>
               </div>
               <Switch
@@ -569,32 +576,64 @@ export function FormImageEditing({
 
   return (
     <>
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
-          {t("title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Mobile View */}
-          <div className="md:hidden space-y-4">
-            <div className="flex items-center gap-2">
-              <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t("advancedOptions")}</DialogTitle>
-                  </DialogHeader>
-                  {settingsContent}
-                </DialogContent>
-              </Dialog>
-              <div className="flex-grow">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            {t("title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+              <div className="flex items-center gap-2">
+                <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Settings className="h-5 w-5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t("advancedOptions")}</DialogTitle>
+                    </DialogHeader>
+                    {settingsContent}
+                  </DialogContent>
+                </Dialog>
+                <div className="flex-grow">
+                  <Select
+                    value={form.watch("model")}
+                    onValueChange={(value) => form.setValue("model", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {models.map((model) => (
+                        <SelectItem key={model.modelId} value={model.modelId}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{model.modelName}</span>
+                            <div className="flex items-center gap-2 ml-2">
+                              {model.credits > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {model.credits} {t("credits")}
+                              </span>
+                            )}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="model">{t("modelSelection")}</Label>
                 <Select
                   value={form.watch("model")}
                   onValueChange={(value) => form.setValue("model", value)}
@@ -608,14 +647,9 @@ export function FormImageEditing({
                         <div className="flex items-center justify-between w-full">
                           <span>{model.modelName}</span>
                           <div className="flex items-center gap-2 ml-2">
-                            {!model.credits && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                Free
-                              </span>
-                            )}
                             {model.credits > 0 && (
                               <span className="text-xs text-muted-foreground">
-                                {model.credits} credits
+                                {model.credits} {t("credits")}
                               </span>
                             )}
                           </div>
@@ -624,243 +658,201 @@ export function FormImageEditing({
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedModel && selectedModel.credits > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {t("costCredits", { credits: selectedModel.credits })}
+                  </p>
+                )}
               </div>
             </div>
-          </div>
 
-          {/* Desktop View */}
-          <div className="hidden md:block space-y-6">
+            {/* Image Upload */}
             <div className="space-y-2">
-              <Label htmlFor="model">{t("modelSelection")}</Label>
-              <Select
-                value={form.watch("model")}
-                onValueChange={(value) => form.setValue("model", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model) => (
-                    <SelectItem key={model.modelId} value={model.modelId}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{model.modelName}</span>
-                        <div className="flex items-center gap-2 ml-2">
-                          {!model.credits && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              Free
-                            </span>
-                          )}
-                          {model.credits > 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              {model.credits} credits
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedModel && selectedModel.credits > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {t("costCredits", { credits: selectedModel.credits })}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <Label>{t("inputImage")}</Label>
-            {!uploadedImage ? (
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragging
+              <Label>{t("inputImage")}</Label>
+              {!uploadedImage ? (
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging
                     ? "border-primary bg-primary/5"
                     : "border-muted-foreground/25 hover:border-muted-foreground/50"
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div className="p-4 rounded-full bg-muted">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-4 rounded-full bg-muted">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{t("dragDropImage")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("supportedFormats")}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      {t("selectImage")}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">{t("dragDropImage")}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("supportedFormats")}
-                    </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
+                </div>
+              ) : (
+                <div className="relative border rounded-lg overflow-hidden">
+                  <div className="aspect-video relative">
+                    <Image
+                      src={uploadedImage}
+                      alt={t("uploadedImage")}
+                      fill
+                      className="object-contain"
+                    />
                   </div>
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={removeUploadedImage}
                   >
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    {t("selectImage")}
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileInputChange}
-                />
-              </div>
-            ) : (
-              <div className="relative border rounded-lg overflow-hidden">
-                <div className="aspect-video relative">
-                  <Image
-                    src={uploadedImage}
-                    alt="Uploaded image"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={removeUploadedImage}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            {form.formState.errors.inputImage && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.inputImage.message}
-              </p>
-            )}
-          </div>
-
-          {/* Prompt (Common for both views) */}
-          <div className="space-y-2">
-            <Label htmlFor="prompt">{t("prompt")}</Label>
-            <div className="relative">
-              <Textarea
-                id="prompt"
-                placeholder={t("promptPlaceholder")}
-                className="min-h-[100px] resize-none pr-12"
-                {...form.register("prompt")}
-              />
-              {form.watch("prompt")?.trim() && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 h-8 w-8 p-0"
-                  onClick={handleOptimizePrompt}
-                  disabled={isOptimizingPrompt}
-                  title="Otimizar prompt com IA"
-                >
-                  {isOptimizingPrompt ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                  ) : (
-                    <Zap className="h-4 w-4" />
-                  )}
-                </Button>
+              )}
+              {form.formState.errors.inputImage && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.inputImage.message}
+                </p>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("promptDescription")} • Prompts em inglês geram melhores
-              resultados.
-            </p>
-            {form.formState.errors.prompt && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.prompt.message}
-              </p>
-            )}
-          </div>
 
-          {/* Desktop Settings - Moved to end */}
-          <div className="hidden md:block">{settingsContent}</div>
-
-          {/* Generate Button (Common for both views) */}
-          <div>
-            {selectedModel && selectedModel.credits > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Custo:</span>
-                <div className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  <span
-                    className={
-                      hasEnoughCredits(selectedModel.credits)
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }
+            {/* Prompt (Common for both views) */}
+            <div className="space-y-2">
+              <Label htmlFor="prompt">{t("prompt")}</Label>
+              <div className="relative">
+                <Textarea
+                  id="prompt"
+                  placeholder={t("promptPlaceholder")}
+                  className="min-h-[100px] resize-none pr-12"
+                  {...form.register("prompt")}
+                />
+                {form.watch("prompt")?.trim() && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 h-8 w-8 p-0"
+                    onClick={handleOptimizePrompt}
+                    disabled={isOptimizingPrompt}
+                    title={t("optimizePromptWithAI")}
                   >
-                    {selectedModel.credits} créditos
-                  </span>
-                </div>
+                    {isOptimizingPrompt ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                    ) : (
+                      <Zap className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
               </div>
-            )}
-            {credits && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Saldo:</span>
-                <div className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  <span>{credits.balance} créditos</span>
-                </div>
-              </div>
-            )}
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={
-                isGenerating ||
-                startedGeneration ||
-                !form.watch("inputImage") ||
-                (selectedModel &&
-                  selectedModel.credits > 0 &&
-                  !hasEnoughCredits(selectedModel.credits))
-              }
-            >
-              {isGenerating || startedGeneration ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  {t("editing")}
-                </>
-              ) : selectedModel &&
-                selectedModel.credits > 0 &&
-                !hasEnoughCredits(selectedModel.credits) ? (
-                <>
-                  <Coins className="mr-2" />
-                  Créditos insuficientes
-                </>
-              ) : (
-                <>
-                  <WandSparkles className="mr-2" />
-                  {t("editImage")}
-                  {selectedModel && selectedModel.credits > 0 && (
-                    <span className="ml-2 opacity-75">
-                      (-{selectedModel.credits})
-                    </span>
-                  )}
-                </>
+              <p className="text-xs text-muted-foreground">
+                {t("promptDescription")} • {t("englishPromptsWork")}
+              </p>
+              {form.formState.errors.prompt && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.prompt.message}
+                </p>
               )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+            </div>
 
-    {/* Modals */}
-    <AuthRequiredModal 
-      isOpen={showAuthModal} 
-      onClose={() => setShowAuthModal(false)}
-      locale={locale}
-    />
-    <SubscriptionRequiredModal 
-      isOpen={showSubscriptionModal} 
-      onClose={() => setShowSubscriptionModal(false)}
-      locale={locale}
-    />
+            {/* Desktop Settings - Moved to end */}
+            <div className="hidden md:block">{settingsContent}</div>
+
+            {/* Generate Button (Common for both views) */}
+            <div>
+              {selectedModel && selectedModel.credits > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{t("cost")}</span>
+                  <div className="flex items-center gap-1">
+                    <Coins className="h-4 w-4" />
+                    <span
+                      className={
+                        hasEnoughCredits(selectedModel.credits)
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      {selectedModel.credits} {t("credits")}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={
+                  isGenerating ||
+                  startedGeneration ||
+                  !form.watch("inputImage") ||
+                  (selectedModel &&
+                    selectedModel.credits > 0 &&
+                    !hasEnoughCredits(selectedModel.credits))
+                }
+              >
+                {isGenerating || startedGeneration ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    {t("editing")}
+                  </>
+                ) : selectedModel &&
+                  selectedModel.credits > 0 &&
+                  !hasEnoughCredits(selectedModel.credits) ? (
+                  <>
+                    <Coins className="mr-2" />
+                    {t("insufficientCreditsButton")}
+                  </>
+                ) : (
+                  <>
+                    <WandSparkles className="mr-2" />
+                    {t("editImage")}
+                    {selectedModel && selectedModel.credits > 0 && (
+                      <span className="ml-2 opacity-75">
+                        (-{selectedModel.credits})
+                      </span>
+                    )}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        locale={locale}
+      />
+      <SubscriptionRequiredModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        locale={locale}
+      />
+      <SubscriptionRequiredModal
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        locale={locale}
+      />
     </>
   );
 }

@@ -1,5 +1,5 @@
 export const MODEL_COSTS = {
-  "flux-schnell": { credits: 0, name: "Pixoo Free" },
+  "flux-schnell": { credits: 1, name: "Pixoo Init" },
   "flux-dev": { credits: 2, name: "Pixoo Gen" },
   "flux-pro": { credits: 5, name: "Pixoo Pro" },
   "flux-pro-1.1": { credits: 5, name: "Pixoo Pro Max" },

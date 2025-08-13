@@ -100,7 +100,7 @@ export function Header({ className }: HeaderProps) {
                       src={session?.user?.image || "/avatars/01.png"}
                       alt={session?.user?.name}
                     />
-                    <AvatarFallback>{session?.user?.name}</AvatarFallback>
+                    <AvatarFallback>{session?.user?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -136,8 +136,8 @@ export function Header({ className }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="relative h-8 w-8 rounded-full"
               onClick={handleSignIn}
             >

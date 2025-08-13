@@ -10,10 +10,10 @@ export default async function ImageEditingPage() {
     models = res.data.result || [];
   }
 
-  // Filter models to only allow flux-dev, flux-kontext-pro, and flux-kontext-max
   const allowedModels = models.filter((model: ModelCost) =>
     ["flux-kontext-pro", "flux-kontext-max"].includes(model.modelId)
   );
+
 
   return <ImageEditing models={allowedModels} />;
 }

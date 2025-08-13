@@ -48,7 +48,7 @@ import { SubscriptionRequiredModal } from "@/components/modals/subscription-requ
 import { useParams } from "next/navigation";
 
 const formTextToImageSchema = z.object({
-  prompt: z.string().min(1, "Prompt is required"),
+  prompt: z.string().min(1, "promptRequired"),
   model: z.string(),
   imagePublic: z.boolean(),
   promptUpsampling: z.boolean(),
@@ -85,7 +85,7 @@ export function FormTextToImage({
   isGenerating,
   promptValue,
 }: FormTextToImageProps) {
-  const t = useTranslations("formTextToImage");
+  const t = useTranslations("textToImageForm");
   const {
     credits,
     hasEnoughCredits,
@@ -103,6 +103,7 @@ export function FormTextToImage({
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
   const { data: session } = useSession();
   const { subscription } = useSubscription();
   const params = useParams();
@@ -161,12 +162,12 @@ export function FormTextToImage({
     const currentModel = form.getValues("model");
 
     if (!currentPrompt.trim()) {
-      toast.error("Digite um prompt primeiro");
+      toast.error(t("enterPromptFirst"));
       return;
     }
 
     setIsOptimizingPrompt(true);
-    toast.info("Otimizando prompt...");
+    toast.info(t("optimizingPrompt"));
 
     try {
       const result = await executeOptimizePrompt({
@@ -176,13 +177,13 @@ export function FormTextToImage({
 
       if (result?.data?.success && result.data.optimizedPrompt) {
         form.setValue("prompt", result.data.optimizedPrompt);
-        toast.success("Prompt otimizado com sucesso!");
+        toast.success(t("promptOptimizedSuccessfully"));
       } else {
-        toast.error(result?.data?.error || "Erro ao otimizar prompt");
+        toast.error(result?.data?.error || t("errorOptimizingPrompt"));
       }
     } catch (error) {
       console.error("Error optimizing prompt:", error);
-      toast.error("Erro ao otimizar prompt");
+      toast.error(t("errorOptimizingPrompt"));
     } finally {
       setIsOptimizingPrompt(false);
     }
@@ -202,7 +203,13 @@ export function FormTextToImage({
     // Verificar se o modelo selecionado requer créditos
     const selectedModel = models.find((m) => m.modelId === data.model);
     if (!selectedModel) {
-      toast.error("Modelo não encontrado");
+      toast.error(t("modelNotFound"));
+      return false;
+    }
+
+    // Sempre exibir modal de planos se não tiver assinatura ativa
+    if (!subscription) {
+      setShowPlansModal(true);
       return false;
     }
 
@@ -222,7 +229,7 @@ export function FormTextToImage({
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
-          `Créditos insuficientes. Você precisa de ${selectedModel.credits} créditos para usar este modelo.`
+          t("insufficientCreditsModel", { credits: selectedModel.credits })
         );
         setStartedGeneration(false);
         return false;
@@ -255,7 +262,7 @@ export function FormTextToImage({
         if (reservation) {
           await cancelReservation(
             reservation.reservationId,
-            `Falha na API de geração - Status ${response.data?.status}`
+            t("apiGenerationFailure")
           );
           setCurrentReservation(null);
         }
@@ -276,7 +283,7 @@ export function FormTextToImage({
         } else {
           const errorData = response.data?.error;
           onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-          throw new Error(errorData || "Failed to generate image");
+          throw new Error(errorData || t("failedToGenerateImage"));
         }
         return;
       }
@@ -291,7 +298,7 @@ export function FormTextToImage({
         // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
           console.log(
-            `✅ Imagem iniciada com sucesso. Créditos serão confirmados via webhook para reserva: ${reservation.reservationId}`
+            `✅ ${t("generationCompletedSuccessfully")} ${reservation.reservationId}`
           );
           setCurrentReservation(null);
         }
@@ -310,9 +317,9 @@ export function FormTextToImage({
           result.taskId,
           reservation
             ? {
-                reservationId: reservation.reservationId,
-                modelId: selectedModel.modelId,
-              }
+              reservationId: reservation.reservationId,
+              modelId: selectedModel.modelId,
+            }
             : undefined
         );
       } else {
@@ -322,13 +329,13 @@ export function FormTextToImage({
         if (reservation) {
           await cancelReservation(
             reservation.reservationId,
-            "Resposta inválida do servidor"
+            t("invalidServerResponse")
           );
           setCurrentReservation(null);
         }
 
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
-        throw new Error("Invalid response from server");
+        throw new Error(t("invalidServerResponse"));
       }
     } catch (error: any) {
       setStartedGeneration(false);
@@ -337,7 +344,7 @@ export function FormTextToImage({
       if (currentReservation) {
         await cancelReservation(
           currentReservation.reservationId,
-          `Erro na geração: ${error.message}`
+          t("generationError", { error: error.message })
         );
         setCurrentReservation(null);
       }
@@ -433,9 +440,9 @@ export function FormTextToImage({
             {/* Prompt Upsampling */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="promptUpsampling">Prompt Upsampling</Label>
+                <Label htmlFor="promptUpsampling">{t("promptUpsampling")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Modifica automaticamente o prompt para geração mais criativa
+                  {t("promptUpsamplingDescription")}
                 </p>
               </div>
               <Switch
@@ -466,32 +473,64 @@ export function FormTextToImage({
 
   return (
     <>
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
-          {t("title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Mobile View */}
-          <div className="md:hidden space-y-4">
-            <div className="flex items-center gap-2">
-              <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t("advancedOptions")}</DialogTitle>
-                  </DialogHeader>
-                  {settingsContent}
-                </DialogContent>
-              </Dialog>
-              <div className="flex-grow">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            {t("title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+              <div className="flex items-center gap-2">
+                <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Settings className="h-5 w-5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t("advancedOptions")}</DialogTitle>
+                    </DialogHeader>
+                    {settingsContent}
+                  </DialogContent>
+                </Dialog>
+                <div className="flex-grow">
+                  <Select
+                    value={form.watch("model")}
+                    onValueChange={(value) => form.setValue("model", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {models.map((model) => (
+                        <SelectItem key={model.modelId} value={model.modelId}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{model.modelName}</span>
+                            <div className="flex items-center gap-2 ml-2">
+                              {model.credits > 0 && (
+                                <span className="text-xs text-muted-foreground">
+                                  {model.credits} {t("credits")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="model">{t("modelSelection")}</Label>
                 <Select
                   value={form.watch("model")}
                   onValueChange={(value) => form.setValue("model", value)}
@@ -505,14 +544,9 @@ export function FormTextToImage({
                         <div className="flex items-center justify-between w-full">
                           <span>{model.modelName}</span>
                           <div className="flex items-center gap-2 ml-2">
-                            {!model.credits && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                Free
-                              </span>
-                            )}
                             {model.credits > 0 && (
                               <span className="text-xs text-muted-foreground">
-                                {model.credits} credits
+                                {model.credits} {t("credits")}
                               </span>
                             )}
                           </div>
@@ -521,173 +555,133 @@ export function FormTextToImage({
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedModel && selectedModel.credits > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {t("costCredits", { credits: selectedModel.credits })}
+                  </p>
+                )}
               </div>
             </div>
-          </div>
 
-          {/* Desktop View */}
-          <div className="hidden md:block space-y-6">
+            {/* Prompt (Common for both views) */}
             <div className="space-y-2">
-              <Label htmlFor="model">{t("modelSelection")}</Label>
-              <Select
-                value={form.watch("model")}
-                onValueChange={(value) => form.setValue("model", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model) => (
-                    <SelectItem key={model.modelId} value={model.modelId}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{model.modelName}</span>
-                        <div className="flex items-center gap-2 ml-2">
-                          {!model.credits && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              Free
-                            </span>
-                          )}
-                          {model.credits > 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              {model.credits} credits
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedModel && selectedModel.credits > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {t("costCredits", { credits: selectedModel.credits })}
+              <Label htmlFor="prompt">{t("prompt")}</Label>
+              <div className="relative">
+                <Textarea
+                  id="prompt"
+                  placeholder={t("promptPlaceholder")}
+                  className="min-h-[100px] resize-none pr-12"
+                  {...form.register("prompt")}
+                />
+                {form.watch("prompt")?.trim() && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 h-8 w-8 p-0"
+                    onClick={handleOptimizePrompt}
+                    disabled={isOptimizingPrompt}
+                    title={t("optimizePromptWithAI")}
+                  >
+                    {isOptimizingPrompt ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                    ) : (
+                      <Zap className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 {t("englishPromptsWork")}
+              </p>
+              {form.formState.errors.prompt && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.prompt.message}
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Prompt (Common for both views) */}
-          <div className="space-y-2">
-            <Label htmlFor="prompt">{t("prompt")}</Label>
-            <div className="relative">
-              <Textarea
-                id="prompt"
-                placeholder={t("promptPlaceholder")}
-                className="min-h-[100px] resize-none pr-12"
-                {...form.register("prompt")}
-              />
-              {form.watch("prompt")?.trim() && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 h-8 w-8 p-0"
-                  onClick={handleOptimizePrompt}
-                  disabled={isOptimizingPrompt}
-                  title="Otimizar prompt com IA"
-                >
-                  {isOptimizingPrompt ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                  ) : (
-                    <Zap className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              💡 Prompts em inglês tendem a produzir melhores resultados
-            </p>
-            {form.formState.errors.prompt && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.prompt.message}
-              </p>
-            )}
-          </div>
+            {/* Desktop Settings - Moved to end */}
+            <div className="hidden md:block">{settingsContent}</div>
 
-          {/* Desktop Settings - Moved to end */}
-          <div className="hidden md:block">{settingsContent}</div>
-
-          {/* Generate Button (Common for both views) */}
-          <div className="space-y-2">
-            {selectedModel && selectedModel.credits > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Custo:</span>
-                <div className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  <span
-                    className={
-                      hasEnoughCredits(selectedModel.credits)
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }
-                  >
-                    {selectedModel.credits} créditos
-                  </span>
-                </div>
-              </div>
-            )}
-            {credits && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Saldo:</span>
-                <div className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  <span>{credits.balance} créditos</span>
-                </div>
-              </div>
-            )}
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={
-                isGenerating ||
-                startedGeneration ||
-                // creditsLoading ||
-                (selectedModel &&
-                  selectedModel.credits > 0 &&
-                  !hasEnoughCredits(selectedModel.credits))
-              }
-            >
-              {isGenerating || startedGeneration ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  {t("generating")}
-                </>
-              ) : selectedModel &&
-                selectedModel.credits > 0 &&
-                !hasEnoughCredits(selectedModel.credits) ? (
-                <>
-                  <Coins className="mr-2" />
-                  Créditos insuficientes
-                </>
-              ) : (
-                <>
-                  <WandSparkles className="mr-2" />
-                  {t("generateImage")}
-                  {selectedModel && selectedModel.credits > 0 && (
-                    <span className="ml-2 opacity-75">
-                      (-{selectedModel.credits})
+            {/* Generate Button (Common for both views) */}
+            <div className="space-y-2">
+              {selectedModel && selectedModel.credits > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{t("cost")}</span>
+                  <div className="flex items-center gap-1">
+                    <Coins className="h-4 w-4" />
+                    <span
+                      className={
+                        hasEnoughCredits(selectedModel.credits)
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      {selectedModel.credits} {t("credits")}
                     </span>
-                  )}
-                </>
+                  </div>
+                </div>
               )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
 
-    {/* Modals */}
-    <AuthRequiredModal 
-      isOpen={showAuthModal} 
-      onClose={() => setShowAuthModal(false)}
-      locale={locale}
-    />
-    <SubscriptionRequiredModal 
-      isOpen={showSubscriptionModal} 
-      onClose={() => setShowSubscriptionModal(false)}
-      locale={locale}
-    />
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={
+                  isGenerating ||
+                  startedGeneration ||
+                  // creditsLoading ||
+                  (selectedModel &&
+                    selectedModel.credits > 0 &&
+                    !hasEnoughCredits(selectedModel.credits))
+                }
+              >
+                {isGenerating || startedGeneration ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    {t("generating")}
+                  </>
+                ) : selectedModel &&
+                  selectedModel.credits > 0 &&
+                  !hasEnoughCredits(selectedModel.credits) ? (
+                  <>
+                    <Coins className="mr-2" />
+                    {t("insufficientCreditsButton")}
+                  </>
+                ) : (
+                  <>
+                    <WandSparkles className="mr-2" />
+                    {t("generateImage")}
+                    {selectedModel && selectedModel.credits > 0 && (
+                      <span className="ml-2 opacity-75">
+                        (-{selectedModel.credits})
+                      </span>
+                    )}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        locale={locale}
+      />
+      <SubscriptionRequiredModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        locale={locale}
+      />
+      <SubscriptionRequiredModal
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        locale={locale}
+      />
     </>
   );
 }

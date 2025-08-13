@@ -7,8 +7,12 @@ import { getModelCost } from "@/actions/credits/get/get-model-cost.action";
 import { CreditsMiddleware } from "@/lib/credits-middleware";
 import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action";
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
-import { eq } from "drizzle-orm";
+import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
+import { spendFreeCredits } from "@/actions/credits/spend/spend-free-credits.action";
+import { renewDailyFreeCredits } from "@/actions/credits/renew/renew-daily-free-credits.action";
+import { eq, and } from "drizzle-orm";
 import { validateBFLDimensions } from "@/lib/utils";
+import { subscriptions } from "@/db/schema";
 
 const BFL_API_KEY =
   process.env.BFL_API_KEY || "42dbe2e7-b294-49af-89e4-3ef00d616cc5";
@@ -102,9 +106,72 @@ export async function POST(request: NextRequest) {
 
     const modelCost = modelCostResult.data.result;
 
-    // Reservar créditos se necessário
+    // Verificar se o usuário tem plano ativo
+    const activeSubscription = await db.query.subscriptions.findFirst({
+      where: and(
+        eq(subscriptions.userId, session.user.id),
+        eq(subscriptions.status, 'active')
+      ),
+    });
+
+    // Reservar créditos ou usar créditos gratuitos
     let reservationId: string | null = null;
-    if (modelCost.credits > 0) {
+    let usedFreeCredits = false;
+
+    // Se é flux-schnell e não tem plano ativo, tentar usar créditos gratuitos
+    if (model === 'flux-schnell' && !activeSubscription) {
+      try {
+        // Verificar créditos gratuitos disponíveis
+        const freeCreditsResult = await getUserFreeCredits({});
+        
+        if (freeCreditsResult?.data?.success) {
+          const freeCreditsData = freeCreditsResult.data.data;
+          
+          // Se pode renovar, renovar automaticamente
+          if (freeCreditsData?.canRenew) {
+            await renewDailyFreeCredits({});
+          }
+          
+          // Tentar usar créditos gratuitos
+          if ((freeCreditsData?.freeCreditsBalance && freeCreditsData.freeCreditsBalance > 0) || freeCreditsData?.canRenew) {
+            const spendResult = await spendFreeCredits({
+              modelId: model,
+              description: `Geração de imagem gratuita - ${model}`,
+            });
+            
+            if (spendResult?.data?.success) {
+              usedFreeCredits = true;
+              console.log(`✅ Crédito gratuito usado para ${model}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Erro ao processar créditos gratuitos:", error);
+      }
+    }
+
+    // Se não usou créditos gratuitos e o modelo tem custo, reservar créditos normais
+    if (!usedFreeCredits && modelCost.credits > 0) {
+      // Se é flux-schnell e não tem plano ativo, bloquear uso de créditos pagos
+      if (model === 'flux-schnell' && !activeSubscription) {
+        return NextResponse.json(
+          {
+            error: "Créditos gratuitos esgotados. Aguarde a renovação diária ou assine um plano para continuar.",
+          },
+          { status: 402 }
+        );
+      }
+
+      // Se não tem plano ativo e não é flux-schnell, bloquear
+      if (!activeSubscription && model !== 'flux-schnell') {
+        return NextResponse.json(
+          {
+            error: "Este modelo requer um plano ativo. Assine um plano para usar modelos premium.",
+          },
+          { status: 402 }
+        );
+      }
+
       await CreditsMiddleware.ensureUserCredits(session.user.id);
 
       try {
@@ -334,6 +401,8 @@ export async function POST(request: NextRequest) {
           console.error("❌ Erro ao confirmar créditos:", error);
           // Não falhar a resposta por erro de créditos, mas logar
         }
+      } else if (usedFreeCredits) {
+        console.log(`✅ Crédito gratuito processado para ${model}`);
       }
 
       return NextResponse.json({

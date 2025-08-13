@@ -21,6 +21,46 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            // Criar registro de créditos iniciais para novos usuários
+            await db.insert(schemas.userCredits).values({
+              id: crypto.randomUUID(),
+              userId: user.id,
+              balance: 0,
+              totalEarned: 0,
+              totalSpent: 0,
+              freeCreditsBalance: 5,
+              lastFreeCreditsRenewal: new Date(),
+            });
+
+            // Registrar transação inicial
+            await db.insert(schemas.creditTransactions).values({
+              id: crypto.randomUUID(),
+              userId: user.id,
+              type: 'bonus',
+              amount: 5,
+              description: 'Créditos gratuitos de boas-vindas - flux-schnell',
+              balanceAfter: 0, // Balance normal permanece 0
+              metadata: JSON.stringify({ 
+                freeCreditsBalance: 5,
+                initialCredits: true 
+              }),
+              createdAt: new Date(),
+            });
+
+            console.log(`✅ Créditos gratuitos iniciais criados para usuário ${user.id}`);
+          } catch (error) {
+            console.error(`❌ Erro ao criar créditos iniciais para usuário ${user.id}:`, error);
+            // Não lançar erro para não quebrar o fluxo de criação do usuário
+          }
+        },
+      },
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;
