@@ -17,9 +17,9 @@
   "navigation": {
     "home": "Início",
     "explore": "Explorar",
-    "textToImage": "Texto para Imagem",
-    "imageToImage": "Imagem para Imagem",
-    "imageToPrompt": "Imagem para Prompt",
+    "textToImage": "Criar Imagem",
+    "imageEditing": "Edição de Imagem",
+    "imageToPrompt": "Prompt de Imagem",
     "fluxLora": "Flux Lora",
     "fluxTools": "Ferramentas Flux",
     "fluxDesigner": "Flux Designer",

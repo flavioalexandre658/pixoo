@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -37,20 +38,20 @@ interface NavSection {
   items: NavItem[];
 }
 
-const getNavigationSections = (t: any): NavSection[] => [
+const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
   {
     items: [
       {
         icon: Home,
         label: t("home"),
         href: "/",
-        isActive: false,
+        isActive: currentPath === "/",
       },
       {
         icon: Search,
         label: t("explore"),
         href: "/explore",
-        isActive: false,
+        isActive: currentPath === "/explore",
       },
     ],
   },
@@ -61,65 +62,19 @@ const getNavigationSections = (t: any): NavSection[] => [
         icon: Image,
         label: t("textToImage"),
         href: "/text-to-image",
-        isActive: true,
-      },
-      {
-        icon: ImageIcon,
-        label: t("imageToImage"),
-        href: "/image-to-image",
-        isActive: false,
+        isActive: currentPath === "/text-to-image",
       },
       {
         icon: Wand2,
-        label: "Image Editing",
+        label: t("imageEditing"),
         href: "/image-editing",
-        isActive: false,
+        isActive: currentPath === "/image-editing",
       },
       {
         icon: MessageSquare,
         label: t("imageToPrompt"),
         href: "/image-to-prompt",
-        isActive: false,
-      },
-      {
-        icon: Sparkles,
-        label: t("fluxLora"),
-        href: "/flux-lora",
-        isActive: false,
-      },
-      {
-        icon: Wand2,
-        label: t("fluxTools"),
-        href: "/flux-tools",
-        isActive: false,
-      },
-    ],
-  },
-  {
-    title: "Flux Designer",
-    items: [
-      {
-        icon: Sparkles,
-        label: t("fluxDesigner"),
-        href: "/flux-designer",
-        isActive: false,
-      },
-    ],
-  },
-  {
-    title: "Video AI",
-    items: [
-      {
-        icon: Video,
-        label: t("textToVideo"),
-        href: "/text-to-video",
-        isActive: false,
-      },
-      {
-        icon: Video,
-        label: t("imageToVideo"),
-        href: "/image-to-video",
-        isActive: false,
+        isActive: currentPath === "/image-to-prompt",
       },
     ],
   },
@@ -130,7 +85,7 @@ const getNavigationSections = (t: any): NavSection[] => [
         icon: History,
         label: t("history"),
         href: "/history",
-        isActive: false,
+        isActive: currentPath === "/history",
       },
     ],
   },
@@ -138,20 +93,35 @@ const getNavigationSections = (t: any): NavSection[] => [
 
 export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [currentPath, setCurrentPath] = useState("/");
   const t = useTranslations("navigation");
-  const navigationSections = getNavigationSections(t);
+  const pathname = usePathname();
+  
+  useEffect(() => {
+    // Remove locale from pathname (e.g., /pt/text-to-image -> /text-to-image)
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
+    setCurrentPath(pathWithoutLocale);
+  }, [pathname]);
+  
+  const navigationSections = getNavigationSections(t, currentPath);
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
-      <div className={cn(
-        "flex items-center border-b",
-        isCollapsed && !isMobile ? "justify-center p-2" : "justify-between p-4"
-      )}>
-        <div className={cn(
-          "flex items-center",
-          isCollapsed && !isMobile ? "justify-center" : "gap-2"
-        )}>
+      <div
+        className={cn(
+          "flex items-center border-b",
+          isCollapsed && !isMobile
+            ? "justify-center p-2"
+            : "justify-between p-4"
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center",
+            isCollapsed && !isMobile ? "justify-center" : "gap-2"
+          )}
+        >
           <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
@@ -184,15 +154,17 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className={cn(
-        "flex-1 overflow-y-auto space-y-6",
-        isCollapsed && !isMobile ? "p-2" : "p-4"
-      )}>
+      <nav
+        className={cn(
+          "flex-1 overflow-y-auto space-y-6",
+          isCollapsed && !isMobile ? "p-2" : "p-4"
+        )}
+      >
         {navigationSections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className={cn(
-            "space-y-2",
-            isCollapsed && !isMobile && "space-y-1"
-          )}>
+          <div
+            key={sectionIndex}
+            className={cn("space-y-2", isCollapsed && !isMobile && "space-y-1")}
+          >
             {section.title && (!isCollapsed || isMobile) && (
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">
                 {section.title}
@@ -207,14 +179,15 @@ export function Sidebar({ className }: SidebarProps) {
                     variant={item.isActive ? "default" : "ghost"}
                     className={cn(
                       "w-full h-10",
-                      isCollapsed && !isMobile 
-                        ? "justify-center p-0 min-w-[2.5rem]" 
+                      isCollapsed && !isMobile
+                        ? "justify-center p-0 min-w-[2.5rem]"
                         : "justify-start gap-3 px-3",
                       item.isActive &&
                         "bg-blue-100 text-blue-700 hover:bg-blue-200"
                     )}
                     title={isCollapsed && !isMobile ? item.label : undefined}
                     asChild
+                    suppressHydrationWarning
                   >
                     <a href={item.href}>
                       <Icon className="h-4 w-4 flex-shrink-0" />
@@ -236,15 +209,16 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Upgrade Button */}
-      <div className={cn(
-        "border-t",
-        isCollapsed && !isMobile ? "p-2" : "p-4"
-      )}>
-        <Button className={cn(
-          "w-full bg-blue-600 hover:bg-blue-700",
-          isCollapsed && !isMobile && "h-10 p-0 min-w-[2.5rem]"
-        )}>
-          {!isCollapsed || isMobile ? t("upgradeToPro") : (
+      <div className={cn("border-t", isCollapsed && !isMobile ? "p-2" : "p-4")}>
+        <Button
+          className={cn(
+            "w-full bg-blue-600 hover:bg-blue-700",
+            isCollapsed && !isMobile && "h-10 p-0 min-w-[2.5rem]"
+          )}
+        >
+          {!isCollapsed || isMobile ? (
+            t("upgradeToPro")
+          ) : (
             <Sparkles className="h-4 w-4" />
           )}
         </Button>
