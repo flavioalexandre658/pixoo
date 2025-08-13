@@ -91,6 +91,8 @@ export function ExploreGrid({ images }: ExploreGridProps) {
               <Image
                 src={image.url}
                 alt={image.prompt}
+                width={400}
+                height={600}
                 className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
               />
@@ -155,7 +157,7 @@ export function ExploreGrid({ images }: ExploreGridProps) {
                   </span>
                   <span className="flex items-center gap-1">
                     <Eye className="h-3 w-3" />
-                    {Math.floor(Math.random() * 1000) + 100}
+                    {Math.floor(parseInt(image.id.slice(-3), 16) % 900) + 100}
                   </span>
                 </div>
               </div>

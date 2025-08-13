@@ -31,6 +31,7 @@ export const generatedImages = pgTable("generated_images", {
   category: text("category").default("general"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export type GeneratedImage = typeof generatedImages.$inferSelect;

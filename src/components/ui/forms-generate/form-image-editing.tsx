@@ -298,6 +298,7 @@ export function FormImageEditing({
         aspectRatio: finalAspectRatio,
         seed: data.seed ?? 1,
         imagePublic: data.imagePublic ?? false,
+        isPublic: data.imagePublic ?? false,
       });
 
       if (response.serverError || response.data?.error) {

@@ -241,6 +241,7 @@ export const generateImage = authActionClient
         seed,
         steps,
         guidance,
+        isPublic = false,
       } = parsedInput;
 
       const { userId } = ctx as { userId: string };
@@ -340,6 +341,7 @@ export const generateImage = authActionClient
               reservationId: reservationId,
               completedAt: new Date(),
               generationTimeMs: 0, // Together.ai é instantâneo
+              isPublic: isPublic,
             });
           } catch (dbError) {
             console.error("Erro ao salvar no banco:", dbError);
@@ -592,6 +594,7 @@ export const generateImage = authActionClient
             status: "pending",
             creditsUsed: modelCost.credits,
             reservationId: reservationId,
+            isPublic: isPublic,
           });
         } catch (dbError) {
           console.error("Erro ao salvar no banco:", dbError);

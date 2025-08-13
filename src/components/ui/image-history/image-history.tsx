@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { ImageHistoryCard } from "./image-history-card";
 import { getImagesHistory } from "@/actions/images/history/get-images-history.action";
 import { deleteImage, deleteMultipleImages } from "@/actions/images/delete";
+import { updateImagePublicStatus } from "@/actions/images/update-public-status/update-public-status.action";
 import { useAction } from "next-safe-action/hooks";
 
 interface GeneratedImage {
@@ -68,6 +69,7 @@ export function ImageHistory({ refreshTrigger, onPromptReuse }: ImageHistoryProp
   const { executeAsync: executeDeleteImage } = useAction(deleteImage);
   const { executeAsync: executeDeleteMultipleImages } =
     useAction(deleteMultipleImages);
+  const { executeAsync: executeUpdatePublicStatus } = useAction(updateImagePublicStatus);
 
   const fetchImages = useCallback(async () => {
     try {
@@ -122,6 +124,29 @@ export function ImageHistory({ refreshTrigger, onPromptReuse }: ImageHistoryProp
       type: 'single',
       imageId,
     });
+  };
+
+  const handleTogglePublic = async (imageId: string, isPublic: boolean) => {
+    try {
+      const response = await executeUpdatePublicStatus({ imageId, isPublic });
+      
+      if (response?.data?.success) {
+        // Atualizar o estado local da imagem
+        setImages(prevImages => 
+          prevImages.map(img => 
+            img.id === imageId 
+              ? { ...img, isPublic }
+              : img
+          )
+        );
+        toast.success(response.data.data?.message || "Status atualizado com sucesso");
+      } else {
+        toast.error(response?.data?.errors?._form?.[0] || "Erro ao atualizar status da imagem");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status público:", error);
+      toast.error("Erro ao atualizar status da imagem");
+    }
   };
 
   const confirmDeleteImage = async () => {
@@ -400,6 +425,7 @@ export function ImageHistory({ refreshTrigger, onPromptReuse }: ImageHistoryProp
                   isSelectionMode={isSelectionMode}
                   isDeleting={isDeleting}
                   onPromptReuse={onPromptReuse}
+                  onTogglePublic={handleTogglePublic}
                 />
               </div>
             ))}

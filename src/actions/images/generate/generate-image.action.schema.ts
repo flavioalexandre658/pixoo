@@ -21,6 +21,7 @@ const generateImageSchema = z.object({
   steps: z.number().int().positive().optional(),
   guidance: z.number().positive().optional(),
   imagePublic: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 export { generateImageSchema };

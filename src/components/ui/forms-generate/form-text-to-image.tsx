@@ -170,6 +170,7 @@ export function FormTextToImage({
         steps: data.steps ?? 25,
         guidance: data.guidance ?? 3,
         imagePublic: data.imagePublic ?? false,
+        isPublic: data.imagePublic ?? false,
       });
 
       if (response.serverError || !response.data?.success) {

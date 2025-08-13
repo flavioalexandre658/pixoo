@@ -11,10 +11,14 @@ interface ExploreImage {
   likes: number;
   category: string;
   createdAt: Date;
+  user?: {
+    name: string;
+    avatar?: string;
+  };
 }
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Heart, Shuffle, Play } from "lucide-react";
+import { Heart, Shuffle, Play, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -27,6 +31,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(image.likes);
+  const [isCopied, setIsCopied] = useState(false);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,6 +44,17 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
     e.stopPropagation();
     // TODO: Implementar remix - redirecionar para text-to-image com o prompt
     console.log("Remix image:", image.prompt);
+  };
+
+  const handleCopyPrompt = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(image.prompt);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error("Erro ao copiar prompt:", error);
+    }
   };
 
   const truncatePrompt = (prompt: string, maxLength: number = 80) => {
@@ -88,10 +104,16 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
           >
             <div className="flex items-center gap-3">
               <Avatar className="w-8 h-8 border-2 border-white">
-                <AvatarFallback className="text-xs">AI</AvatarFallback>
+                {image.user?.avatar ? (
+                  <img src={image.user.avatar} alt={image.user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <AvatarFallback className="text-xs">
+                    {image.user?.name?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <span className="text-white font-medium text-sm">
-                {image.model}
+                {image.user?.name || "Usuário Anônimo"}
               </span>
             </div>
           </div>
@@ -111,15 +133,30 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
 
               {/* Actions */}
               <div className="flex items-center justify-between">
-                <Button
-                  onClick={handleRemix}
-                  size="sm"
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-                  variant="outline"
-                >
-                  <Shuffle className="w-4 h-4 mr-2" />
-                  {t("explore.remix")}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleRemix}
+                    size="sm"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                    variant="outline"
+                  >
+                    <Shuffle className="w-4 h-4 mr-2" />
+                    {t("explore.remix")}
+                  </Button>
+
+                  <Button
+                    onClick={handleCopyPrompt}
+                    size="sm"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                    variant="outline"
+                  >
+                    {isCopied ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
 
                 <Button
                   onClick={handleLike}

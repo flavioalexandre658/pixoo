@@ -10,6 +10,7 @@ import {
   Eye,
   Trash2,
   Copy,
+  Globe,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +29,7 @@ interface ImageHistoryCardProps {
     creditsUsed: number;
     generationTimeMs: number | null;
     createdAt: string;
+    isPublic?: boolean;
   };
   getModelBadgeColor: (model: string) => string;
   formatTime: (ms: number | null) => string;
@@ -39,6 +41,7 @@ interface ImageHistoryCardProps {
   isSelectionMode: boolean;
   isDeleting: boolean;
   onPromptReuse?: (prompt: string) => void;
+  onTogglePublic?: (imageId: string, isPublic: boolean) => void;
 }
 
 export function ImageHistoryCard({
@@ -53,6 +56,7 @@ export function ImageHistoryCard({
   isSelectionMode,
   isDeleting,
   onPromptReuse,
+  onTogglePublic,
 }: ImageHistoryCardProps) {
   const [imageError, setImageError] = useState(false);
   const t = useTranslations("imageHistory");
@@ -74,6 +78,18 @@ export function ImageHistoryCard({
     } catch (error) {
       console.error("Erro ao copiar prompt:", error);
       toast.error("Erro ao copiar prompt");
+    }
+  };
+
+  const handleTogglePublic = () => {
+    if (onTogglePublic) {
+      const newPublicState = !image.isPublic;
+      onTogglePublic(image.id, newPublicState);
+      toast.success(
+        newPublicState 
+          ? "Imagem tornada pública!" 
+          : "Imagem tornada privada!"
+      );
     }
   };
 
@@ -154,6 +170,17 @@ export function ImageHistoryCard({
           >
             <Copy className="h-3 w-3" />
           </Button>
+          {onTogglePublic && (
+            <Button
+              variant={image.isPublic ? "default" : "outline"}
+              size="sm"
+              onClick={handleTogglePublic}
+              className="px-2 flex-shrink-0"
+              title={image.isPublic ? "Tornar privada" : "Tornar pública"}
+            >
+              <Globe className="h-3 w-3" />
+            </Button>
+          )}
           {onViewFull && (
             <Button
               variant="outline"
