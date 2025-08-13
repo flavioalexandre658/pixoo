@@ -63,12 +63,12 @@ function ImagePreviewComponent({
               <div className="text-6xl font-mono font-bold text-primary">
                 {(currentTime / 1000).toFixed(1)}
               </div>
-              <div className="text-lg text-muted-foreground mt-2">{t("seconds")}</div>
+              <div className="text-lg text-muted-foreground mt-2">
+                {t("seconds")}
+              </div>
             </div>
           )}
-          <div className="text-sm text-muted-foreground">
-            {t("generating")}
-          </div>
+          <div className="text-sm text-muted-foreground">{t("generating")}</div>
         </div>
       ) : generatedImage ? (
         <div className="space-y-4 py-4 px-4 sm:px-8">
@@ -104,7 +104,9 @@ function ImagePreviewComponent({
                   className="w-full sm:w-auto"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  <span className="text-sm">{isDeleting ? "Deletando..." : "Deletar"}</span>
+                  <span className="text-sm">
+                    {isDeleting ? "Deletando..." : "Deletar"}
+                  </span>
                 </Button>
               )}
             </div>
@@ -113,7 +115,9 @@ function ImagePreviewComponent({
             {imageError ? (
               <div className="flex items-center justify-center h-full bg-muted rounded-lg">
                 <div className="text-center space-y-3">
-                  <p className="text-sm text-muted-foreground">{t("imageLoadError")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("imageLoadError")}
+                  </p>
                   <div className="flex flex-col gap-2">
                     {!useProxy && (
                       <Button
@@ -130,7 +134,7 @@ function ImagePreviewComponent({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(generatedImage, '_blank')}
+                      onClick={() => window.open(generatedImage, "_blank")}
                     >
                       {t("openInNewTab")}
                     </Button>
@@ -149,7 +153,7 @@ function ImagePreviewComponent({
                 onLoad={() => {
                   setImageError(false);
                 }}
-                onError={(e) => {
+                onError={() => {
                   if (!useProxy) {
                     setUseProxy(true);
                   } else {

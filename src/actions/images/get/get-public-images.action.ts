@@ -1,0 +1,55 @@
+"use server";
+
+import { db } from "@/db";
+import { generatedImages } from "@/db/schema";
+import { desc, eq, and, type SQL } from "drizzle-orm";
+import { createSafeActionClient } from "next-safe-action";
+import { getPublicImagesSchema } from "./get-public-images.action.schema";
+
+const action = createSafeActionClient();
+
+export const getPublicImages = action
+  .schema(getPublicImagesSchema)
+  .action(async ({ parsedInput: { limit = 20, offset = 0, category } }) => {
+    try {
+      let whereCondition: SQL<unknown> = eq(generatedImages.isPublic, true);
+      
+      if (category && category !== 'all') {
+        const categoryCondition = and(
+          eq(generatedImages.isPublic, true),
+          eq(generatedImages.category, category)
+        );
+        if (categoryCondition) {
+          whereCondition = categoryCondition;
+        }
+      }
+
+      const images = await db
+        .select({
+          id: generatedImages.id,
+          prompt: generatedImages.prompt,
+          imageUrl: generatedImages.imageUrl,
+          model: generatedImages.model,
+          aspectRatio: generatedImages.aspectRatio,
+          likes: generatedImages.likes,
+          category: generatedImages.category,
+          createdAt: generatedImages.createdAt,
+        })
+        .from(generatedImages)
+        .where(whereCondition)
+        .orderBy(desc(generatedImages.likes), desc(generatedImages.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        success: true,
+        data: images,
+      };
+    } catch (error) {
+      console.error("Error fetching public images:", error);
+      return {
+        success: false,
+        serverError: "Failed to fetch public images",
+      };
+    }
+  });

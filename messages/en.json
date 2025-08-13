@@ -182,5 +182,26 @@
     "somethingWentWrong": "Something went wrong",
     "errorLoadingHistory": "An error occurred while loading the image history.",
     "tryAgain": "Try Again"
+  },
+  "explore": {
+    "title": "Explore",
+    "description": "Discover amazing creations from our community",
+    "trending": "Trending",
+    "categories": {
+      "all": "All",
+      "photography": "Photography",
+      "animals": "Animals",
+      "anime": "Anime",
+      "architecture": "Architecture",
+      "character": "Character",
+      "food": "Food",
+      "sci-fi": "Sci-Fi"
+    },
+    "selectModel": "Select Model",
+    "allModels": "All Models",
+    "loading": "Loading...",
+    "noImages": "No images found",
+    "loadMore": "Load More",
+    "remix": "Remix"
   }
 }

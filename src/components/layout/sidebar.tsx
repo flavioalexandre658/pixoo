@@ -10,7 +10,6 @@ import {
   Home,
   Search,
   Image,
-  MessageSquare,
   Sparkles,
   Wand2,
   History,

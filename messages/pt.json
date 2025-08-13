@@ -256,5 +256,26 @@
     "somethingWentWrong": "Algo deu errado",
     "errorLoadingHistory": "Ocorreu um erro ao carregar o histórico de imagens.",
     "tryAgain": "Tentar Novamente"
+  },
+  "explore": {
+    "title": "Explorar",
+    "description": "Descubra criações incríveis da nossa comunidade",
+    "trending": "Em Alta",
+    "categories": {
+      "all": "Todos",
+      "photography": "Fotografia",
+      "animals": "Animais",
+      "anime": "Anime",
+      "architecture": "Arquitetura",
+      "character": "Personagem",
+      "food": "Comida",
+      "sci-fi": "Ficção Científica"
+    },
+    "selectModel": "Selecionar Modelo",
+    "allModels": "Todos os Modelos",
+    "loading": "Carregando...",
+    "noImages": "Nenhuma imagem encontrada",
+    "loadMore": "Carregar Mais",
+    "remix": "Remix"
   }
 }

@@ -27,6 +27,8 @@ export const generatedImages = pgTable("generated_images", {
   steps: integer("steps"),
   guidance: decimal("guidance", { precision: 3, scale: 1 }),
   isPublic: boolean("is_public").notNull().default(false),
+  likes: integer("likes").notNull().default(0),
+  category: text("category").default("general"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 });
