@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
             // Baixar a imagem da URL da BFL com retry e timeout configurados
             const imageBuffer = await downloadImageFromUrl(
               bflUrl,
-              1, // 3 tentativas
-              45000 // 45 segundos de timeout
+              3, // 3 tentativas (aumentado de 1)
+              60000 // 60 segundos de timeout (aumentado de 45s)
             );
             
             // Gerar nome único para o arquivo no S3

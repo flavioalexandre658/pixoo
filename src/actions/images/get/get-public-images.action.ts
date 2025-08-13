@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { generatedImages } from "@/db/schema";
+import { generatedImages, modelCosts, users } from "@/db/schema";
 import { desc, eq, and, type SQL } from "drizzle-orm";
 import { createSafeActionClient } from "next-safe-action";
 import { getPublicImagesSchema } from "./get-public-images.action.schema";
@@ -30,12 +30,19 @@ export const getPublicImages = action
           prompt: generatedImages.prompt,
           imageUrl: generatedImages.imageUrl,
           model: generatedImages.model,
+          modelName: modelCosts.modelName,
           aspectRatio: generatedImages.aspectRatio,
           likes: generatedImages.likes,
           category: generatedImages.category,
           createdAt: generatedImages.createdAt,
+          user: {
+            name: users.name,
+            email: users.email,
+          },
         })
         .from(generatedImages)
+        .leftJoin(modelCosts, eq(generatedImages.model, modelCosts.modelId))
+        .leftJoin(users, eq(generatedImages.userId, users.id))
         .where(whereCondition)
         .orderBy(desc(generatedImages.likes), desc(generatedImages.createdAt))
         .limit(limit)

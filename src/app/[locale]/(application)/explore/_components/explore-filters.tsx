@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, Filter, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,11 +24,6 @@ interface ExploreFiltersProps {
   categories: string[];
 }
 
-const sortOptions = [
-  { id: "recent", name: "Most Recent" },
-  { id: "popular", name: "Most Popular" },
-];
-
 export function ExploreFilters({
   selectedCategory,
   onCategoryChange,
@@ -40,13 +36,19 @@ export function ExploreFilters({
   models,
   categories,
 }: ExploreFiltersProps) {
+  const t = useTranslations("explore");
+  
+  const sortOptions = [
+    { id: "recent", name: t("mostRecent") },
+    { id: "popular", name: t("mostPopular") },
+  ];
   return (
     <div className="flex flex-col gap-4 p-4 bg-card rounded-lg border">
       {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Search images by prompt..."
+          placeholder={t("searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-10"
@@ -59,10 +61,10 @@ export function ExploreFilters({
         <Select value={selectedCategory} onValueChange={onCategoryChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t("category")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t("allCategories")}</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category} value={category}>
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -74,12 +76,12 @@ export function ExploreFilters({
         {/* Model Filter */}
         <Select value={selectedModel} onValueChange={onModelChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Model" />
+            <SelectValue placeholder={t("model")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Models</SelectItem>
+            <SelectItem value="all">{t("allModels")}</SelectItem>
             {models.map((model) => (
-              <SelectItem key={model.id} value={model.name}>
+              <SelectItem key={model.id} value={model.id}>
                 {model.name}
               </SelectItem>
             ))}
@@ -90,7 +92,7 @@ export function ExploreFilters({
         <Select value={sortBy} onValueChange={onSortChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <TrendingUp className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder={t("sortBy")} />
           </SelectTrigger>
           <SelectContent>
             {sortOptions.map((option) => (

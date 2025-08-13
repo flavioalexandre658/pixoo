@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { PageContainer, PageContainerHeader } from "@/components/ui/page-container/page-container";
 import { ExploreFilters } from "./explore-filters";
 import { ExploreGrid } from "./explore-grid";
@@ -10,10 +11,15 @@ interface ExploreImage {
   prompt: string;
   imageUrl: string | null;
   model: string;
+  modelName?: string;
   aspectRatio: string;
   likes: number;
   category: string | null;
   createdAt: Date;
+  user?: {
+    name: string;
+    email: string;
+  };
 }
 
 interface ExplorePageProps {
@@ -21,6 +27,7 @@ interface ExplorePageProps {
 }
 
 function ExplorePage({ images }: ExplorePageProps) {
+  const t = useTranslations("explore");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedModel, setSelectedModel] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
@@ -34,7 +41,13 @@ function ExplorePage({ images }: ExplorePageProps) {
 
   const models = useMemo(() => {
     const uniqueModels = [...new Set(images.map(img => img.model))];
-    return uniqueModels.map(model => ({ name: model, id: model }));
+    return uniqueModels.map(model => {
+      const imageWithModel = images.find(img => img.model === model);
+      return { 
+        name: imageWithModel?.modelName || model, 
+        id: model 
+      };
+    });
   }, [images]);
 
   const filteredImages = useMemo(() => {
@@ -62,23 +75,28 @@ function ExplorePage({ images }: ExplorePageProps) {
   }, [filteredImages, sortBy]);
 
   // Transform data for ExploreGrid component
-  const gridImages = sortedImages.map(image => ({
+  const gridImages = sortedImages.map((image) => ({
     id: image.id,
     url: image.imageUrl!,
     prompt: image.prompt,
     model: image.model,
+    modelName: image.modelName,
     aspectRatio: image.aspectRatio,
     likes: image.likes,
     category: image.category || "general",
     createdAt: image.createdAt,
+    user: image.user ? {
+      name: image.user.name,
+      avatar: undefined, // Não temos avatar no banco ainda
+    } : undefined,
   }));
 
   return (
     <PageContainer>
       <PageContainerHeader>
-        <h1 className="text-3xl font-bold">Explore</h1>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground mt-2">
-          Discover amazing AI-generated images from our community
+          {t("description")}
         </p>
       </PageContainerHeader>
 

@@ -242,6 +242,7 @@ export const generateImage = authActionClient
         steps,
         guidance,
         isPublic = false,
+        promptUpsampling = false,
       } = parsedInput;
 
       const { userId } = ctx as { userId: string };
@@ -377,7 +378,7 @@ export const generateImage = authActionClient
         aspect_ratio: convertAspectRatio(aspectRatio),
         output_format: "jpeg",
         safety_tolerance: 2,
-        prompt_upsampling: false,
+        prompt_upsampling: promptUpsampling,
       };
 
       // Adicionar dimensões customizadas se fornecidas

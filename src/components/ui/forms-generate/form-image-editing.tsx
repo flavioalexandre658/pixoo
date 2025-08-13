@@ -47,6 +47,7 @@ const formImageEditingSchema = z.object({
   prompt: z.string().min(1, "Edit instruction is required"),
   model: z.string(),
   imagePublic: z.boolean(),
+  promptUpsampling: z.boolean(),
   seed: z.number().optional(),
   aspectRatio: z.string().optional(),
   inputImage: z.string().min(1, "Input image is required"),
@@ -112,6 +113,7 @@ export function FormImageEditing({
       prompt: "",
       model: "flux-kontext-pro",
       imagePublic: false,
+      promptUpsampling: false,
       aspectRatio: "auto",
       inputImage: "",
     },
@@ -299,6 +301,7 @@ export function FormImageEditing({
         seed: data.seed ?? 1,
         imagePublic: data.imagePublic ?? false,
         isPublic: data.imagePublic ?? false,
+        promptUpsampling: data.promptUpsampling,
       });
 
       if (response.serverError || response.data?.error) {
@@ -445,6 +448,20 @@ export function FormImageEditing({
                 placeholder={t("seedPlaceholder")}
                 defaultValue={"-1"}
                 {...form.register("seed", { valueAsNumber: true })}
+              />
+            </div>
+
+            {/* Prompt Upsampling */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="promptUpsampling">Prompt Upsampling</Label>
+                <p className="text-sm text-muted-foreground">
+                  Modifica automaticamente o prompt para geração mais criativa
+                </p>
+              </div>
+              <Switch
+                id="promptUpsampling"
+                {...form.register("promptUpsampling")}
               />
             </div>
           </div>
@@ -648,7 +665,7 @@ export function FormImageEditing({
               {...form.register("prompt")}
             />
             <p className="text-xs text-muted-foreground">
-              {t("promptDescription")}
+              {t("promptDescription")} • Prompts em inglês geram melhores resultados.
             </p>
             {form.formState.errors.prompt && (
               <p className="text-sm text-destructive">

@@ -44,6 +44,7 @@ const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   model: z.string(),
   imagePublic: z.boolean(),
+  promptUpsampling: z.boolean(),
   seed: z.number().optional(),
   steps: z.number().min(1).max(50).optional(),
   guidance: z.number().min(1).max(20).optional(),
@@ -114,6 +115,7 @@ export function FormTextToImage({
       prompt: "",
       model: "flux-schnell",
       imagePublic: false,
+      promptUpsampling: false,
       width: 1024,
       height: 1024,
     },
@@ -171,6 +173,7 @@ export function FormTextToImage({
         guidance: data.guidance ?? 3,
         imagePublic: data.imagePublic ?? false,
         isPublic: data.imagePublic ?? false,
+        promptUpsampling: data.promptUpsampling ?? false,
       });
 
       if (response.serverError || !response.data?.success) {
@@ -348,8 +351,22 @@ export function FormTextToImage({
                 min="1"
                 max="20"
                 step="0.1"
-                defaultValue="3"
+                defaultValue="3.5"
                 {...form.register("guidance", { valueAsNumber: true })}
+              />
+            </div>
+
+            {/* Prompt Upsampling */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="promptUpsampling">Prompt Upsampling</Label>
+                <p className="text-sm text-muted-foreground">
+                  Modifica automaticamente o prompt para geração mais criativa
+                </p>
+              </div>
+              <Switch
+                id="promptUpsampling"
+                {...form.register("promptUpsampling")}
               />
             </div>
           </div>
@@ -483,6 +500,9 @@ export function FormTextToImage({
               className="min-h-[100px] resize-none"
               {...form.register("prompt")}
             />
+            <p className="text-xs text-muted-foreground">
+              💡 Prompts em inglês tendem a produzir melhores resultados
+            </p>
             {form.formState.errors.prompt && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.prompt.message}

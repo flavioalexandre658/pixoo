@@ -275,9 +275,21 @@
     },
     "selectModel": "Selecionar Modelo",
     "allModels": "Todos os Modelos",
+    "allCategories": "Todas as Categorias",
     "loading": "Carregando...",
     "noImages": "Nenhuma imagem encontrada",
+    "noImagesDescription": "Tente ajustar seus filtros ou termos de busca",
     "loadMore": "Carregar Mais",
-    "remix": "Remix"
+    "remix": "Remix",
+    "searchPlaceholder": "Buscar imagens por prompt...",
+    "category": "Categoria",
+    "model": "Modelo",
+    "sortBy": "Ordenar por",
+    "mostRecent": "Mais Recentes",
+    "mostPopular": "Mais Populares",
+    "anonymousUser": "Usuário Anônimo",
+    "copyPromptError": "Erro ao copiar prompt",
+    "aiGeneratedImage": "Imagem Gerada por IA",
+    "shareError": "Erro ao compartilhar"
   }
 }

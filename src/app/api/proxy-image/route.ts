@@ -8,8 +8,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
   }
 
-  // Verificar se a URL é do domínio da BFL para segurança
-  if (!imageUrl.startsWith('https://delivery-us1.bfl.ai/')) {
+  // Verificar se a URL é de um domínio autorizado para segurança
+  const isValidDomain = imageUrl.startsWith('https://delivery-us1.bfl.ai/') || 
+                       imageUrl.startsWith('https://pixoo-images.s3.us-east-1.amazonaws.com/');
+  
+  if (!isValidDomain) {
     return NextResponse.json({ error: 'Unauthorized domain' }, { status: 403 });
   }
 

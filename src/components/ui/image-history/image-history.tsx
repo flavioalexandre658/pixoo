@@ -98,7 +98,27 @@ export function ImageHistory({ refreshTrigger, onPromptReuse }: ImageHistoryProp
 
   const downloadImage = async (imageUrl: string) => {
     try {
-      const response = await fetch(imageUrl);
+      toast.loading("Preparando download...", { id: "download" });
+
+      // Tentar fetch direto primeiro
+      let response;
+      try {
+        response = await fetch(imageUrl, {
+          mode: "cors",
+          credentials: "omit",
+        });
+      } catch (corsError) {
+        console.log(corsError);
+        // Se falhar por CORS, tentar através de proxy
+        response = await fetch(
+          `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -107,10 +127,19 @@ export function ImageHistory({ refreshTrigger, onPromptReuse }: ImageHistoryProp
       a.download = `image-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+
+      toast.success("Imagem baixada com sucesso!", { id: "download" });
     } catch (error) {
       console.error("Error downloading image:", error);
+      toast.error("Falha ao baixar a imagem. Tente novamente.", {
+        id: "download",
+      });
     }
   };
 
