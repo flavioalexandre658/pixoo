@@ -42,7 +42,7 @@ export function Header({ className }: HeaderProps) {
         className
       )}
     >
-      <div className="container flex h-14 items-center justify-between px-4">
+      <div className="flex h-14 items-center justify-between px-4">
         {/* Left side - could be used for breadcrumbs or page title */}
         <div className="flex items-center gap-4">
           <div className="md:hidden" /> {/* Space for mobile menu button */}
