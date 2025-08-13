@@ -615,11 +615,13 @@ export const generateImage = authActionClient
             }
           }
           return {
+            success: false,
             error: "Erro interno ao salvar dados",
           };
         }
 
         return {
+          success: true,
           taskId: createData.id,
           status: "Pending",
           message: "Geração de imagem iniciada com webhook.",
@@ -627,11 +629,13 @@ export const generateImage = authActionClient
       }
 
       return {
+        success: false,
         error: "Formato de resposta inesperado da API BFL",
       };
     } catch (error) {
       console.error("Erro na geração de imagem:", error);
       return {
+        success: false,
         error: "Falha ao gerar imagem. Tente novamente.",
       };
     }

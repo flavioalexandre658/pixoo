@@ -164,7 +164,7 @@ export default function TextToImage({ models }: TextToImage) {
         console.log(`Polling status for task: ${taskId}`);
         const response = await executeGetImageByTaskId({ taskId });
 
-        if (!response.serverError || response.data?.success) {
+        if (!response.serverError && response.data?.success) {
           const data = response.data?.data;
           console.log("Polling response:", {
             taskId,

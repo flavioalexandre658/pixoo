@@ -25,6 +25,7 @@ import {
   Settings,
   WandSparkles,
   Coins,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -39,6 +40,7 @@ import { useCredits } from "@/hooks/use-credits";
 import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
+import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
 
 const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
@@ -93,7 +95,9 @@ export function FormTextToImage({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [startedGeneration, setStartedGeneration] = useState(isGenerating);
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
+  const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
 
   // Reset startedGeneration when generation is complete
   useEffect(() => {
@@ -127,6 +131,39 @@ export function FormTextToImage({
       form.setValue("prompt", promptValue);
     }
   }, [promptValue, form]);
+
+  // Handle prompt optimization
+  const handleOptimizePrompt = async () => {
+    const currentPrompt = form.getValues("prompt");
+    const currentModel = form.getValues("model");
+
+    if (!currentPrompt.trim()) {
+      toast.error("Digite um prompt primeiro");
+      return;
+    }
+
+    setIsOptimizingPrompt(true);
+    toast.info("Otimizando prompt...");
+
+    try {
+      const result = await executeOptimizePrompt({
+        prompt: currentPrompt,
+        model: currentModel,
+      });
+
+      if (result?.data?.success && result.data.optimizedPrompt) {
+        form.setValue("prompt", result.data.optimizedPrompt);
+        toast.success("Prompt otimizado com sucesso!");
+      } else {
+        toast.error(result?.data?.error || "Erro ao otimizar prompt");
+      }
+    } catch (error) {
+      console.error("Error optimizing prompt:", error);
+      toast.error("Erro ao otimizar prompt");
+    } finally {
+      setIsOptimizingPrompt(false);
+    }
+  };
 
   const onSubmit = async (data: FormTextToImageForm) => {
     if (startedGeneration || isGenerating) {
@@ -176,7 +213,8 @@ export function FormTextToImage({
         promptUpsampling: data.promptUpsampling ?? false,
       });
 
-      if (response.serverError || !response.data?.success) {
+      // Verificar se houve erro no servidor ou se a resposta não foi bem-sucedida
+      if (response.serverError || (response.data && !response.data.success)) {
         setStartedGeneration(false);
 
         // Cancelar reserva em caso de erro na API (usuário não foi cobrado ainda)
@@ -285,16 +323,19 @@ export function FormTextToImage({
   const selectedModel = models.find((m) => m.id === form.watch("model"));
 
   const settingsContent = (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-6">
       {/* Advanced Options */}
       <div className="space-y-4">
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 p-0 h-auto font-normal"
+          className="flex items-center justify-between w-full p-3 h-auto font-medium border-dashed hover:border-solid transition-all duration-200 hover:bg-muted/50"
         >
-          {t("advancedOptions")}
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span>{t("advancedOptions")}</span>
+          </div>
           {showAdvanced ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -316,7 +357,6 @@ export function FormTextToImage({
                 }}
               />
             </div>
-
             {/* Seed */}
             <div className="space-y-2">
               <Label htmlFor="seed">{t("seed")}</Label>
@@ -494,12 +534,31 @@ export function FormTextToImage({
           {/* Prompt (Common for both views) */}
           <div className="space-y-2">
             <Label htmlFor="prompt">{t("prompt")}</Label>
-            <Textarea
-              id="prompt"
-              placeholder={t("promptPlaceholder")}
-              className="min-h-[100px] resize-none"
-              {...form.register("prompt")}
-            />
+            <div className="relative">
+              <Textarea
+                id="prompt"
+                placeholder={t("promptPlaceholder")}
+                className="min-h-[100px] resize-none pr-12"
+                {...form.register("prompt")}
+              />
+              {form.watch("prompt")?.trim() && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 h-8 w-8 p-0"
+                  onClick={handleOptimizePrompt}
+                  disabled={isOptimizingPrompt}
+                  title="Otimizar prompt com IA"
+                >
+                  {isOptimizingPrompt ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               💡 Prompts em inglês tendem a produzir melhores resultados
             </p>
