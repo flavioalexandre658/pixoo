@@ -40,7 +40,8 @@ export const getImagesHistory = authActionClient
                     seed: generatedImages.seed,
                     steps: generatedImages.steps,
                     guidance: generatedImages.guidance,
-                    completedAt: generatedImages.completedAt
+                    completedAt: generatedImages.completedAt,
+                    isPublic: generatedImages.isPublic
                 })
                 .from(generatedImages)
                 .leftJoin(modelCosts, eq(generatedImages.model, modelCosts.modelId))

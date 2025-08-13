@@ -110,7 +110,7 @@ export function FormImageEditing({
     resolver: zodResolver(formImageEditingSchema),
     defaultValues: {
       prompt: "",
-      model: "flux-context-pro",
+      model: "flux-kontext-pro",
       imagePublic: false,
       aspectRatio: "auto",
       inputImage: "",
@@ -661,7 +661,7 @@ export function FormImageEditing({
           <div className="hidden md:block">{settingsContent}</div>
 
           {/* Generate Button (Common for both views) */}
-          <div className="space-y-2">
+          <div>
             {selectedModel && selectedModel.credits > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Custo:</span>

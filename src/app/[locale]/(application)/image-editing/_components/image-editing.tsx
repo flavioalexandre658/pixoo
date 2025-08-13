@@ -29,8 +29,8 @@ export default function ImageEditing({ models }: ImageEditingProps) {
   const handleImageGenerated = (imageUrl: string) => {
     setGeneratedImage(imageUrl);
     // Calcular tempo de geração e atualizar histórico
-    const timeMs = generationStartTimeRef.current 
-      ? Date.now() - generationStartTimeRef.current 
+    const timeMs = generationStartTimeRef.current
+      ? Date.now() - generationStartTimeRef.current
       : 0;
     handleGenerationComplete(timeMs);
   };
@@ -319,7 +319,7 @@ export default function ImageEditing({ models }: ImageEditingProps) {
               (model) => model.modelId === currentReservation.modelId
             );
             const cost = modelCost?.credits || 10; // Fallback para 10 créditos se não encontrar
-            
+
             refundCredits(
               cost,
               `Timeout na edição - ${currentReservation.modelId}`,
@@ -351,6 +351,7 @@ export default function ImageEditing({ models }: ImageEditingProps) {
     <PageContainer>
       <PageContainerHeader>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </PageContainerHeader>
       <PageContainerContent>
         {/* Left side - Form */}
@@ -395,7 +396,7 @@ export default function ImageEditing({ models }: ImageEditingProps) {
       </PageContainerContent>
 
       {/* Histórico de Imagens */}
-      <div className="mt-8">
+      <div>
         <ImageHistory refreshTrigger={historyRefreshTrigger} />
       </div>
     </PageContainer>

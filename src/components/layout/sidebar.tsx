@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -84,16 +84,11 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
 
 export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [currentPath, setCurrentPath] = useState("/");
   const t = useTranslations("navigation");
   const pathname = usePathname();
 
-  useEffect(() => {
-    // Remove locale from pathname (e.g., /pt/text-to-image -> /text-to-image)
-    const pathWithoutLocale =
-      pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
-    setCurrentPath(pathWithoutLocale);
-  }, [pathname]);
+  // Remove locale from pathname immediately (e.g., /pt/text-to-image -> /text-to-image)
+  const currentPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
 
   const navigationSections = getNavigationSections(t, currentPath);
 

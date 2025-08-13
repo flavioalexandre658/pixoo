@@ -172,10 +172,14 @@ export function ImageHistoryCard({
           </Button>
           {onTogglePublic && (
             <Button
-              variant={image.isPublic ? "default" : "outline"}
+              variant="outline"
               size="sm"
               onClick={handleTogglePublic}
-              className="px-2 flex-shrink-0"
+              className={`px-2 flex-shrink-0 ${
+                image.isPublic 
+                  ? "!bg-black !text-white !border-black hover:!bg-gray-800" 
+                  : ""
+              }`}
               title={image.isPublic ? "Tornar privada" : "Tornar pública"}
             >
               <Globe className="h-3 w-3" />

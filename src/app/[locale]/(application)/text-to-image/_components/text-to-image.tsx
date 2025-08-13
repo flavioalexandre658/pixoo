@@ -28,8 +28,8 @@ export default function TextToImage({ models }: TextToImage) {
   const handleImageGenerated = (imageUrl: string) => {
     setGeneratedImage(imageUrl);
     // Calcular tempo de geração e atualizar histórico
-    const timeMs = generationStartTimeRef.current 
-      ? Date.now() - generationStartTimeRef.current 
+    const timeMs = generationStartTimeRef.current
+      ? Date.now() - generationStartTimeRef.current
       : 0;
     handleGenerationComplete(timeMs);
   };
@@ -353,9 +353,7 @@ export default function TextToImage({ models }: TextToImage) {
     <PageContainer>
       <PageContainerHeader>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground">
-          Generate stunning images with AI using advanced Flux models
-        </p>
+        <p className="text-muted-foreground">{t("description")}</p>
       </PageContainerHeader>
       <PageContainerContent>
         {/* Left side - Form */}
@@ -402,8 +400,8 @@ export default function TextToImage({ models }: TextToImage) {
 
       {/* Histórico de Imagens */}
       <div className="mt-8">
-        <ImageHistory 
-          refreshTrigger={historyRefreshTrigger} 
+        <ImageHistory
+          refreshTrigger={historyRefreshTrigger}
           onPromptReuse={(prompt: string) => {
             setPromptValue(prompt);
             // Reset promptValue after a short delay to allow for future reuses

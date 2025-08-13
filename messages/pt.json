@@ -43,10 +43,12 @@
     "changeLanguage": "Alterar idioma"
   },
   "textToImage": {
-    "title": "Texto para Imagem"
+    "title": "Criar Imagem",
+    "description": "Crie imagens incríveis com IA usando modelos avançados do Pixoo"
   },
   "imageEditing": {
-    "title": "Edição de Imagem"
+    "title": "Edição de Imagem",
+    "description": "Edite imagens com IA usando modelos avançados do Pixoo"
   },
   "formTextToImage": {
     "title": "Geração de Imagem com IA",

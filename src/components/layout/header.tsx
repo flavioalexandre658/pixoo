@@ -16,6 +16,7 @@ import { Bell, Settings, User, LogOut, CreditCard, Globe } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter, useParams } from "next/navigation";
 import { CreditsDisplay } from "@/components/ui/credits-display";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface HeaderProps {
   className?: string;
@@ -23,11 +24,11 @@ interface HeaderProps {
 
 export function Header({ className }: HeaderProps) {
   const t = useTranslations("header");
-  const tNav = useTranslations("navigation");
   const { data: session } = useSession();
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const { pageTitle } = usePageTitle();
 
   const handleSignOut = async () => {
     await signOut();
@@ -46,7 +47,7 @@ export function Header({ className }: HeaderProps) {
         <div className="flex items-center gap-4">
           <div className="md:hidden" /> {/* Space for mobile menu button */}
           <div className="hidden md:block">
-            <h1 className="text-lg font-semibold">{tNav("textToImage")}</h1>
+            <h1 className="text-lg font-semibold">{pageTitle}</h1>
           </div>
         </div>
 
