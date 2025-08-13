@@ -7,7 +7,7 @@ export interface ISubscription {
   stripeCustomerId?: string | null;
   currentPeriodStart?: Date | null;
   currentPeriodEnd?: Date | null;
-  cancelAtPeriodEnd: boolean;
+  cancelAtPeriodEnd: boolean | null;
   canceledAt?: Date | null;
   trialStart?: Date | null;
   trialEnd?: Date | null;

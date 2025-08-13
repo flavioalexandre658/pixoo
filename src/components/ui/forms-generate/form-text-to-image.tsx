@@ -41,6 +41,11 @@ import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
+import { useSession } from "@/lib/auth-client";
+import { useSubscription } from "@/contexts/subscription-context";
+import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
+import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
+import { useParams } from "next/navigation";
 
 const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
@@ -96,6 +101,12 @@ export function FormTextToImage({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [startedGeneration, setStartedGeneration] = useState(isGenerating);
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const { data: session } = useSession();
+  const { subscription } = useSubscription();
+  const params = useParams();
+  const locale = params.locale as string;
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
 
@@ -134,6 +145,18 @@ export function FormTextToImage({
 
   // Handle prompt optimization
   const handleOptimizePrompt = async () => {
+    // Verificar se o usuário está logado
+    if (!session) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Verificar se o usuário tem assinatura ativa
+    if (!subscription) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+
     const currentPrompt = form.getValues("prompt");
     const currentModel = form.getValues("model");
 
@@ -170,17 +193,28 @@ export function FormTextToImage({
       return false;
     }
 
-    // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
-    setStartedGeneration(true);
-    onGenerationButtonClick?.();
+    // Verificar se o usuário está logado
+    if (!session) {
+      setShowAuthModal(true);
+      return false;
+    }
 
     // Verificar se o modelo selecionado requer créditos
     const selectedModel = models.find((m) => m.modelId === data.model);
     if (!selectedModel) {
       toast.error("Modelo não encontrado");
-      setStartedGeneration(false);
       return false;
     }
+
+    // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
+    if (data.model !== "flux-schnell" && !subscription) {
+      setShowSubscriptionModal(true);
+      return false;
+    }
+
+    // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
+    setStartedGeneration(true);
+    onGenerationButtonClick?.();
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
@@ -431,6 +465,7 @@ export function FormTextToImage({
   );
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -641,5 +676,18 @@ export function FormTextToImage({
         </form>
       </CardContent>
     </Card>
+
+    {/* Modals */}
+    <AuthRequiredModal 
+      isOpen={showAuthModal} 
+      onClose={() => setShowAuthModal(false)}
+      locale={locale}
+    />
+    <SubscriptionRequiredModal 
+      isOpen={showSubscriptionModal} 
+      onClose={() => setShowSubscriptionModal(false)}
+      locale={locale}
+    />
+    </>
   );
 }

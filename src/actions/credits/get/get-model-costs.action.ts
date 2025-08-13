@@ -1,11 +1,11 @@
 "use server";
 import { db } from "@/db";
-import { authActionClient } from "@/lib/safe-action";
+import { actionClient } from "@/lib/safe-action";
 import { modelCosts } from "@/db/schema";
 
 import { getModelCostsSchema } from "./get-model-costs.action.schema";
 
-export const getModelCosts = authActionClient
+export const getModelCosts = actionClient
   .inputSchema(getModelCostsSchema)
   .action(async () => {
     try {

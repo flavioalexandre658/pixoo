@@ -12,7 +12,7 @@ export function usePageTitle() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Remove locale from pathname (e.g., /pt/text-to-image -> /text-to-image)
+    // Remove locale from pathname (e.g., /pt/create-image -> /create-image)
     const pathWithoutLocale =
       pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
     setCurrentPath(pathWithoutLocale);
@@ -21,8 +21,8 @@ export function usePageTitle() {
   const pageTitleMap: PageTitleMap = {
     "/": t("home"),
     "/explore": t("explore"),
-    "/text-to-image": t("textToImage"),
-    "/image-editing": t("imageEditing"),
+    "/create-image": t("textToImage"),
+    "/edit-image": t("imageEditing"),
     "/history": t("history"),
   };
 

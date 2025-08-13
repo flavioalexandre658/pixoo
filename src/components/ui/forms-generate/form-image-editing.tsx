@@ -44,6 +44,11 @@ import { useAction } from "next-safe-action/hooks";
 import Image from "next/image";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
+import { useSession } from "@/lib/auth-client";
+import { useSubscription } from "@/contexts/subscription-context";
+import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
+import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
+import { useParams } from "next/navigation";
 
 const formImageEditingSchema = z.object({
   prompt: z.string().min(1, "Edit instruction is required"),
@@ -99,7 +104,13 @@ export function FormImageEditing({
     null
   );
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: session } = useSession();
+  const { subscription } = useSubscription();
+  const params = useParams();
+  const locale = params.locale as string;
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
 
@@ -249,6 +260,18 @@ export function FormImageEditing({
 
   // Handle prompt optimization
   const handleOptimizePrompt = async () => {
+    // Verificar se o usuário está logado
+    if (!session) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Verificar se o usuário tem assinatura ativa
+    if (!subscription) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+
     const currentPrompt = form.getValues("prompt");
     const currentModel = form.getValues("model");
     const currentInputImage = form.getValues("inputImage");
@@ -293,17 +316,28 @@ export function FormImageEditing({
       return false;
     }
 
-    // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
-    setStartedGeneration(true);
-    onGenerationButtonClick?.();
+    // Verificar se o usuário está logado
+    if (!session) {
+      setShowAuthModal(true);
+      return false;
+    }
 
     // Verificar se o modelo selecionado requer créditos
     const selectedModel = models.find((m) => m.modelId === data.model);
     if (!selectedModel) {
       toast.error("Modelo não encontrado");
-      setStartedGeneration(false);
       return false;
     }
+
+    // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
+    if (data.model !== "flux-schnell" && !subscription) {
+      setShowSubscriptionModal(true);
+      return false;
+    }
+
+    // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
+    setStartedGeneration(true);
+    onGenerationButtonClick?.();
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
@@ -534,6 +568,7 @@ export function FormImageEditing({
   );
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -814,5 +849,18 @@ export function FormImageEditing({
         </form>
       </CardContent>
     </Card>
+
+    {/* Modals */}
+    <AuthRequiredModal 
+      isOpen={showAuthModal} 
+      onClose={() => setShowAuthModal(false)}
+      locale={locale}
+    />
+    <SubscriptionRequiredModal 
+      isOpen={showSubscriptionModal} 
+      onClose={() => setShowSubscriptionModal(false)}
+      locale={locale}
+    />
+    </>
   );
 }

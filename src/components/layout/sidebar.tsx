@@ -58,14 +58,14 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
       {
         icon: Image,
         label: t("textToImage"),
-        href: "/text-to-image",
-        isActive: currentPath === "/text-to-image",
+        href: "/create-image",
+        isActive: currentPath === "/create-image",
       },
       {
         icon: Wand2,
         label: t("imageEditing"),
-        href: "/image-editing",
-        isActive: currentPath === "/image-editing",
+        href: "/edit-image",
+        isActive: currentPath === "/edit-image",
       },
     ],
   },
@@ -87,7 +87,7 @@ export function Sidebar({ className }: SidebarProps) {
   const t = useTranslations("navigation");
   const pathname = usePathname();
 
-  // Remove locale from pathname immediately (e.g., /pt/text-to-image -> /text-to-image)
+  // Remove locale from pathname immediately (e.g., /pt/create-image -> /create-image)
   const currentPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
 
   const navigationSections = getNavigationSections(t, currentPath);

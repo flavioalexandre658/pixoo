@@ -291,5 +291,40 @@
     "copyPromptError": "Erro ao copiar prompt",
     "aiGeneratedImage": "Imagem Gerada por IA",
     "shareError": "Erro ao compartilhar"
+  },
+  "authRequired": {
+    "title": "Login Necessário",
+    "description": "Para gerar imagens, você precisa fazer login ou criar uma conta. É rápido e gratuito!",
+    "signIn": "Fazer Login",
+    "signUp": "Criar Conta"
+  },
+  "subscriptionRequired": {
+    "title": "Upgrade Necessário",
+    "description": "Para usar este modelo ou recurso, você precisa de um plano ativo. Escolha o plano ideal para você!",
+    "popular": "Mais Popular",
+    "viewAllPlans": "Ver Todos os Planos",
+    "plans": {
+      "basic": {
+        "name": "Pixoo Basic",
+        "price": "R$ 19,90/mês",
+        "description": "Ideal para uso pessoal",
+        "features": [
+          "500 créditos mensais",
+          "Acesso a modelos básicos",
+          "Suporte por email"
+        ]
+      },
+      "pro": {
+        "name": "Pixoo Pro",
+        "price": "R$ 39,90/mês",
+        "description": "Para profissionais e criadores",
+        "features": [
+          "2000 créditos mensais",
+          "Acesso a todos os modelos",
+          "Otimização de prompt com IA",
+          "Suporte prioritário"
+        ]
+      }
+    }
   }
 }

@@ -12,7 +12,7 @@ export default function History() {
 
   const handlePromptReuse = (prompt: string) => {
     // Aqui você pode implementar a lógica para reutilizar o prompt
-    // Por exemplo, redirecionar para a página de text-to-image com o prompt preenchido
+    // Por exemplo, redirecionar para a página de create-image com o prompt preenchido
     console.log("Reusing prompt:", prompt);
   };
 
