@@ -9,7 +9,8 @@ import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action
 import { cancelReservation } from "@/actions/credits";
 import { spendFreeCredits } from "@/actions/credits/spend/spend-free-credits.action";
 import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { subscriptions } from "@/db/schema";
 import { randomUUID } from "crypto";
 import { spawn } from "child_process";
 import { writeFileSync, unlinkSync } from "fs";
@@ -270,28 +271,42 @@ export const generateImage = authActionClient
         };
       }
 
+      // Verificar se o usuário tem assinatura ativa
+      const activeSubscription = await db.query.subscriptions.findFirst({
+        where: and(
+          eq(subscriptions.userId, userId),
+          eq(subscriptions.status, 'active')
+        ),
+      });
+
       // Verificar créditos baseado no modelo
       let reservationId: string | null = null;
       let usesFreeCredits = false;
+      const hasActiveSubscription = !!activeSubscription;
       
       if (model === "flux-schnell") {
-        // Para flux-schnell, verificar créditos gratuitos
-        const freeCreditsResult = await getUserFreeCredits({});
-        
-        if (freeCreditsResult.serverError || !freeCreditsResult.data?.success) {
-          return {
-            error: "Erro ao verificar créditos gratuitos",
-          };
+        // Se tem assinatura ativa, flux-schnell é ilimitado (não cobra créditos)
+        if (hasActiveSubscription) {
+          usesFreeCredits = false; // Não usa créditos gratuitos nem pagos
+        } else {
+          // Para usuários sem assinatura, verificar créditos gratuitos
+          const freeCreditsResult = await getUserFreeCredits({});
+          
+          if (freeCreditsResult.serverError || !freeCreditsResult.data?.success) {
+            return {
+              error: "Erro ao verificar créditos gratuitos",
+            };
+          }
+          
+          const freeCreditsData = freeCreditsResult.data.data;
+          if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
+            return {
+              error: "Créditos gratuitos insuficientes para usar este modelo",
+            };
+          }
+          
+          usesFreeCredits = true;
         }
-        
-        const freeCreditsData = freeCreditsResult.data.data;
-        if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
-          return {
-            error: "Créditos gratuitos insuficientes para usar este modelo",
-          };
-        }
-        
-        usesFreeCredits = true;
       } else {
         // Para outros modelos, usar sistema de reserva normal
         const reserveResult = await reserveCredits({
@@ -328,7 +343,7 @@ export const generateImage = authActionClient
           
           // Confirmar créditos baseado no tipo
           if (usesFreeCredits) {
-            // Para flux-schnell, gastar créditos gratuitos
+            // Para flux-schnell sem assinatura, gastar créditos gratuitos
             const spendResult = await spendFreeCredits({
               modelId: model,
               description: `Geração de imagem concluída via Together.ai - ${model}`,

@@ -260,7 +260,7 @@ export function FormTextToImage({
       }
     }
 
-    // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
+    // Para outros modelos que não são flux-schnell, sempre exigir assinatura
     if (data.model !== "flux-schnell" && !subscription) {
       setShowSubscriptionModal(true);
       return false;
@@ -274,15 +274,17 @@ export function FormTextToImage({
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
 
-    // Se for flux-schnell, verificar créditos gratuitos
+    // Se for flux-schnell, verificar se precisa de créditos gratuitos
     if (data.model === "flux-schnell") {
-      // Verificar se tem créditos gratuitos suficientes
-      if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
-        toast.error(t("insufficientFreeCredits"));
-        setStartedGeneration(false);
-        return false;
+      // Se não tem assinatura ativa, verificar créditos gratuitos
+      if (!subscription) {
+        if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+          toast.error(t("insufficientFreeCredits"));
+          setStartedGeneration(false);
+          return false;
+        }
       }
-      // Para flux-schnell, não fazemos reserva, gastamos diretamente após sucesso
+      // Para flux-schnell, não fazemos reserva, gastamos diretamente após sucesso (ou é ilimitado com assinatura)
     } else if (selectedModel.credits > 0) {
       // Para outros modelos, usar sistema de reserva normal
       reservation = await reserveCredits(selectedModel.modelId);

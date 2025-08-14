@@ -28,8 +28,8 @@ export function SubscriptionRequiredModal({ isOpen, onClose, locale }: Subscript
     onClose();
   };
 
-  const handlePlanSelect = (plan: any) => {
-    // Fechar modal e redirecionar para checkout será feito automaticamente pelo componente
+  const handleCheckoutSuccess = () => {
+    // Fechar modal quando o checkout for iniciado com sucesso
     onClose();
   };
 
@@ -49,10 +49,12 @@ export function SubscriptionRequiredModal({ isOpen, onClose, locale }: Subscript
         <div className="mt-6">
           <PlansList 
             locale={locale}
-            onPlanSelect={handlePlanSelect}
+            onPlanSelect={undefined}
             showSelectButton={true}
-            buttonText="Selecionar Plano"
+            buttonText="Assinar Plano"
             className="grid-cols-1 md:grid-cols-2"
+            excludeFreePlan={true}
+            onCheckoutSuccess={handleCheckoutSuccess}
           />
         </div>
         

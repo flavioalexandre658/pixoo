@@ -42,7 +42,8 @@ export const getPlansByCurrency = actionClient
         priceFormatted: currency === 'BRL' 
           ? `R$ ${(plan.priceInCents / 100).toFixed(2).replace('.', ',')}`
           : `$${(plan.priceInCents / 100).toFixed(2)}`,
-        stripePriceId: `${plan.code}_${plan.interval}_${currency.toLowerCase()}` // Gerar ID do preço do Stripe
+        stripePriceId: `${plan.code}_${plan.interval}_${currency.toLowerCase()}`, // Manter compatibilidade
+        lookupKey: `${plan.code}_${plan.interval}_${currency.toLowerCase()}` // Lookup key para buscar preços no Stripe
       }));
 
       console.log(`✅ ${processedPlans.length} planos encontrados para ${currency}`);

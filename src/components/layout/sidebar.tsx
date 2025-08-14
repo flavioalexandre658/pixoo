@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
 
 interface SidebarProps {
   className?: string;
@@ -84,8 +85,11 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
 
 export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
   const t = useTranslations("navigation");
   const pathname = usePathname();
+  const params = useParams();
+  const locale = params.locale as string;
 
   // Remove locale from pathname immediately (e.g., /pt/create-image -> /create-image)
   const currentPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
@@ -198,6 +202,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Upgrade Button */}
       <div className={cn("border-t", isCollapsed && !isMobile ? "p-2" : "p-4")}>
         <Button
+          onClick={() => setShowPlansModal(true)}
           className={cn(
             "w-full bg-blue-600 hover:bg-blue-700",
             isCollapsed && !isMobile && "h-10 p-0 min-w-[2.5rem]"
@@ -240,6 +245,13 @@ export function Sidebar({ className }: SidebarProps) {
           <SidebarContent isMobile />
         </SheetContent>
       </Sheet>
+
+      {/* Plans Modal */}
+      <SubscriptionRequiredModal
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        locale={locale}
+      />
     </>
   );
 }

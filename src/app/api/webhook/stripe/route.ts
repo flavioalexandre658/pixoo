@@ -82,8 +82,19 @@ export async function POST(req: NextRequest) {
 
       // Buscar a subscription completa para obter metadata e dados
       const subscription = await stripe.subscriptions.retrieve(
-        session.subscription as string
+        session.subscription as string,
+        {
+          expand: ['latest_invoice', 'items.data.price']
+        }
       );
+
+      console.log(`🔍 [Stripe Webhook] Subscription completa:`, {
+        id: subscription.id,
+        status: subscription.status,
+        current_period_start: (subscription as any).current_period_start,
+        current_period_end: (subscription as any).current_period_end,
+        customer: subscription.customer
+      });
 
       // Buscar metadata na invoice se não estiver na subscription
       let userId: string | undefined;
@@ -121,7 +132,20 @@ export async function POST(req: NextRequest) {
       );
 
       const currentPeriodEnd = (subscription as any).current_period_end;
-      const renewsAt = currentPeriodEnd
+      const currentPeriodStart = (subscription as any).current_period_start;
+      const canceledAt = (subscription as any).canceled_at;
+      const trialStart = (subscription as any).trial_start;
+      const trialEnd = (subscription as any).trial_end;
+
+      console.log(`🔍 [Stripe Webhook] Timestamps recebidos:`, {
+        currentPeriodEnd,
+        currentPeriodStart,
+        canceledAt,
+        trialStart,
+        trialEnd
+      });
+
+      const renewsAt = currentPeriodEnd && !isNaN(currentPeriodEnd)
         ? new Date(currentPeriodEnd * 1000)
         : new Date();
 
@@ -132,31 +156,36 @@ export async function POST(req: NextRequest) {
         status: subscription.status,
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: subscription.customer as string,
-        currentPeriodStart: new Date(
-          (subscription as any).current_period_start * 1000
-        ),
+        currentPeriodStart: currentPeriodStart && !isNaN(currentPeriodStart)
+          ? new Date(currentPeriodStart * 1000)
+          : new Date(),
         currentPeriodEnd: renewsAt,
-        cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
-        canceledAt: (subscription as any).canceled_at
-          ? new Date((subscription as any).canceled_at * 1000)
+        cancelAtPeriodEnd: (subscription as any).cancel_at_period_end || false,
+        canceledAt: canceledAt && !isNaN(canceledAt)
+          ? new Date(canceledAt * 1000)
           : null,
-        trialStart: (subscription as any).trial_start
-          ? new Date((subscription as any).trial_start * 1000)
+        trialStart: trialStart && !isNaN(trialStart)
+          ? new Date(trialStart * 1000)
           : null,
-        trialEnd: (subscription as any).trial_end
-          ? new Date((subscription as any).trial_end * 1000)
+        trialEnd: trialEnd && !isNaN(trialEnd)
+          ? new Date(trialEnd * 1000)
           : null,
       };
 
-      await db
-        .insert(subscriptions)
-        .values(values)
-        .onConflictDoUpdate({
-          target: [subscriptions.stripeCustomerId],
-          set: {
+      // Verificar se já existe uma assinatura para este usuário
+      const existingSubscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.userId, userId),
+      });
+
+      if (existingSubscription) {
+        // Atualizar assinatura existente
+        await db
+          .update(subscriptions)
+          .set({
             planId: values.planId,
             status: values.status,
             stripeSubscriptionId: values.stripeSubscriptionId,
+            stripeCustomerId: values.stripeCustomerId,
             currentPeriodStart: values.currentPeriodStart,
             currentPeriodEnd: values.currentPeriodEnd,
             cancelAtPeriodEnd: values.cancelAtPeriodEnd,
@@ -164,8 +193,12 @@ export async function POST(req: NextRequest) {
             trialStart: values.trialStart,
             trialEnd: values.trialEnd,
             updatedAt: new Date(),
-          },
-        });
+          })
+          .where(eq(subscriptions.userId, userId));
+      } else {
+        // Criar nova assinatura
+        await db.insert(subscriptions).values(values);
+      }
 
       // Buscar o plano para obter os créditos
       const plan = await db.query.plans.findFirst({
@@ -264,7 +297,9 @@ export async function POST(req: NextRequest) {
         }
 
         const currentPeriodEnd = (subscription as any).current_period_end;
-        const renewsAt = currentPeriodEnd
+        const currentPeriodStart = (subscription as any).current_period_start;
+        
+        const renewsAt = currentPeriodEnd && !isNaN(currentPeriodEnd)
           ? new Date(currentPeriodEnd * 1000)
           : new Date();
 
@@ -273,9 +308,9 @@ export async function POST(req: NextRequest) {
           .update(subscriptions)
           .set({
             status: subscription.status,
-            currentPeriodStart: new Date(
-              (subscription as any).current_period_start * 1000
-            ),
+            currentPeriodStart: currentPeriodStart && !isNaN(currentPeriodStart)
+              ? new Date(currentPeriodStart * 1000)
+              : new Date(),
             currentPeriodEnd: renewsAt,
             cancelAtPeriodEnd:
               (subscription as any).cancel_at_period_end || false,
@@ -360,7 +395,10 @@ export async function POST(req: NextRequest) {
       }
 
       const currentPeriodEnd = (subscription as any).current_period_end;
-      const renewsAt = currentPeriodEnd
+      const currentPeriodStart = (subscription as any).current_period_start;
+      const canceledAt = (subscription as any).canceled_at;
+      
+      const renewsAt = currentPeriodEnd && !isNaN(currentPeriodEnd)
         ? new Date(currentPeriodEnd * 1000)
         : new Date();
 
@@ -369,13 +407,13 @@ export async function POST(req: NextRequest) {
         .update(subscriptions)
         .set({
           status: subscription.status,
-          currentPeriodStart: new Date(
-            (subscription as any).current_period_start * 1000
-          ),
+          currentPeriodStart: currentPeriodStart && !isNaN(currentPeriodStart)
+            ? new Date(currentPeriodStart * 1000)
+            : new Date(),
           currentPeriodEnd: renewsAt,
-          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
-          canceledAt: (subscription as any).canceled_at
-            ? new Date((subscription as any).canceled_at * 1000)
+          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end || false,
+          canceledAt: canceledAt && !isNaN(canceledAt)
+            ? new Date(canceledAt * 1000)
             : null,
           updatedAt: new Date(),
         })

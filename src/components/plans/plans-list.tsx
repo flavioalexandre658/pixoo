@@ -7,8 +7,10 @@ import { Crown, Zap, Star, Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
+import { useSession } from '@/lib/auth-client';
 import { getPlansByCurrency } from '@/actions/plans/get/get-plans-by-currency.action';
+import { createCheckoutSession } from '@/actions/checkout/create/create-checkout-session.action';
 
 interface Plan {
   id: string;
@@ -35,6 +37,8 @@ interface PlansListProps {
   showSelectButton?: boolean;
   buttonText?: string;
   className?: string;
+  excludeFreePlan?: boolean;
+  onCheckoutSuccess?: () => void;
 }
 
 export function PlansList({
@@ -42,11 +46,13 @@ export function PlansList({
   onPlanSelect,
   showSelectButton = true,
   buttonText,
-  className = ''
+  className = '',
+  excludeFreePlan = false,
+  onCheckoutSuccess
 }: PlansListProps) {
   const t = useTranslations('subscriptionRequired');
+  const { data: session } = useSession();
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [isCreatingCheckout, setIsCreatingCheckout] = useState<string | null>(null);
 
   // Determinar moeda baseada no locale
   const currency = locale === 'pt' ? 'BRL' : 'USD';
@@ -64,6 +70,27 @@ export function PlansList({
     },
   });
 
+  // Action para criar checkout
+  const { execute: executeCreateCheckout, isExecuting: isCreatingCheckoutAction } = useAction(createCheckoutSession, {
+    onSuccess: (result) => {
+      if (result.data?.success && result.data.data?.url) {
+        console.log('🔗 Redirecionando para URL de checkout:', result.data.data.url);
+        // Chamar callback de sucesso antes do redirecionamento
+        if (onCheckoutSuccess) {
+          onCheckoutSuccess();
+        }
+        window.location.href = result.data.data.url;
+      } else {
+        toast.error('URL de checkout não recebida');
+      }
+    },
+    onError: (error) => {
+      console.error('❌ Erro ao criar checkout:', error);
+      const errorMessage = error.error?.serverError || 'Erro ao processar pagamento';
+      toast.error(errorMessage);
+    },
+  });
+
   // Buscar planos ao montar o componente
   useEffect(() => {
     fetchPlans({ currency });
@@ -71,52 +98,32 @@ export function PlansList({
 
   // Função para criar checkout
   const handleCreateCheckout = async (plan: Plan) => {
-    if (plan.priceInCents === 0) {
-      toast.error('Plano gratuito não requer checkout');
+    console.log('🛒 Iniciando processo de checkout para plano:', plan);
+    
+    if (!session?.user?.id) {
+      console.log('❌ Usuário não autenticado');
+      toast.error('Você precisa estar logado para fazer checkout');
       return;
     }
 
-    setIsCreatingCheckout(plan.id);
-
-    try {
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planCode: plan.code,
-          currency: plan.currency,
-          interval: plan.interval,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao criar sessão de checkout');
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('URL de checkout não recebida');
-      }
-    } catch (error) {
-      console.error('Erro ao criar checkout:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Erro ao processar pagamento'
-      );
-    } finally {
-      setIsCreatingCheckout(null);
-    }
+    console.log('📤 Executando action de checkout...');
+    executeCreateCheckout({
+      planCode: plan.code,
+      currency: plan.currency as 'USD' | 'BRL',
+      interval: plan.interval as 'monthly' | 'yearly',
+    });
   };
 
   // Função para lidar com seleção de plano
   const handlePlanAction = (plan: Plan) => {
+    console.log('🎯 handlePlanAction chamada para plano:', plan.code, plan.name);
+    console.log('🔍 onPlanSelect existe?', !!onPlanSelect);
+    
     if (onPlanSelect) {
+      console.log('📞 Chamando onPlanSelect...');
       onPlanSelect(plan);
     } else {
+      console.log('💳 Chamando handleCreateCheckout...');
       handleCreateCheckout(plan);
     }
   };
@@ -153,11 +160,21 @@ export function PlansList({
     );
   }
 
+  // Filtrar planos se necessário
+  const filteredPlans = excludeFreePlan 
+    ? plans.filter(plan => plan.code !== 'free' && plan.priceInCents > 0)
+    : plans;
+
+  // Adaptar layout baseado no número de planos
+  const gridCols = excludeFreePlan 
+    ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4'
+    : 'grid md:grid-cols-2 lg:grid-cols-4 gap-4';
+
   return (
-    <div className={`grid md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
-      {plans.map((plan) => {
+    <div className={`${gridCols} ${className}`}>
+      {filteredPlans.map((plan) => {
         const IconComponent = getPlanIcon(plan.code);
-        const isLoading = isCreatingCheckout === plan.id;
+        const isLoading = isCreatingCheckoutAction;
 
         return (
           <Card
@@ -211,14 +228,14 @@ export function PlansList({
               {showSelectButton && (
                 <Button
                   onClick={() => handlePlanAction(plan)}
-                  disabled={isLoading}
+                  disabled={isCreatingCheckoutAction}
                   className={`w-full ${plan.isPopular
                       ? 'bg-primary hover:bg-primary/90'
                       : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
                     }`}
                   size="lg"
                 >
-                  {isLoading ? (
+                  {isCreatingCheckoutAction ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processando...

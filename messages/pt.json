@@ -26,7 +26,7 @@
     "textToVideo": "Texto para Vídeo",
     "imageToVideo": "Imagem para Vídeo",
     "history": "Histórico",
-    "upgradeToPro": "Upgrade para Pro",
+    "upgradeToPro": "Upgrade",
     "generate": "Gerar Imagem",
     "gallery": "Galeria",
     "pricing": "Preços",
@@ -493,6 +493,8 @@
     "cost": "Custo:",
     "generating": "Gerando...",
     "insufficientCreditsButton": "Créditos insuficientes",
-    "generateImage": "Gerar Imagem"
+    "generateImage": "Gerar Imagem",
+    "steps": "Passos (1-50)",
+    "guidance": "Escala de Orientação (1-20)"
   }
 }

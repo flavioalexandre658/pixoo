@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings, User, LogOut, CreditCard, Globe } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter, usePathname } from "@/i18n/routing";
 import { CreditsDisplay } from "@/components/ui/credits-display";
 import { usePageTitle } from "@/hooks/use-page-title";
 
@@ -26,6 +27,7 @@ export function Header({ className }: HeaderProps) {
   const t = useTranslations("header");
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams();
   const locale = params.locale as string;
   const { pageTitle } = usePageTitle();
@@ -37,6 +39,10 @@ export function Header({ className }: HeaderProps) {
 
   const handleSignIn = () => {
     router.push(`/${locale}/sign-in`);
+  };
+
+  const handleLanguageChange = (newLocale: string) => {
+    router.push(pathname, { locale: newLocale });
   };
 
   return (
@@ -68,13 +74,13 @@ export function Header({ className }: HeaderProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t("language")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
                 <span className="flex items-center gap-2">🇺🇸 English</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLanguageChange('pt')}>
                 <span className="flex items-center gap-2">🇧🇷 Português</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLanguageChange('es')}>
                 <span className="flex items-center gap-2">🇪🇸 Español</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

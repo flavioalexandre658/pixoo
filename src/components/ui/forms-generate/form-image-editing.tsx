@@ -330,8 +330,10 @@ export function FormImageEditing({
       return false;
     }
 
-    // Sempre exibir modal de planos se não tiver assinatura ativa
+    // Verificar se precisa de assinatura baseado no modelo
     if (!subscription) {
+      // Para flux-schnell, sempre exigir assinatura no image editing
+      // (diferente do text-to-image que permite créditos gratuitos)
       setShowPlansModal(true);
       return false;
     }
@@ -348,7 +350,8 @@ export function FormImageEditing({
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
-    if (selectedModel.credits > 0) {
+    // Para flux-schnell com assinatura ativa, não reservar créditos (é ilimitado)
+    if (selectedModel.credits > 0 && !(data.model === "flux-schnell" && subscription)) {
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
