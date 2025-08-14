@@ -87,6 +87,8 @@ export default function TextToImage({ models }: TextToImage) {
     setCurrentTime(timeMs);
     // Atualizar histórico quando uma nova imagem for gerada
     setHistoryRefreshTrigger((prev) => prev + 1);
+    // Atualizar créditos após a geração
+    fetchCredits();
   };
 
   const downloadImage = async () => {
@@ -372,9 +374,8 @@ export default function TextToImage({ models }: TextToImage) {
             ) => {
               startPolling(taskId, reservationData);
             }}
-            onGenerationComplete={() => {
-              setIsGenerating(false);
-              setIsWaitingWebhook(false);
+            onGenerationComplete={(timeMs: number) => {
+              handleGenerationComplete(timeMs);
             }}
             onGenerationButtonClick={() => {
               const now = Date.now();

@@ -7,6 +7,8 @@ import { generatedImages, modelCosts } from "@/db/schema";
 import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action";
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
 import { cancelReservation } from "@/actions/credits";
+import { spendFreeCredits } from "@/actions/credits/spend/spend-free-credits.action";
+import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { spawn } from "child_process";
@@ -268,23 +270,46 @@ export const generateImage = authActionClient
         };
       }
 
-      // Reservar créditos
+      // Verificar créditos baseado no modelo
       let reservationId: string | null = null;
-      const reserveResult = await reserveCredits({
-        modelId: model,
-        description: `Reserva para geração de imagem - ${model}`,
-      });
+      let usesFreeCredits = false;
+      
+      if (model === "flux-schnell") {
+        // Para flux-schnell, verificar créditos gratuitos
+        const freeCreditsResult = await getUserFreeCredits({});
+        
+        if (freeCreditsResult.serverError || !freeCreditsResult.data?.success) {
+          return {
+            error: "Erro ao verificar créditos gratuitos",
+          };
+        }
+        
+        const freeCreditsData = freeCreditsResult.data.data;
+        if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
+          return {
+            error: "Créditos gratuitos insuficientes para usar este modelo",
+          };
+        }
+        
+        usesFreeCredits = true;
+      } else {
+        // Para outros modelos, usar sistema de reserva normal
+        const reserveResult = await reserveCredits({
+          modelId: model,
+          description: `Reserva para geração de imagem - ${model}`,
+        });
 
-      if (reserveResult.serverError || !reserveResult.data?.success) {
-        return {
-          error:
-            reserveResult.data?.errors?._form?.[0] ||
-            reserveResult.serverError ||
-            "Erro ao reservar créditos",
-        };
+        if (reserveResult.serverError || !reserveResult.data?.success) {
+          return {
+            error:
+              reserveResult.data?.errors?._form?.[0] ||
+              reserveResult.serverError ||
+              "Erro ao reservar créditos",
+          };
+        }
+
+        reservationId = reserveResult.data?.data?.reservationId || null;
       }
-
-      reservationId = reserveResult.data?.data?.reservationId || null;
 
       // Se for flux-schnell, usar Together.ai
       if (model === "flux-schnell") {
@@ -301,8 +326,22 @@ export const generateImage = authActionClient
           const taskId = randomUUID();
           const imageId = randomUUID();
           
-          // Confirmar créditos se houve reserva
-          if (reservationId) {
+          // Confirmar créditos baseado no tipo
+          if (usesFreeCredits) {
+            // Para flux-schnell, gastar créditos gratuitos
+            const spendResult = await spendFreeCredits({
+              modelId: model,
+              description: `Geração de imagem concluída via Together.ai - ${model}`,
+            });
+
+            if (spendResult.serverError || !spendResult.data?.success) {
+              console.error(
+                "Erro ao gastar créditos gratuitos:",
+                spendResult.data?.errors || spendResult.serverError
+              );
+            }
+          } else if (reservationId) {
+            // Para outros modelos, confirmar reserva
             const confirmResult = await confirmCredits({
               reservationId: reservationId,
               modelId: model,
@@ -355,8 +394,8 @@ export const generateImage = authActionClient
             imageId: imageId,
           };
         } else {
-          // Se falhou com Together.ai, cancelar reserva
-          if (reservationId) {
+          // Se falhou com Together.ai, cancelar reserva apenas se não for créditos gratuitos
+          if (!usesFreeCredits && reservationId) {
             await cancelReservation({
               reservationId: reservationId,
               reason: `Falha na geração via Together.ai - ${togetherResult.error}`,
@@ -600,7 +639,7 @@ export const generateImage = authActionClient
         } catch (dbError) {
           console.error("Erro ao salvar no banco:", dbError);
           // Se falhar ao salvar no banco e há reserva, cancelar a reserva (não reembolsar pois não foi cobrado)
-          if (reservationId) {
+          if (!usesFreeCredits && reservationId) {
             const cancelResult = await cancelReservation({
               reservationId: reservationId,
               reason: `Erro ao salvar dados da imagem - ${model}`,

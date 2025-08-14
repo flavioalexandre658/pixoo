@@ -39,34 +39,66 @@ export function CreditsDisplay({
   className = "",
 }: CreditsDisplayProps) {
   const t = useTranslations('credits');
-  const { credits, isLoading } = useCredits();
+  const { credits, isLoading, fetchCredits } = useCredits();
   const { data: session } = useSession();
   const { subscription } = useSubscription();
   const [freeCredits, setFreeCredits] = useState<FreeCreditsData | null>(null);
   const [loadingFreeCredits, setLoadingFreeCredits] = useState(false);
   const balance = credits?.balance || 0;
 
-  useEffect(() => {
-    const fetchFreeCredits = async () => {
-      if (!session?.user || subscription) {
-        return;
-      }
+  const fetchFreeCredits = async () => {
+    if (!session?.user || subscription) {
+      return;
+    }
 
-      setLoadingFreeCredits(true);
-      try {
-        const result = await getUserFreeCredits({});
-        if (result?.data?.success && result.data.data) {
-          setFreeCredits(result.data.data);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar créditos gratuitos:", error);
-      } finally {
-        setLoadingFreeCredits(false);
+    setLoadingFreeCredits(true);
+    try {
+      const result = await getUserFreeCredits({});
+      if (result?.data?.success && result.data.data) {
+        setFreeCredits(result.data.data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar créditos gratuitos:", error);
+    } finally {
+      setLoadingFreeCredits(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFreeCredits();
+  }, [session, subscription]);
+
+  // Atualizar créditos quando a aba volta ao foco
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const handleFocus = () => {
+      fetchCredits();
+      fetchFreeCredits();
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchCredits();
+        fetchFreeCredits();
       }
     };
 
-    fetchFreeCredits();
-  }, [session, subscription]);
+    const handleCreditsUpdate = () => {
+      fetchCredits();
+      fetchFreeCredits();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('creditsUpdated', handleCreditsUpdate);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('creditsUpdated', handleCreditsUpdate);
+    };
+  }, [session?.user?.id, fetchCredits]);
 
   if (isLoading || loadingFreeCredits) {
     return (

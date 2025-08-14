@@ -41,6 +41,7 @@ import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
+import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/contexts/subscription-context";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
@@ -69,7 +70,7 @@ interface FormTextToImageProps {
     taskId: string,
     reservationData?: { reservationId: string; modelId: string }
   ) => void;
-  onGenerationComplete?: () => void;
+  onGenerationComplete?: (timeMs: number) => void;
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
   promptValue?: string;
@@ -110,14 +111,51 @@ export function FormTextToImage({
   const locale = params.locale as string;
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
+  const { executeAsync: executeGetUserFreeCredits } = useAction(getUserFreeCredits);
+
+  // Estado para créditos gratuitos
+  const [freeCredits, setFreeCredits] = useState<{
+    freeCreditsBalance: number;
+    hasActiveSubscription: boolean;
+    canUseFreeCredits: boolean;
+  } | null>(null);
+  const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
 
   // Reset startedGeneration when generation is complete
   useEffect(() => {
     if (!isGenerating && startedGeneration) {
+      const timeMs = generationStartTime ? Date.now() - generationStartTime : 0;
+      onGenerationComplete?.(timeMs);
+      setGenerationStartTime(null);
+      triggerCreditsUpdate();
       setStartedGeneration(false);
-      onGenerationComplete?.();
     }
-  }, [isGenerating, startedGeneration, onGenerationComplete]);
+  }, [isGenerating, startedGeneration, onGenerationComplete, generationStartTime]);
+
+  // Função para buscar créditos gratuitos
+  const fetchFreeCredits = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const result = await executeGetUserFreeCredits({});
+      if (result?.data?.success) {
+        setFreeCredits(result.data.data || null);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar créditos gratuitos:', error);
+    }
+  };
+
+  // Função para disparar evento de atualização de créditos
+  const triggerCreditsUpdate = () => {
+    // Disparar evento customizado para atualizar todos os componentes de créditos
+    window.dispatchEvent(new CustomEvent('creditsUpdated'));
+  };
+
+  // Buscar créditos gratuitos quando a sessão estiver disponível
+  useEffect(() => {
+    fetchFreeCredits();
+  }, [session?.user?.id]);
 
   const [dimension, setDimension] = useState<Dimension>({
     aspectRatio: "1:1",
@@ -207,10 +245,19 @@ export function FormTextToImage({
       return false;
     }
 
-    // Sempre exibir modal de planos se não tiver assinatura ativa
+    // Verificar se o usuário tem assinatura ativa ou créditos gratuitos para flux-schnell
     if (!subscription) {
-      setShowPlansModal(true);
-      return false;
+      // Se for flux-schnell, verificar se tem créditos gratuitos
+      if (data.model === "flux-schnell") {
+        if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+          setShowPlansModal(true);
+          return false;
+        }
+      } else {
+        // Para outros modelos, sempre exigir assinatura
+        setShowSubscriptionModal(true);
+        return false;
+      }
     }
 
     // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
@@ -221,11 +268,23 @@ export function FormTextToImage({
 
     // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
     setStartedGeneration(true);
+    setGenerationStartTime(Date.now());
     onGenerationButtonClick?.();
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
-    if (selectedModel.credits > 0) {
+
+    // Se for flux-schnell, verificar créditos gratuitos
+    if (data.model === "flux-schnell") {
+      // Verificar se tem créditos gratuitos suficientes
+      if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+        toast.error(t("insufficientFreeCredits"));
+        setStartedGeneration(false);
+        return false;
+      }
+      // Para flux-schnell, não fazemos reserva, gastamos diretamente após sucesso
+    } else if (selectedModel.credits > 0) {
+      // Para outros modelos, usar sistema de reserva normal
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
@@ -282,7 +341,9 @@ export function FormTextToImage({
           toast.error("Bad request. Please check your input.");
         } else {
           const errorData = response.data?.error;
-          onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+          const timeMs = generationStartTime ? Date.now() - generationStartTime : 0;
+          onGenerationComplete?.(timeMs); // Resetar estado isGenerating no componente pai
+          setGenerationStartTime(null); // Reset do tempo de início
           throw new Error(errorData || t("failedToGenerateImage"));
         }
         return;
@@ -294,7 +355,8 @@ export function FormTextToImage({
       if (result?.success && result?.imageUrl) {
         setStartedGeneration(false);
 
-        // Nota: A confirmação de créditos será feita automaticamente via webhook
+        // Nota: Para flux-schnell, os créditos gratuitos são gastos automaticamente no backend
+        // Para outros modelos, a confirmação de créditos será feita automaticamente via webhook
         // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
           console.log(
@@ -304,9 +366,13 @@ export function FormTextToImage({
         }
 
         onImageGenerated(result.imageUrl);
-        onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+        const timeMs = generationStartTime ? Date.now() - generationStartTime : 0;
+        onGenerationComplete?.(timeMs); // Resetar estado isGenerating no componente pai
         fetchCredits();
+        fetchFreeCredits(); // Atualizar créditos gratuitos também
+        triggerCreditsUpdate();
         toast.success(t("imageGeneratedSuccess"));
+        setGenerationStartTime(null); // Reset do tempo de início
       } else if (result?.taskId) {
         // Fallback para modelos que usam BFL API (não Together.ai)
         toast.info(t("checkingStatus"));
@@ -334,7 +400,10 @@ export function FormTextToImage({
           setCurrentReservation(null);
         }
 
-        onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+        const timeMs = generationStartTime ? Date.now() - generationStartTime : 0;
+        onGenerationComplete?.(timeMs); // Resetar estado isGenerating no componente pai
+        triggerCreditsUpdate();
+        setGenerationStartTime(null);
         throw new Error(t("invalidServerResponse"));
       }
     } catch (error: any) {
@@ -349,7 +418,10 @@ export function FormTextToImage({
         setCurrentReservation(null);
       }
 
-      onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+      const timeMs = generationStartTime ? Date.now() - generationStartTime : 0;
+      onGenerationComplete?.(timeMs); // Resetar estado isGenerating no componente pai
+      triggerCreditsUpdate();
+      setGenerationStartTime(null);
       console.error("Generation error:", error);
       if (error.message.includes("credits")) {
         toast.error(t("insufficientCredits"));

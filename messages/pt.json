@@ -60,6 +60,8 @@
     "imagePublic": "Imagem Pública",
     "imagePublicDescription": "Tornar esta imagem visível para outros usuários",
     "generateImage": "Gerar Imagem",
+    "insufficientFreeCredits": "Créditos gratuitos insuficientes para usar este modelo",
+    "freeCreditsRequired": "Você precisa de créditos gratuitos para usar o modelo flux-schnell",
     "generating": "Gerando...",
     "noImageGenerated": "Nenhuma imagem gerada",
     "startingGeneration": "Iniciando geração de imagem...",

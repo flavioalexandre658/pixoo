@@ -142,6 +142,9 @@ export async function POST(request: NextRequest) {
             if (spendResult?.data?.success) {
               usedFreeCredits = true;
               console.log(`✅ Crédito gratuito usado para ${model}`);
+            } else {
+              const errorMessage = spendResult?.data?.errors?._form?.[0] || "Erro desconhecido";
+              console.error(`❌ Falha ao usar crédito gratuito para ${model}:`, errorMessage);
             }
           }
         }
