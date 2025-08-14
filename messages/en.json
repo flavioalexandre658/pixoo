@@ -33,175 +33,91 @@
     "profile": "Profile",
     "logout": "Logout"
   },
-  "header": {
-    "notifications": "Notifications",
-    "profile": "Profile",
-    "billing": "Billing",
-    "settings": "Settings",
-    "logout": "Logout",
-    "language": "Language",
-    "changeLanguage": "Change language"
-  },
-  "textToImage": {
-    "title": "AI Image Generation",
-    "modelSelection": "Model Selection",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Describe the image you want to generate...",
-    "aspectRatio": "Aspect Ratio",
-    "advancedOptions": "Advanced Options",
-    "imagePublic": "Public Image",
-    "imagePublicDescription": "Make this image visible to other users",
-    "generateImage": "Generate Image"
-  },
-  "auth": {
-    "loading": "Loading...",
-    "login": "Login",
-    "register": "Register",
-    "email": "Email",
-    "password": "Password",
-    "confirmPassword": "Confirm Password",
-    "signIn": "Sign In",
-    "signUp": "Sign Up",
-    "signInWithGoogle": "Sign in with Google",
-    "signUpWithGoogle": "Sign up with Google",
-    "forgotPassword": "Forgot Password",
-    "resetPassword": "Reset Password",
-    "sendResetLink": "Send Reset Link",
-    "backToSignIn": "Back to Sign In",
-    "alreadyHaveAccount": "Already have an account?",
-    "dontHaveAccount": "Don't have an account?",
-    "name": "Name",
-    "fullName": "Full Name",
-    "enterEmail": "Enter your email",
-    "enterPassword": "Enter your password",
-    "enterName": "Enter your name",
-    "passwordMinLength": "Password must be at least 8 characters",
-    "emailRequired": "Email is required",
-    "passwordRequired": "Password is required",
-    "nameRequired": "Name is required",
-    "invalidEmail": "Invalid email",
-    "passwordsNotMatch": "Passwords do not match",
-    "signInSuccess": "Successfully signed in",
-    "signUpSuccess": "Account created successfully",
-    "resetLinkSent": "Reset link sent to your email",
-    "passwordResetSuccess": "Password reset successfully",
-    "signInError": "Error signing in",
-    "signUpError": "Error creating account",
-    "resetPasswordError": "Error resetting password",
-    "welcomeBack": "Welcome Back",
-    "createAccount": "Create Your Account",
-    "loginTitle": "Sign in to your account",
-    "registerTitle": "Create your account",
-    "signOut": "Sign Out"
-  },
-  "imageGeneration": {
-    "title": "Text to Image",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Describe the image you want to generate...",
-    "modelSelection": "Model Selection",
-    "aspectRatio": "Image Ratio: 1:1",
-    "advancedOptions": "Advanced Options",
-    "imagePublic": "Image Public:",
-    "generateImage": "Generate Image",
-    "generating": "Generating image...",
-    "noImageGenerated": "No image generated",
-    "creditsRequired": "Credits required",
-    "insufficientCredits": "Insufficient credits",
-    "noImageToDownload": "No image to download",
-    "imageLoadError": "Error loading image",
-    "retryWithProxy": "Retry with Proxy",
-    "openInNewTab": "Open in New Tab"
-  },
-  "models": {
-    "fluxSchnell": "Flux Schnell",
-    "fluxDev": "Flux Dev",
-    "fluxPro": "Flux Pro",
-    "fluxPro11": "Flux Pro 1.1",
-    "fluxPro11Ultra": "Flux Pro 1.1 Ultra",
-    "fluxRealism": "Flux Realism",
-    "freeUnlimited": "free unlimited",
-    "credits": "credits"
-  },
   "pricing": {
-    "title": "Plans and Pricing",
-    "freePlan": "Free Plan",
-    "starterPlan": "Starter Plan",
-    "premiumPlan": "Premium Plan",
-    "advancedPlan": "Advanced Plan",
-    "oneTimePlan": "One-Time Plan",
-    "monthly": "Monthly",
-    "annually": "Annually",
-    "creditsPerMonth": "credits per month",
-    "dailyCredits": "daily credits",
-    "unlimitedUse": "Unlimited Use",
-    "commercialLicense": "Commercial License",
-    "historyRecords": "History Records",
-    "permanentHistory": "Permanent History",
-    "choosePlan": "Choose Plan"
-  },
-  "imageEditing": {
-    "title": "Image Editing"
-  },
-  "formImageEditing": {
-    "title": "AI Image Editing",
-    "modelSelection": "Model Selection",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Describe how you want to edit the image...",
-    "uploadImage": "Upload Image",
-    "uploadImageDescription": "Drag and drop an image or click to select",
-    "supportedFormats": "Supported formats: JPG, PNG, WebP (max 10MB)",
-    "aspectRatio": "Aspect Ratio",
-    "advancedOptions": "Advanced Options",
-    "imagePublic": "Public Image",
-    "imagePublicDescription": "Make this image visible to other users",
-    "editImage": "Edit Image",
-    "editing": "Editing...",
-    "noImageGenerated": "No image edited",
-    "startingEditing": "Starting image editing...",
-    "checkingStatus": "Checking status...",
-    "imageEditedSuccess": "Image edited successfully!",
-    "insufficientCredits": "Insufficient credits. Add more credits to continue.",
-    "rateLimitExceeded": "Rate limit exceeded. Try again in a few minutes.",
-    "editingFailed": "Failed to edit image. Please try again.",
-    "seed": "Seed (Optional)",
-    "seedPlaceholder": "Random seed for reproducible results",
-    "steps": "Steps (1-50)",
-    "guidance": "Guidance Scale (1-20)",
-    "costCredits": "This will cost {credits} credits",
-    "removeImage": "Remove Image",
-    "imageRequired": "An image is required for editing",
-    "invalidFileType": "Invalid file type. Use JPG, PNG or WebP.",
-    "fileTooLarge": "File too large. Maximum 10MB.",
-    "uploadError": "Error uploading image"
-  },
-  "history": {
-    "title": "Image History",
-    "description": "View and manage all your generated images"
-  },
-  "errors": {
-    "somethingWentWrong": "Something went wrong",
-    "errorLoadingHistory": "An error occurred while loading the image history.",
-    "tryAgain": "Try Again"
-  },
-  "explore": {
-    "title": "Explore",
-    "description": "Discover amazing creations from our community",
-    "trending": "Trending",
-    "categories": {
-      "all": "All",
-      "photography": "Photography",
-      "animals": "Animals",
-      "anime": "Anime",
-      "architecture": "Architecture",
-      "character": "Character",
-      "food": "Food",
-      "sci-fi": "Sci-Fi"
+    "title": "Choose the perfect plan for you",
+    "subtitle": "Unlock the full potential of AI image generation. Flexible plans for all types of creators.",
+    "features": {
+      "fastGeneration": {
+        "title": "Fast Generation",
+        "description": "Create amazing images in seconds with our advanced technology"
+      },
+      "premiumQuality": {
+        "title": "Premium Quality",
+        "description": "High-resolution images with impressive details"
+      },
+      "commercialLicense": {
+        "title": "Commercial License",
+        "description": "Use your creations for commercial projects without restrictions"
+      }
     },
-    "selectModel": "Select Model",
-    "allModels": "All Models",
-    "loading": "Loading...",
-    "noImages": "No images found",
-    "loadMore": "Load More",
-    "remix": "Remix"
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "questions": {
+        "cancel": {
+          "question": "Can I cancel my subscription at any time?",
+          "answer": "Yes, you can cancel your subscription at any time. You will continue to have access to features until the end of the paid period."
+        },
+        "credits": {
+          "question": "Do unused credits expire?",
+          "answer": "Credits are renewed monthly. Unused credits are not carried over to the next month."
+        },
+        "commercial": {
+          "question": "Can I use the generated images commercially?",
+          "answer": "Yes, all paid plans include commercial license. You can use the images in personal and commercial projects."
+        },
+        "free": {
+          "question": "How does the free plan work?",
+          "answer": "The free plan offers 5 daily credits that are automatically renewed. Perfect for trying out our platform."
+        }
+      }
+    }
+  },
+  "subscriptionRequired": {
+    "title": "Upgrade Required",
+    "description": "To use this model or feature, you need an active plan. Choose the perfect plan for you!",
+    "popular": "Most Popular",
+    "viewAllPlans": "View All Plans",
+    "plans": {
+      "basic": {
+        "name": "Pixoo Basic",
+        "price": "$19.90/month",
+        "description": "Perfect for personal use",
+        "features": [
+          "500 monthly credits",
+          "Access to basic models",
+          "Email support"
+        ]
+      },
+      "pro": {
+        "name": "Pixoo Pro",
+        "price": "$39.90/month",
+        "description": "For professionals and creators",
+        "features": [
+          "2000 monthly credits",
+          "Access to all models",
+          "AI prompt optimization",
+          "Priority support"
+        ]
+      }
+    }
+  },
+  "credits": {
+    "yourCredits": "Your Credits",
+    "freeCredits": "Free Credits",
+    "creditsAvailable": "Credits available",
+    "add": "Add",
+    "totalEarned": "Total Earned",
+    "totalSpent": "Total Spent",
+    "recentTransactions": "Recent Transactions",
+    "currentBalance": "Current balance: {balance} credits",
+    "onlyForPixooFree": "Only for Pixoo Free",
+    "renewalAvailable": "Renewal available",
+    "nextRenewalIn": "Next renewal in {hours}h",
+    "loginToSeeCredits": "Login to see your credits",
+    "importantInfo": "ℹ️ Important information:",
+    "validOnlyForFluxSchnell": "• Valid only for flux-schnell model",
+    "renewedEvery24Hours": "• Automatically renewed every 24 hours",
+    "renewalAvailableNow": "• Renewal available now",
+    "nextRenewalInHours": "• Next renewal in {hours}h"
   }
 }

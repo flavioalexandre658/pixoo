@@ -348,6 +348,45 @@
     "renewalAvailableNow": "• Renovação disponível agora",
     "nextRenewalInHours": "• Próxima renovação em {hours}h"
   },
+  "pricing": {
+    "title": "Escolha o plano ideal para você",
+    "subtitle": "Desbloqueie todo o potencial da geração de imagens com IA. Planos flexíveis para todos os tipos de criadores.",
+    "features": {
+      "fastGeneration": {
+        "title": "Geração Rápida",
+        "description": "Crie imagens incríveis em segundos com nossa tecnologia avançada"
+      },
+      "premiumQuality": {
+        "title": "Qualidade Premium",
+        "description": "Imagens de alta resolução com detalhes impressionantes"
+      },
+      "commercialLicense": {
+        "title": "Licença Comercial",
+        "description": "Use suas criações para projetos comerciais sem restrições"
+      }
+    },
+    "faq": {
+      "title": "Perguntas Frequentes",
+      "questions": {
+        "cancel": {
+          "question": "Posso cancelar minha assinatura a qualquer momento?",
+          "answer": "Sim, você pode cancelar sua assinatura a qualquer momento. Você continuará tendo acesso aos recursos até o final do período pago."
+        },
+        "credits": {
+          "question": "Os créditos não utilizados expiram?",
+          "answer": "Os créditos são renovados mensalmente. Créditos não utilizados não são acumulados para o próximo mês."
+        },
+        "commercial": {
+          "question": "Posso usar as imagens geradas comercialmente?",
+          "answer": "Sim, todos os planos pagos incluem licença comercial. Você pode usar as imagens em projetos pessoais e comerciais."
+        },
+        "free": {
+          "question": "Como funciona o plano gratuito?",
+          "answer": "O plano gratuito oferece 5 créditos diários que são renovados automaticamente. Ideal para experimentar nossa plataforma."
+        }
+      }
+    }
+  },
   "imageEditingForm": {
     "title": "Edição de Imagem com IA",
     "editInstructionRequired": "Instrução de edição é obrigatória",
