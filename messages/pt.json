@@ -1,4 +1,10 @@
 {
+  "metadata": {
+    "lp": {
+      "title": "Pixoo - Crie Imagens Incríveis com IA",
+      "description": "Transforme suas ideias em arte visual com os modelos de IA mais avançados. Crie imagens profissionais, editadas e personalizadas em segundos."
+    }
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Erro",
@@ -387,6 +393,23 @@
       }
     }
   },
+  "footer": {
+    "tagline": "Crie imagens incríveis com IA usando os modelos mais avançados. Transforme suas ideias em arte visual.",
+    "platform": "Plataforma",
+    "links": {
+      "features": "Recursos",
+      "pricing": "Preços",
+      "faq": "FAQ",
+      "testimonials": "Depoimentos"
+    },
+    "newsletter": {
+      "title": "Fique por dentro das novidades",
+      "description": "Receba atualizações sobre novos recursos e modelos de IA.",
+      "emailPlaceholder": "Digite seu e-mail",
+      "subscribe": "Inscrever"
+    },
+    "copyright": "Todos os direitos reservados."
+  },
   "imageEditingForm": {
     "title": "Edição de Imagem com IA",
     "editInstructionRequired": "Instrução de edição é obrigatória",
@@ -496,5 +519,88 @@
     "generateImage": "Gerar Imagem",
     "steps": "Passos (1-50)",
     "guidance": "Escala de Orientação (1-20)"
+  },
+  "TermsOfUse": {
+    "title": "Termos de Uso",
+    "lastUpdated": "Última atualização: {date, date, medium}"
+  },
+  "PrivacyPolicy": {
+    "title": "Política de Privacidade",
+    "lastUpdated": "Última atualização: {date, date, medium}"
+  },
+  "landingPage": {
+    "navbar": {
+      "features": "Recursos",
+      "pricing": "Preços",
+      "about": "Sobre",
+      "contact": "Contato",
+      "signIn": "Entrar",
+      "signUp": "Criar Conta",
+      "getStarted": "Começar",
+      "start": "Começar",
+      "faq": "FAQ",
+      "testimonials": "Depoimentos"
+    },
+    "hero": {
+      "badge": "Experimente grátis",
+      "title": "Crie Imagens Incríveis com IA",
+      "subtitle": "Transforme suas ideias em arte visual usando os modelos de IA mais avançados. Rápido, fácil e com qualidade profissional.",
+      "ctaPrimary": "Criar uma imagem",
+      "ctaSecondary": "Editar uma imagem",
+      "trustedBy": "Confiado por mais de 10.000 criadores"
+    },
+    "features": {
+      "title": "Recursos Poderosos",
+      "subtitle": "Tudo que você precisa para criar imagens incríveis com IA",
+      "feature1": {
+        "title": "Geração com IA Avançada",
+        "description": "Use modelos de última geração como Flux Pro para criar imagens de alta qualidade a partir de texto."
+      },
+      "feature2": {
+        "title": "Edição Inteligente",
+        "description": "Edite suas imagens com precisão usando IA. Modifique, melhore e transforme com comandos simples."
+      },
+      "feature3": {
+        "title": "Múltiplos Formatos",
+        "description": "Gere imagens em diferentes proporções e resoluções para qualquer projeto ou plataforma."
+      },
+      "feature4": {
+        "title": "Processamento Rápido",
+        "description": "Resultados em segundos. Nossa infraestrutura otimizada garante velocidade sem comprometer a qualidade."
+      },
+      "feature5": {
+        "title": "Uso Comercial",
+        "description": "Todas as imagens geradas podem ser usadas em projetos comerciais sem restrições de licença."
+      },
+      "feature6": {
+        "title": "Fácil de Usar",
+        "description": "Interface intuitiva que permite criar imagens profissionais mesmo sem experiência técnica."
+      }
+    },
+    "pricing": {
+      "title": "Planos Simples e Transparentes",
+      "subtitle": "Escolha o plano ideal para suas necessidades de criação",
+      "common": {
+        "choosePlan": "Escolher Plano"
+      }
+    },
+    "testimonials": {
+      "title": "O que nossos usuários dizem",
+      "subtitle": "Milhares de criadores confiam no Pixoo para suas necessidades de geração de imagens"
+    },
+    "faq": {
+      "title": "Perguntas Frequentes",
+      "subtitle": "Encontre respostas para as dúvidas mais comuns sobre o Pixoo"
+    },
+    "ctaBanner": {
+      "title": "Pronto para criar imagens incríveis?",
+      "description": "Junte-se a milhares de usuários que já estão criando arte digital com IA. Comece gratuitamente e descubra o poder da criatividade sem limites.",
+      "getStarted": "Começar Gratuitamente",
+      "exploreGallery": "Explorar Galeria",
+      "features": "✨ Sem cartão de crédito necessário • 🎨 Créditos gratuitos inclusos"
+    },
+    "logoCloud": {
+      "title": "Confiado por criadores ao redor do mundo"
+    }
   }
 }

@@ -6,12 +6,12 @@ import { usePathname, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import Logo from "@/components/branding/logo";
 import {
-  Home,
   Search,
-  Image,
   Sparkles,
   Wand2,
+  Image as ImgIcon,
   History,
   Menu,
   ChevronLeft,
@@ -39,12 +39,12 @@ interface NavSection {
 const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
   {
     items: [
-      {
+      /* {
         icon: Home,
         label: t("home"),
         href: "/",
         isActive: currentPath === "/",
-      },
+      },*/
       {
         icon: Search,
         label: t("explore"),
@@ -57,7 +57,7 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
     title: "Image AI",
     items: [
       {
-        icon: Image,
+        icon: ImgIcon,
         label: t("textToImage"),
         href: "/create-image",
         isActive: currentPath === "/create-image",
@@ -107,19 +107,16 @@ export function Sidebar({ className }: SidebarProps) {
             : "justify-between p-4"
         )}
       >
-        <div
+        <Logo
+          width={32}
+          height={32}
+          customLogo="../images/icon.svg"
+          showText={!isCollapsed || isMobile}
           className={cn(
             "flex items-center",
             isCollapsed && !isMobile ? "justify-center" : "gap-2"
           )}
-        >
-          <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          {(!isCollapsed || isMobile) && (
-            <span className="font-semibold text-lg">Pixoo</span>
-          )}
-        </div>
+        />
         {!isMobile && !isCollapsed && (
           <Button
             variant="ghost"

@@ -126,7 +126,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
       {/* Video Play Button (if applicable) */}
       {image.model.includes("video") && (
         <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="bg-black/50 rounded-full p-3">
+          <div className="bg-pixoo-dark/50 rounded-full p-3">
             <Play className="w-8 h-8 text-white fill-white" />
           </div>
         </div>

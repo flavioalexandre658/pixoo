@@ -1,16 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { useAction } from 'next-safe-action/hooks';
-import { Crown, Zap, Star, Check, Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { useSession } from '@/lib/auth-client';
-import { getPlansByCurrency } from '@/actions/plans/get/get-plans-by-currency.action';
-import { createCheckoutSession } from '@/actions/checkout/create/create-checkout-session.action';
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useAction } from "next-safe-action/hooks";
+import { Crown, Zap, Star, Check, Loader2, Sparkles } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useSession } from "@/lib/auth-client";
+import { getPlansByCurrency } from "@/actions/plans/get/get-plans-by-currency.action";
+import { createCheckoutSession } from "@/actions/checkout/create/create-checkout-session.action";
 
 interface Plan {
   id: string;
@@ -46,47 +52,57 @@ export function PlansList({
   onPlanSelect,
   showSelectButton = true,
   buttonText,
-  className = '',
+  className = "",
   excludeFreePlan = false,
-  onCheckoutSuccess
+  onCheckoutSuccess,
 }: PlansListProps) {
-  const t = useTranslations('subscriptionRequired');
+  const t = useTranslations("subscriptionRequired");
   const { data: session } = useSession();
   const [plans, setPlans] = useState<Plan[]>([]);
 
   // Determinar moeda baseada no locale
-  const currency = locale === 'pt' ? 'BRL' : 'USD';
+  const currency = locale === "pt" ? "BRL" : "USD";
 
   // Action para buscar planos
-  const { execute: fetchPlans, isExecuting: isLoadingPlans } = useAction(getPlansByCurrency, {
-    onSuccess: (result) => {
-      if (result.data?.success && result.data.data) {
-        setPlans(result.data.data);
-      }
-    },
-    onError: (error) => {
-      console.error('Erro ao buscar planos:', error);
-      toast.error('Erro ao carregar planos');
-    },
-  });
+  const { execute: fetchPlans, isExecuting: isLoadingPlans } = useAction(
+    getPlansByCurrency,
+    {
+      onSuccess: (result) => {
+        if (result.data?.success && result.data.data) {
+          setPlans(result.data.data);
+        }
+      },
+      onError: (error) => {
+        console.error("Erro ao buscar planos:", error);
+        toast.error("Erro ao carregar planos");
+      },
+    }
+  );
 
   // Action para criar checkout
-  const { execute: executeCreateCheckout, isExecuting: isCreatingCheckoutAction } = useAction(createCheckoutSession, {
+  const {
+    execute: executeCreateCheckout,
+    isExecuting: isCreatingCheckoutAction,
+  } = useAction(createCheckoutSession, {
     onSuccess: (result) => {
       if (result.data?.success && result.data.data?.url) {
-        console.log('🔗 Redirecionando para URL de checkout:', result.data.data.url);
+        console.log(
+          "🔗 Redirecionando para URL de checkout:",
+          result.data.data.url
+        );
         // Chamar callback de sucesso antes do redirecionamento
         if (onCheckoutSuccess) {
           onCheckoutSuccess();
         }
         window.location.href = result.data.data.url;
       } else {
-        toast.error('URL de checkout não recebida');
+        toast.error("URL de checkout não recebida");
       }
     },
     onError: (error) => {
-      console.error('❌ Erro ao criar checkout:', error);
-      const errorMessage = error.error?.serverError || 'Erro ao processar pagamento';
+      console.error("❌ Erro ao criar checkout:", error);
+      const errorMessage =
+        error.error?.serverError || "Erro ao processar pagamento";
       toast.error(errorMessage);
     },
   });
@@ -98,161 +114,249 @@ export function PlansList({
 
   // Função para criar checkout
   const handleCreateCheckout = async (plan: Plan) => {
-    console.log('🛒 Iniciando processo de checkout para plano:', plan);
-    
+    console.log("🛒 Iniciando processo de checkout para plano:", plan);
+
     if (!session?.user?.id) {
-      console.log('❌ Usuário não autenticado');
-      toast.error('Você precisa estar logado para fazer checkout');
+      console.log("❌ Usuário não autenticado");
+      toast.error("Você precisa estar logado para fazer checkout");
       return;
     }
 
-    console.log('📤 Executando action de checkout...');
+    console.log("📤 Executando action de checkout...");
     executeCreateCheckout({
       planCode: plan.code,
-      currency: plan.currency as 'USD' | 'BRL',
-      interval: plan.interval as 'monthly' | 'yearly',
+      currency: plan.currency as "USD" | "BRL",
+      interval: plan.interval as "monthly" | "yearly",
     });
   };
 
   // Função para lidar com seleção de plano
   const handlePlanAction = (plan: Plan) => {
-    console.log('🎯 handlePlanAction chamada para plano:', plan.code, plan.name);
-    console.log('🔍 onPlanSelect existe?', !!onPlanSelect);
-    
+    console.log(
+      "🎯 handlePlanAction chamada para plano:",
+      plan.code,
+      plan.name
+    );
+    console.log("🔍 onPlanSelect existe?", !!onPlanSelect);
+
     if (onPlanSelect) {
-      console.log('📞 Chamando onPlanSelect...');
+      console.log("📞 Chamando onPlanSelect...");
       onPlanSelect(plan);
     } else {
-      console.log('💳 Chamando handleCreateCheckout...');
+      console.log("💳 Chamando handleCreateCheckout...");
       handleCreateCheckout(plan);
     }
   };
 
-  // Ícones para diferentes tipos de planos
-  const getPlanIcon = (code: string) => {
+  // Ícones e estilos para diferentes tipos de planos
+  const getPlanConfig = (code: string) => {
     switch (code) {
-      case 'free':
-        return Zap;
-      case 'starter':
-        return Star;
-      case 'premium':
-      case 'advanced':
-        return Crown;
+      case "free":
+        return {
+          icon: Zap,
+          gradient: "from-slate-50 to-slate-100",
+          borderColor: "border-slate-200",
+          iconColor: "text-slate-600",
+          badgeColor: "bg-slate-100 text-slate-700",
+        };
+      case "starter":
+        return {
+          icon: Star,
+          gradient: "from-pixoo-purple/10 to-pixoo-magenta/10",
+          borderColor: "border-pixoo-purple/30",
+          iconColor: "text-pixoo-purple",
+          badgeColor: "bg-pixoo-purple text-white",
+        };
+      case "premium":
+      case "advanced":
+        return {
+          icon: Crown,
+          gradient: "from-pixoo-pink/10 to-pixoo-magenta/10",
+          borderColor: "border-pixoo-pink/30",
+          iconColor: "text-pixoo-pink",
+          badgeColor: "bg-pixoo-pink text-white",
+        };
       default:
-        return Zap;
+        return {
+          icon: Sparkles,
+          gradient: "from-pixoo-dark/5 to-pixoo-purple/5",
+          borderColor: "border-pixoo-dark/20",
+          iconColor: "text-pixoo-dark",
+          badgeColor: "bg-pixoo-dark text-white",
+        };
     }
   };
 
   if (isLoadingPlans) {
     return (
-      <div className={`flex justify-center items-center py-8 ${className}`}>
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Carregando planos...</span>
+      <div className={`flex justify-center items-center py-12 ${className}`}>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-pixoo-purple to-pixoo-pink animate-spin">
+              <div className="absolute inset-2 bg-background rounded-full" />
+            </div>
+          </div>
+          <span className="text-muted-foreground font-medium">
+            Carregando planos...
+          </span>
+        </div>
       </div>
     );
   }
 
   if (!plans.length) {
     return (
-      <div className={`text-center py-8 ${className}`}>
-        <p className="text-muted-foreground">Nenhum plano disponível no momento.</p>
+      <div className={`text-center py-12 ${className}`}>
+        <div className="max-w-md mx-auto">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-pixoo-purple/20 to-pixoo-pink/20 flex items-center justify-center">
+            <Zap className="w-8 h-8 text-pixoo-purple" />
+          </div>
+          <p className="text-muted-foreground text-lg">
+            Nenhum plano disponível no momento.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Tente novamente em alguns instantes.
+          </p>
+        </div>
       </div>
     );
   }
 
   // Filtrar planos se necessário
-  const filteredPlans = excludeFreePlan 
-    ? plans.filter(plan => plan.code !== 'free' && plan.priceInCents > 0)
+  const filteredPlans = excludeFreePlan
+    ? plans.filter((plan) => plan.code !== "free" && plan.priceInCents > 0)
     : plans;
 
   // Adaptar layout baseado no número de planos
-  const gridCols = excludeFreePlan 
-    ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4'
-    : 'grid md:grid-cols-2 lg:grid-cols-4 gap-4';
+  const gridCols = excludeFreePlan
+    ? "grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+    : "grid md:grid-cols-2 lg:grid-cols-4 gap-6";
 
   return (
     <div className={`${gridCols} ${className}`}>
       {filteredPlans.map((plan) => {
-        const IconComponent = getPlanIcon(plan.code);
-        const isLoading = isCreatingCheckoutAction;
+        const config = getPlanConfig(plan.code);
+        const IconComponent = config.icon;
 
         return (
-          <Card
-            key={plan.id}
-            className={`relative transition-all hover:shadow-lg ${plan.isPopular ? 'border-primary shadow-lg scale-105' : ''
+          <div key={plan.id} className="relative pt-4">
+            <Card
+              className={`relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden ${
+                plan.isPopular
+                  ? "border-pixoo-pink shadow-lg shadow-pixoo-pink/20 scale-105 ring-2 ring-pixoo-pink/20"
+                  : `${config.borderColor} hover:border-pixoo-purple/40`
               }`}
-          >
-            {plan.isPopular && (
-              <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary">
-                <Star className="h-3 w-3 mr-1" />
-                {t('popular')}
-              </Badge>
-            )}
+            >
+              {/* Gradient Background */}
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-50`}
+              />
 
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-2">
-                <IconComponent
-                  className={`h-8 w-8 ${plan.isPopular ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                />
-              </div>
-              <CardTitle className="text-xl">{plan.name}</CardTitle>
-              <CardDescription className="min-h-[3rem]">
-                {plan.description}
-              </CardDescription>
-              <div className="text-3xl font-bold text-primary">
-                {plan.priceFormatted}
-                {plan.priceInCents > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground">
-                    /{plan.interval === 'monthly' ? 'mês' : 'ano'}
-                  </span>
-                )}
-              </div>
-              {plan.credits > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {plan.credits} créditos {plan.interval === 'monthly' ? 'mensais' : 'anuais'}
-                </p>
+              {/* Popular Badge - Agora com posicionamento correto */}
+              {plan.isPopular && (
+                <Badge className="absolute top-[4] left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pixoo-pink to-pixoo-magenta text-white shadow-lg z-10 px-3 py-1">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  {t("popular")}
+                </Badge>
               )}
-            </CardHeader>
 
-            <CardContent className="flex-1">
-              <ul className="space-y-2 mb-6">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <CardHeader className="text-center relative z-10 pb-4 pt-6">
+                {/* Icon with enhanced styling */}
+                <div className="flex justify-center mb-4">
+                  <div
+                    className={`p-3 rounded-2xl bg-gradient-to-br ${config.gradient} border ${config.borderColor} shadow-sm`}
+                  >
+                    <IconComponent className={`h-8 w-8 ${config.iconColor}`} />
+                  </div>
+                </div>
 
-              {showSelectButton && (
-                <Button
-                  onClick={() => handlePlanAction(plan)}
-                  disabled={isCreatingCheckoutAction}
-                  className={`w-full ${plan.isPopular
-                      ? 'bg-primary hover:bg-primary/90'
-                      : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
-                    }`}
-                  size="lg"
-                >
-                  {isCreatingCheckoutAction ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      {plan.priceInCents === 0 ? (
-                        'Plano Atual'
-                      ) : (
-                        buttonText || 'Selecionar Plano'
-                      )}
-                    </>
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pixoo-dark to-pixoo-purple bg-clip-text text-transparent">
+                  {plan.name}
+                </CardTitle>
+
+                <CardDescription className="min-h-[3rem] text-muted-foreground leading-relaxed">
+                  {plan.description}
+                </CardDescription>
+
+                {/* Price with enhanced styling */}
+                <div className="mt-4">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-pixoo-purple to-pixoo-pink bg-clip-text text-transparent">
+                    {plan.priceFormatted}
+                    {plan.priceInCents > 0 && (
+                      <span className="text-lg font-normal text-muted-foreground ml-1">
+                        /{plan.interval === "monthly" ? "mês" : "ano"}
+                      </span>
+                    )}
+                  </div>
+                  {plan.credits > 0 && (
+                    <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-pixoo-purple/10 border border-pixoo-purple/20">
+                      <Zap className="w-4 h-4 text-pixoo-purple mr-1" />
+                      <span className="text-sm font-medium text-pixoo-purple">
+                        {plan.credits} créditos{" "}
+                        {plan.interval === "monthly" ? "mensais" : "anuais"}
+                      </span>
+                    </div>
                   )}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex-1 relative z-10">
+                {/* Features List */}
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li
+                      key={featureIndex}
+                      className="flex items-start gap-3 group/feature"
+                    >
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-r from-pixoo-purple to-pixoo-pink flex items-center justify-center mt-0.5">
+                        <Check className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="text-sm leading-relaxed group-hover/feature:text-pixoo-dark transition-colors">
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Action Button */}
+                {showSelectButton && (
+                  <Button
+                    onClick={() => handlePlanAction(plan)}
+                    disabled={isCreatingCheckoutAction}
+                    className={`w-full h-12 font-semibold transition-all duration-300 ${
+                      plan.isPopular
+                        ? "bg-gradient-to-r from-pixoo-pink to-pixoo-magenta hover:from-pixoo-pink/90 hover:to-pixoo-magenta/90 text-white shadow-lg hover:shadow-xl"
+                        : plan.priceInCents === 0
+                        ? "bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 border border-slate-300"
+                        : "bg-gradient-to-r from-pixoo-purple to-pixoo-dark hover:from-pixoo-purple/90 hover:to-pixoo-dark/90 text-white shadow-md hover:shadow-lg"
+                    }`}
+                    size="lg"
+                  >
+                    {isCreatingCheckoutAction ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        {plan.priceInCents === 0 ? (
+                          <>
+                            <Zap className="h-4 w-4 mr-2" />
+                            Começar Grátis
+                          </>
+                        ) : (
+                          <>
+                            <Crown className="h-4 w-4 mr-2" />
+                            {buttonText || "Selecionar Plano"}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         );
       })}
     </div>

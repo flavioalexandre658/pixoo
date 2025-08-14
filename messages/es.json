@@ -1,4 +1,10 @@
 {
+  "metadata": {
+    "lp": {
+      "title": "Pixoo - Crea Imágenes Increíbles con IA",
+      "description": "Transforma tus ideas en arte visual con los modelos de IA más avanzados. Crea imágenes profesionales, editadas y personalizadas en segundos."
+    }
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Error",

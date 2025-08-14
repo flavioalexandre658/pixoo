@@ -86,9 +86,7 @@ export function ImageHistoryCard({
       const newPublicState = !image.isPublic;
       onTogglePublic(image.id, newPublicState);
       toast.success(
-        newPublicState 
-          ? "Imagem tornada pública!" 
-          : "Imagem tornada privada!"
+        newPublicState ? "Imagem tornada pública!" : "Imagem tornada privada!"
       );
     }
   };
@@ -101,7 +99,9 @@ export function ImageHistoryCard({
           overflow: "hidden",
         }}
       >
-        {image.imageUrl && (image.status === "ready" || image.status === "completed") && !imageError ? (
+        {image.imageUrl &&
+        (image.status === "ready" || image.status === "completed") &&
+        !imageError ? (
           <Image
             src={image.imageUrl}
             alt={image.prompt}
@@ -159,61 +159,63 @@ export function ImageHistoryCard({
         })}
       </div>
       {/* Ações */}
-      {image.imageUrl && (image.status === "ready" || image.status === "completed") && !isSelectionMode && (
-        <div className="flex gap-1 sm:gap-2 mt-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyPrompt}
-            className="px-2 flex-shrink-0"
-            title="Copiar e reutilizar prompt"
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-          {onTogglePublic && (
+      {image.imageUrl &&
+        (image.status === "ready" || image.status === "completed") &&
+        !isSelectionMode && (
+          <div className="flex gap-1 sm:gap-2 mt-auto">
             <Button
               variant="outline"
               size="sm"
-              onClick={handleTogglePublic}
-              className={`px-2 flex-shrink-0 ${
-                image.isPublic 
-                  ? "!bg-black !text-white !border-black hover:!bg-gray-800" 
-                  : ""
-              }`}
-              title={image.isPublic ? "Tornar privada" : "Tornar pública"}
+              onClick={handleCopyPrompt}
+              className="px-2 flex-shrink-0"
+              title="Copiar e reutilizar prompt"
             >
-              <Globe className="h-3 w-3" />
+              <Copy className="h-3 w-3" />
             </Button>
-          )}
-          {onViewFull && (
+            {onTogglePublic && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTogglePublic}
+                className={`px-2 flex-shrink-0 ${
+                  image.isPublic
+                    ? "!bg-pixoo-dark !text-white !border-black hover:!bg-gray-800"
+                    : ""
+                }`}
+                title={image.isPublic ? "Tornar privada" : "Tornar pública"}
+              >
+                <Globe className="h-3 w-3" />
+              </Button>
+            )}
+            {onViewFull && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onViewFull(image.imageUrl!, image.prompt)}
+                className="px-2 flex-shrink-0"
+              >
+                <Eye className="h-3 w-3" />
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onViewFull(image.imageUrl!, image.prompt)}
+              onClick={() => onDownload(image.imageUrl!, image.prompt)}
               className="px-2 flex-shrink-0"
             >
-              <Eye className="h-3 w-3" />
+              <Download className="h-3 w-3" />
             </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDownload(image.imageUrl!, image.prompt)}
-            className="px-2 flex-shrink-0"
-          >
-            <Download className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onDelete(image.id)}
-            disabled={isDeleting}
-            className="px-2 flex-shrink-0"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete(image.id)}
+              disabled={isDeleting}
+              className="px-2 flex-shrink-0"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
     </div>
   );
 }

@@ -4,6 +4,57 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Container customizado */
+  --container-center: true;
+  --container-padding-default: 15px;
+  --container-padding-sm: 15px;
+  --container-padding-lg: 15px;
+  --container-padding-xl: 0;
+  --container-padding-2xl: 0;
+  --container-screen-sm: 640px;
+  --container-screen-md: 768px;
+  --container-screen-lg: 1024px;
+  --container-screen-xl: 1280px;
+  --container-screen-2xl: 1280px;
+
+  /* Cores personalizadas do Pixoo */
+  --color-pixoo-dark: #010c42;
+  --color-pixoo-purple: #7537d1;
+  --color-pixoo-pink: #f14760;
+  --color-pixoo-magenta: #ba4486;
+
+  /* Fontes customizadas */
+  --font-family-poppins: "Poppins", "Inter", sans-serif;
+  --font-family-exo: "Exo 2", "Inter", sans-serif;
+
+  /* Box shadows customizadas */
+  --shadow-base: 0px 0px 1px rgba(40, 41, 61, 0.08),
+    0px 0.5px 2px rgba(96, 97, 112, 0.16);
+  --shadow-base2: 0px 2px 4px rgba(40, 41, 61, 0.04),
+    0px 8px 16px rgba(96, 97, 112, 0.16);
+  --shadow-base3: 16px 10px 40px rgba(15, 23, 42, 0.22);
+  --shadow-deep: -2px 0px 8px rgba(0, 0, 0, 0.16);
+  --shadow-dropdown: 0px 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-testi: 0px 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-todo: rgba(235 233 241, 0.6) 0px 3px 10px 0px;
+
+  /* Breakpoint customizado */
+  --breakpoint-xs: 375px;
+
+  /* Animações customizadas */
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-zoom: zoom 1s ease-in-out infinite;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-marquee: marquee var(--duration) linear infinite;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+
+  /* Border radius customizado */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Variáveis do sistema existentes */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -37,20 +88,63 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Keyframes para animações customizadas */
+@keyframes zoom {
+  0%,
+  100% {
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+  }
 }
 
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
+  --foreground: oklch(0.1958 0.1024 264.31);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
+  --card-foreground: oklch(0.1958 0.1024 264.31);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
+  --popover-foreground: oklch(0.1958 0.1024 264.31);
   --primary: oklch(0.216 0.006 56.043);
   --primary-foreground: oklch(0.985 0.001 106.423);
   --secondary: oklch(0.97 0.001 106.424);
@@ -69,7 +163,7 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
+  --sidebar-foreground: oklch(0.1958 0.1024 264.31);
   --sidebar-primary: oklch(0.216 0.006 56.043);
   --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
   --sidebar-accent: oklch(0.97 0.001 106.424);
@@ -79,7 +173,7 @@
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
+  --background: oklch(0.1958 0.1024 264.31);
   --foreground: oklch(0.985 0.001 106.423);
   --card: oklch(0.216 0.006 56.043);
   --card-foreground: oklch(0.985 0.001 106.423);

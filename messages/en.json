@@ -1,4 +1,10 @@
 {
+  "metadata": {
+    "lp": {
+      "title": "Pixoo - Create Amazing Images with AI",
+      "description": "Transform your ideas into visual art with the most advanced AI models. Create professional, edited and customized images in seconds."
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",
