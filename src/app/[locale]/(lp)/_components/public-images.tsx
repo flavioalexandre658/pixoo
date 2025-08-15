@@ -33,7 +33,7 @@ const PublicImages = () => {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const response = await getPublicImages({ limit: 20 });
+        const response = await getPublicImages({ limit: 40 });
         if (response?.data?.success) {
           setImages(response.data.data || []);
         }
@@ -78,10 +78,10 @@ const PublicImages = () => {
             <div className="absolute inset-y-0 left-0 z-10 w-[15%] bg-gradient-to-r from-background to-transparent" />
             <div className="absolute inset-y-0 right-0 z-10 w-[15%] bg-gradient-to-l from-background to-transparent" />
             <Marquee className="[--duration:60s]">
-              <ImageList images={validImages.slice(0, 10)} />
+              <ImageList images={validImages.slice(0, 20)} />
             </Marquee>
             <Marquee reverse className="mt-6 [--duration:60s]">
-              <ImageList images={validImages.slice(10, 20)} />
+              <ImageList images={validImages.slice(20, 40)} />
             </Marquee>
           </div>
         ) : (
