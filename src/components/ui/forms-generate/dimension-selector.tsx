@@ -26,7 +26,10 @@ const roundToMultipleOf32 = (value: number): number => {
 // Limites: 256-1440px, múltiplo de 32
 const validateDimensions = (width: number, height: number) => {
   const validWidth = Math.max(256, Math.min(1440, roundToMultipleOf32(width)));
-  const validHeight = Math.max(256, Math.min(1440, roundToMultipleOf32(height)));
+  const validHeight = Math.max(
+    256,
+    Math.min(1440, roundToMultipleOf32(height))
+  );
   return { width: validWidth, height: validHeight };
 };
 
@@ -138,47 +141,85 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
   };
 
   return (
-    <div>
-      <div className="grid grid-cols-2 sm:flex gap-2 mb-4">
+    <div className="space-y-3">
+      {/* Título mais compacto */}
+      <Label className="text-sm font-medium flex items-center gap-2">
+        <Square className="h-3 w-3 text-pixoo-purple" />
+        Proporção
+      </Label>
+
+      {/* Botões de proporção - layout mobile otimizado */}
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
         <Button
           type="button"
           variant={selectedRatio === "2:3" ? "default" : "outline"}
           onClick={() => handleRatioSelect("2:3")}
-          className="flex-1 sm:flex-none"
+          className={`h-9 text-xs font-medium transition-colors ${
+            selectedRatio === "2:3"
+              ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white"
+              : "border-border hover:bg-accent hover:text-accent-foreground"
+          }`}
         >
-          <RectangleVertical className="w-4 h-4 sm:w-5 sm:h-5 mr-1" />
-          <span className="text-sm sm:text-base">2:3</span>
+          <RectangleVertical className="w-3 h-3 sm:mr-1" />
+          <span className="hidden sm:inline">2:3</span>
         </Button>
         <Button
           type="button"
           variant={selectedRatio === "1:1" ? "default" : "outline"}
           onClick={() => handleRatioSelect("1:1")}
-          className="flex-1 sm:flex-none"
+          className={`h-9 text-xs font-medium transition-colors ${
+            selectedRatio === "1:1"
+              ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white"
+              : "border-border hover:bg-accent hover:text-accent-foreground"
+          }`}
         >
-          <Square className="w-4 h-4 sm:w-5 sm:h-5 mr-1" />
-          <span className="text-sm sm:text-base">1:1</span>
+          <Square className="w-3 h-3 sm:mr-1" />
+          <span className="hidden sm:inline">1:1</span>
         </Button>
         <Button
           type="button"
           variant={selectedRatio === "16:9" ? "default" : "outline"}
           onClick={() => handleRatioSelect("16:9")}
-          className="flex-1 sm:flex-none"
+          className={`h-9 text-xs font-medium transition-colors ${
+            selectedRatio === "16:9"
+              ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white"
+              : "border-border hover:bg-accent hover:text-accent-foreground"
+          }`}
         >
-          <RectangleHorizontal className="w-4 h-4 sm:w-5 sm:h-5 mr-1" />
-          <span className="text-sm sm:text-base">16:9</span>
+          <RectangleHorizontal className="w-3 h-3 sm:mr-1" />
+          <span className="hidden sm:inline">16:9</span>
         </Button>
         <Button
           type="button"
           variant={selectedRatio === "custom" ? "default" : "outline"}
           onClick={handleCustom}
-          className="flex-1 sm:flex-none"
+          className={`h-9 text-xs font-medium transition-colors ${
+            selectedRatio === "custom"
+              ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white"
+              : "border-border hover:bg-accent hover:text-accent-foreground"
+          }`}
         >
-          <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5 mr-1" />
-          <span className="text-sm sm:text-base">{t("custom")}</span>
+          <MoreHorizontal className="w-3 h-3 sm:mr-1" />
+          <span className="hidden sm:inline">{t("custom")}</span>
         </Button>
       </div>
-      {selectedRatio !== "custom" && (
-        <div className="flex flex-wrap gap-2 mb-2">
+
+      {/* Switch para mostrar dimensões */}
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium flex items-center gap-1.5">
+          <Square className="h-3 w-3 text-pixoo-purple" />
+          Dimensões
+        </Label>
+        <Switch
+          checked={showAdvanced}
+          onCheckedChange={setShowAdvanced}
+          className="scale-75"
+        />
+      </div>
+
+      {/* Presets de tamanho - apenas quando expandido */}
+      {showAdvanced && selectedRatio !== "custom" && (
+        <div className="grid grid-cols-3 gap-1.5">
           {ASPECT_RATIOS.find((r) => r.value === selectedRatio)?.presets.map(
             (preset) => (
               <Button
@@ -188,223 +229,155 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                   selectedPreset === preset.label ? "default" : "outline"
                 }
                 onClick={() => handlePresetSelect(preset.label)}
-                className="flex-1 sm:flex-none min-w-0"
+                className={`h-8 text-xs transition-colors ${
+                  selectedPreset === preset.label
+                    ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white"
+                    : "border-border hover:bg-accent hover:text-accent-foreground"
+                }`}
                 size="sm"
               >
-                <span className="text-xs sm:text-sm">{preset.label}</span>
-                <span className="ml-1 text-xs text-muted-foreground hidden sm:inline">
-                  {preset.width}×{preset.height}
-                </span>
+                {preset.label}
               </Button>
             )
           )}
         </div>
       )}
-      {selectedRatio !== "custom" && (
-        <div className="text-sm text-muted-foreground mb-2">
-          Image Dimensions:{" "}
-          {ASPECT_RATIOS.find((r) => r.value === selectedRatio)?.presets.find(
-            (p) => p.label === selectedPreset
-          )?.width || value.width}
-          ×
-          {ASPECT_RATIOS.find((r) => r.value === selectedRatio)?.presets.find(
-            (p) => p.label === selectedPreset
-          )?.height || value.height}
-          px
-        </div>
-      )}
+
+      {/* Informações das dimensões - sempre visível mas compacta */}
+      <div className="text-xs text-muted-foreground bg-muted px-2 py-1.5 rounded-md text-center">
+        {ASPECT_RATIOS.find((r) => r.value === selectedRatio)?.presets.find(
+          (p) => p.label === selectedPreset
+        )?.width || value.width}
+        ×
+        {ASPECT_RATIOS.find((r) => r.value === selectedRatio)?.presets.find(
+          (p) => p.label === selectedPreset
+        )?.height || value.height}
+        px
+      </div>
+
+      {/* Modal otimizado para mobile */}
       <Dialog open={customOpen} onOpenChange={setCustomOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md md:max-w-lg mx-2 sm:mx-4 md:mx-auto max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg md:text-xl">{t("imageDimensions")}</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-sm p-3 sm:p-4">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-base font-semibold text-center">
+              Dimensões
+            </DialogTitle>
           </DialogHeader>
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Square className="w-5 h-5" />
-              <span className="font-medium">{t("aspectRatio")}</span>
-            </div>
-            <div className="grid grid-cols-3 sm:flex gap-2 mb-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={selectedRatio === "1:1" ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedRatio("1:1");
-                  const validated = validateDimensions(1024, 1024);
-                  setCustomWidth(validated.width);
-                  setCustomHeight(validated.height);
-                }}
-                className="text-xs sm:text-sm"
-              >
-                1:1
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={selectedRatio === "16:9" ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedRatio("16:9");
-                  const validated = validateDimensions(1440, 832);
-                  setCustomWidth(validated.width);
-                  setCustomHeight(validated.height);
-                }}
-                className="text-xs sm:text-sm"
-              >
-                16:9
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={selectedRatio === "9:16" ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedRatio("9:16");
-                  const validated = validateDimensions(800, 1440);
-                  setCustomWidth(validated.width);
-                  setCustomHeight(validated.height);
-                }}
-                className="text-xs sm:text-sm"
-              >
-                9:16
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={selectedRatio === "4:3" ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedRatio("4:3");
-                  const validated = validateDimensions(1344, 1024);
-                  setCustomWidth(validated.width);
-                  setCustomHeight(validated.height);
-                }}
-                className="text-xs sm:text-sm"
-              >
-                4:3
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={selectedRatio === "3:4" ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedRatio("3:4");
-                  const validated = validateDimensions(1024, 1344);
-                  setCustomWidth(validated.width);
-                  setCustomHeight(validated.height);
-                }}
-                className="text-xs sm:text-sm"
-              >
-                3:4
-              </Button>
-            </div>
-            <div className="text-xs text-muted-foreground mb-2">
-              Image Dimensions: {customWidth}×{customHeight} px
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <Switch
-                checked={selectedRatio === "custom"}
-                onCheckedChange={() => setSelectedRatio("custom")}
-              />
-              <span>Custom Resolution</span>
-            </div>
-            {selectedRatio === "custom" && (
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="custom-width" className="text-xs sm:text-sm">{t("width")}</Label>
-                  <Input
-                    id="custom-width"
-                    type="number"
-                    min={256}
-                    max={1440}
-                    step={32}
-                    value={customWidth}
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      const validated = validateDimensions(value, customHeight);
-                      setCustomWidth(validated.width);
-                    }}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="custom-height" className="text-xs sm:text-sm">{t("height")}</Label>
-                  <Input
-                    id="custom-height"
-                    type="number"
-                    min={256}
-                    max={1440}
-                    step={32}
-                    value={customHeight}
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      const validated = validateDimensions(customWidth, value);
-                      setCustomHeight(validated.height);
-                    }}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="mb-4 space-y-3">
-            <div>
-              <div className="font-medium mb-2 text-sm sm:text-base">{t("socials")}</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {SOCIAL_PRESETS.map((preset) => (
+
+          <div className="space-y-3">
+            {/* Proporções rápidas - grid compacto */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Proporção</Label>
+              <div className="grid grid-cols-5 gap-1">
+                {["1:1", "16:9", "9:16", "4:3", "3:4"].map((ratio) => (
                   <Button
-                    key={preset.label}
+                    key={ratio}
                     type="button"
                     size="sm"
-                    variant="outline"
+                    variant={selectedRatio === ratio ? "default" : "outline"}
                     onClick={() => {
-                      setSelectedRatio(preset.aspectRatio);
-                      const validated = validateDimensions(preset.width, preset.height);
+                      setSelectedRatio(ratio);
+                      const presets = {
+                        "1:1": { width: 1024, height: 1024 },
+                        "16:9": { width: 1440, height: 832 },
+                        "9:16": { width: 800, height: 1440 },
+                        "4:3": { width: 1344, height: 1024 },
+                        "3:4": { width: 1024, height: 1344 },
+                      };
+                      const preset = presets[ratio as keyof typeof presets];
+                      const validated = validateDimensions(
+                        preset.width,
+                        preset.height
+                      );
                       setCustomWidth(validated.width);
                       setCustomHeight(validated.height);
                     }}
-                    className="text-xs sm:text-sm justify-start"
+                    className={`h-7 text-xs transition-colors ${
+                      selectedRatio === ratio
+                        ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white"
+                        : "border-border hover:bg-accent hover:text-accent-foreground"
+                    }`}
                   >
-                    {preset.label}
+                    {ratio}
                   </Button>
                 ))}
               </div>
             </div>
-            <div>
-              <div className="font-medium mb-2 text-sm sm:text-base">{t("devices")}</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {DEVICE_PRESETS.map((preset) => (
-                  <Button
-                    key={preset.label}
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedRatio(preset.aspectRatio);
-                      const validated = validateDimensions(preset.width, preset.height);
-                      setCustomWidth(validated.width);
-                      setCustomHeight(validated.height);
-                    }}
-                    className="text-xs sm:text-sm justify-start"
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
+
+            {/* Inputs customizados - layout compacto */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label
+                  htmlFor="custom-width"
+                  className="text-xs font-medium flex items-center gap-1"
+                >
+                  <RectangleHorizontal className="h-3 w-3 text-pixoo-purple" />
+                  Largura
+                </Label>
+                <Input
+                  id="custom-width"
+                  type="number"
+                  min={256}
+                  max={1440}
+                  step={32}
+                  value={customWidth}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    const validated = validateDimensions(value, customHeight);
+                    setCustomWidth(validated.width);
+                  }}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label
+                  htmlFor="custom-height"
+                  className="text-xs font-medium flex items-center gap-1"
+                >
+                  <RectangleVertical className="h-3 w-3 text-pixoo-purple" />
+                  Altura
+                </Label>
+                <Input
+                  id="custom-height"
+                  type="number"
+                  min={256}
+                  max={1440}
+                  step={32}
+                  value={customHeight}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    const validated = validateDimensions(customWidth, value);
+                    setCustomHeight(validated.height);
+                  }}
+                  className="h-8 text-xs"
+                />
               </div>
             </div>
-            <div>
-              <div className="font-medium mb-2 text-sm sm:text-base">{t("film")}</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {FILM_PRESETS.map((preset) => (
+
+            {/* Presets simplificados */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Presets</Label>
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { label: "Instagram", width: 1088, height: 1344 },
+                  { label: "Facebook", width: 1440, height: 832 },
+                  { label: "TikTok", width: 800, height: 1440 },
+                  { label: "Desktop", width: 1440, height: 832 },
+                ].map((preset) => (
                   <Button
                     key={preset.label}
                     type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      setSelectedRatio(preset.aspectRatio);
-                      const validated = validateDimensions(preset.width, preset.height);
+                      const validated = validateDimensions(
+                        preset.width,
+                        preset.height
+                      );
                       setCustomWidth(validated.width);
                       setCustomHeight(validated.height);
                     }}
-                    className="text-xs sm:text-sm justify-start"
+                    className="h-7 text-xs justify-start"
                   >
                     {preset.label}
                   </Button>
@@ -412,23 +385,23 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
               </div>
             </div>
           </div>
-          <div className="flex justify-end pt-4 border-t">
-            <Button
-              type="button"
-              onClick={() => {
-                setCustomOpen(false);
-                const validated = validateDimensions(customWidth, customHeight);
-                onChange({
-                  aspectRatio: selectedRatio,
-                  width: validated.width,
-                  height: validated.height,
-                });
-              }}
-              className="w-full sm:w-auto"
-            >
-              {t("save")}
-            </Button>
-          </div>
+
+          {/* Botão de salvar */}
+          <Button
+            type="button"
+            onClick={() => {
+              setCustomOpen(false);
+              const validated = validateDimensions(customWidth, customHeight);
+              onChange({
+                aspectRatio: selectedRatio,
+                width: validated.width,
+                height: validated.height,
+              });
+            }}
+            className="w-full h-9 bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white font-medium text-sm"
+          >
+            Salvar
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

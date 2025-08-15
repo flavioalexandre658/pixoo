@@ -526,23 +526,27 @@ export function ImageHistory({
             setDeleteConfirmation((prev) => ({ ...prev, isOpen: open }))
           }
         >
-          <AlertDialogContent className="border-pixoo-purple/20 bg-gradient-to-br from-background/95 via-pixoo-purple/5 to-pixoo-pink/5 backdrop-blur-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+          <AlertDialogContent className="border-2 border-pixoo-purple/20 bg-background/98 backdrop-blur-md shadow-2xl">
+            {/* Gradiente de fundo sutil */}
+            <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/3 via-transparent to-pixoo-pink/3 rounded-lg" />
+
+            <AlertDialogHeader className="relative">
+              <AlertDialogTitle className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent text-xl font-semibold">
                 {deleteConfirmation.type === "single"
                   ? "Confirmar deleção de imagem"
                   : "Confirmar deleção de múltiplas imagens"}
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-muted-foreground">
+              <AlertDialogDescription className="text-muted-foreground text-base mt-2">
                 {deleteConfirmation.type === "single"
                   ? "Tem certeza que deseja deletar esta imagem? Esta ação não pode ser desfeita."
                   : `Tem certeza que deseja deletar ${deleteConfirmation.count} imagem(ns)? Esta ação não pode ser desfeita.`}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+
+            <AlertDialogFooter className="relative mt-6 gap-3">
               <AlertDialogCancel
                 disabled={isDeleting}
-                className="border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300"
+                className="border-2 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/5 hover:to-pixoo-pink/5 transition-all duration-300 font-medium"
               >
                 Cancelar
               </AlertDialogCancel>
@@ -553,7 +557,7 @@ export function ImageHistory({
                     : confirmDeleteMultipleImages
                 }
                 disabled={isDeleting}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg shadow-red-500/30 transition-all duration-300"
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg shadow-red-500/20 transition-all duration-300 font-medium hover:scale-105 disabled:hover:scale-100"
               >
                 {isDeleting ? "Deletando..." : "Deletar"}
               </AlertDialogAction>

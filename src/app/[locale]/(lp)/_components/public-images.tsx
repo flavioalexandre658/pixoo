@@ -52,7 +52,7 @@ const PublicImages = () => {
     return (
       <div
         id="testimonials"
-        className="relative flex items-center justify-center py-28 overflow-hidden"
+        className="relative flex items-center justify-center py-16 overflow-hidden"
       >
         {/* Background elements */}
         <div className="absolute top-20 left-20 w-60 h-60 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10 rounded-full blur-3xl animate-pulse" />
@@ -76,7 +76,7 @@ const PublicImages = () => {
   return (
     <div
       id="testimonials"
-      className="relative flex items-center justify-center py-28 overflow-hidden"
+      className="relative flex items-center justify-center py-16 overflow-hidden"
     >
       {/* Background elements */}
       <div className="absolute top-20 left-20 w-60 h-60 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10 rounded-full blur-3xl" />

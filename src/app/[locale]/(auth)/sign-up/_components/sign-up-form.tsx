@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-hot-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Mail, Lock, UserPlus } from "lucide-react";
 import { z } from "zod";
 
 export function SignUpForm() {
@@ -56,7 +56,7 @@ export function SignUpForm() {
       }
 
       toast.success(t("signUpSuccess"));
-      router.push(`/${locale}/dashboard`);
+      router.push(`/${locale}/create-image`);
     } catch {
       toast.error(t("signUpError"));
     } finally {
@@ -69,7 +69,7 @@ export function SignUpForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `/${locale}/dashboard`,
+        callbackURL: `/${locale}/create-image`,
       });
     } catch {
       toast.error(t("signUpError"));
@@ -79,17 +79,18 @@ export function SignUpForm() {
 
   return (
     <div className="space-y-6">
+      {/* Google Sign Up Button */}
       <Button
         type="button"
         variant="outline"
-        className="w-full border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+        className="w-full h-11 border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
         onClick={handleGoogleSignUp}
         disabled={isGoogleLoading || isLoading}
       >
         {isGoogleLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin text-pixoo-purple" />
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
         ) : (
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
             <path
               fill="currentColor"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -108,26 +109,27 @@ export function SignUpForm() {
             />
           </svg>
         )}
-        <span className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent font-medium">
-          {t("signUpWithGoogle")}
-        </span>
+        {t("signUpWithGoogle")}
       </Button>
 
+      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-pixoo-purple/20" />
+          <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">ou</span>
         </div>
       </div>
 
+      {/* Email/Password Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label
             htmlFor="name"
-            className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+            className="text-sm font-medium flex items-center gap-2"
           >
+            <User className="h-3.5 w-3.5 text-pixoo-purple" />
             {t("fullName")}
           </Label>
           <Input
@@ -135,20 +137,23 @@ export function SignUpForm() {
             type="text"
             placeholder={t("enterName")}
             {...register("name")}
-            className={`border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300 ${
-              errors.name ? "border-red-500 focus:border-red-500" : ""
+            className={`h-11 transition-colors ${
+              errors.name
+                ? "border-destructive focus-visible:ring-destructive"
+                : "focus-visible:ring-pixoo-purple"
             }`}
           />
           {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
+            <p className="text-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label
             htmlFor="email"
-            className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+            className="text-sm font-medium flex items-center gap-2"
           >
+            <Mail className="h-3.5 w-3.5 text-pixoo-purple" />
             {t("email")}
           </Label>
           <Input
@@ -156,20 +161,23 @@ export function SignUpForm() {
             type="email"
             placeholder={t("enterEmail")}
             {...register("email")}
-            className={`border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300 ${
-              errors.email ? "border-red-500 focus:border-red-500" : ""
+            className={`h-11 transition-colors ${
+              errors.email
+                ? "border-destructive focus-visible:ring-destructive"
+                : "focus-visible:ring-pixoo-purple"
             }`}
           />
           {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
+            <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label
             htmlFor="password"
-            className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+            className="text-sm font-medium flex items-center gap-2"
           >
+            <Lock className="h-3.5 w-3.5 text-pixoo-purple" />
             {t("password")}
           </Label>
           <Input
@@ -177,20 +185,25 @@ export function SignUpForm() {
             type="password"
             placeholder={t("enterPassword")}
             {...register("password")}
-            className={`border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300 ${
-              errors.password ? "border-red-500 focus:border-red-500" : ""
+            className={`h-11 transition-colors ${
+              errors.password
+                ? "border-destructive focus-visible:ring-destructive"
+                : "focus-visible:ring-pixoo-purple"
             }`}
           />
           {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
+            <p className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label
             htmlFor="confirmPassword"
-            className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+            className="text-sm font-medium flex items-center gap-2"
           >
+            <Lock className="h-3.5 w-3.5 text-pixoo-purple" />
             {t("confirmPassword")}
           </Label>
           <Input
@@ -198,14 +211,14 @@ export function SignUpForm() {
             type="password"
             placeholder={t("confirmPassword")}
             {...register("confirmPassword")}
-            className={`border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300 ${
+            className={`h-11 transition-colors ${
               errors.confirmPassword
-                ? "border-red-500 focus:border-red-500"
-                : ""
+                ? "border-destructive focus-visible:ring-destructive"
+                : "focus-visible:ring-pixoo-purple"
             }`}
           />
           {errors.confirmPassword && (
-            <p className="text-sm text-red-500">
+            <p className="text-sm text-destructive">
               {errors.confirmPassword.message}
             </p>
           )}
@@ -213,11 +226,20 @@ export function SignUpForm() {
 
         <Button
           type="submit"
-          className="w-full bg-gradient-to-r from-pixoo-purple to-pixoo-magenta hover:from-pixoo-magenta hover:to-pixoo-pink text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/30 border-0"
+          className="w-full h-11 bg-gradient-to-r from-pixoo-purple to-pixoo-magenta hover:from-pixoo-purple/90 hover:to-pixoo-magenta/90 text-white font-medium transition-all duration-200"
           disabled={isLoading || isGoogleLoading}
         >
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {t("signUp")}
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              {t("signUp")}
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-4 w-4 mr-2" />
+              {t("signUp")}
+            </>
+          )}
         </Button>
       </form>
     </div>

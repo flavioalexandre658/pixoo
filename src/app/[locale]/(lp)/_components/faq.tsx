@@ -73,7 +73,7 @@ const FAQ = () => {
   return (
     <div
       id="faq"
-      className="relative min-h-screen flex items-center justify-center px-6 py-20 xs:py-28 overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center px-6 py-12 xs:py-16 overflow-hidden"
     >
       {/* Background elements */}
       <div className="absolute top-20 left-20 w-60 h-60 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10 rounded-full blur-3xl" />

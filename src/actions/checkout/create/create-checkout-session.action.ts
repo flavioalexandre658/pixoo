@@ -1,16 +1,16 @@
-'use server';
+"use server";
 
-import { eq, and } from 'drizzle-orm';
-import Stripe from 'stripe';
+import { eq, and } from "drizzle-orm";
+import Stripe from "stripe";
 
-import { db } from '@/db';
-import { plans } from '@/db/schema';
-import { authActionClient } from '@/lib/safe-action';
+import { db } from "@/db";
+import { plans } from "@/db/schema";
+import { authActionClient } from "@/lib/safe-action";
 
-import { createCheckoutSessionSchema } from './create-checkout-session.action.schema';
+import { createCheckoutSessionSchema } from "./create-checkout-session.action.schema";
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set');
+  throw new Error("STRIPE_SECRET_KEY is not set");
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -21,7 +21,10 @@ export const createCheckoutSession = authActionClient
   .inputSchema(createCheckoutSessionSchema)
   .action(async ({ parsedInput, ctx }) => {
     try {
-      const { userId, userEmail } = ctx as { userId: string; userEmail: string };
+      const { userId, userEmail } = ctx as {
+        userId: string;
+        userEmail: string;
+      };
       const { planCode, currency, interval } = parsedInput;
 
       console.log(`🛒 Criando sessão de checkout:`, {
@@ -44,13 +47,13 @@ export const createCheckoutSession = authActionClient
           )
         )
         .limit(1)
-        .then(results => results[0]);
+        .then((results) => results[0]);
 
       if (!plan) {
         return {
           success: false,
           errors: {
-            _form: ['Plano não encontrado'],
+            _form: ["Plano não encontrado"],
           },
         };
       }
@@ -60,7 +63,7 @@ export const createCheckoutSession = authActionClient
         return {
           success: false,
           errors: {
-            _form: ['Plano gratuito não requer checkout'],
+            _form: ["Plano gratuito não requer checkout"],
           },
         };
       }
@@ -77,15 +80,17 @@ export const createCheckoutSession = authActionClient
       // Buscar o preço pelo lookup_key
       const prices = await stripe.prices.list({
         lookup_keys: [lookupKey],
-        expand: ['data.product'],
+        expand: ["data.product"],
       });
 
       if (!prices.data.length) {
-        console.error(`❌ Preço não encontrado no Stripe para lookup_key: ${lookupKey}`);
+        console.error(
+          `❌ Preço não encontrado no Stripe para lookup_key: ${lookupKey}`
+        );
         return {
           success: false,
           errors: {
-            _form: ['Preço não configurado no Stripe'],
+            _form: ["Preço não configurado no Stripe"],
           },
         };
       }
@@ -99,15 +104,15 @@ export const createCheckoutSession = authActionClient
 
       // Criar sessão de checkout do Stripe
       const checkoutSession = await stripe.checkout.sessions.create({
-        mode: 'subscription',
-        payment_method_types: ['card'],
+        mode: "subscription",
+        payment_method_types: ["card"],
         line_items: [
           {
             price: price.id, // ID do preço obtido pelo lookup_key
             quantity: 1,
           },
         ],
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/create-image?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
         customer_email: userEmail, // Email do usuário logado
         metadata: {
@@ -127,8 +132,8 @@ export const createCheckoutSession = authActionClient
           },
         },
         allow_promotion_codes: true,
-        billing_address_collection: 'required',
-        locale: currency === 'BRL' ? 'pt-BR' : 'en',
+        billing_address_collection: "required",
+        locale: currency === "BRL" ? "pt-BR" : "en",
       });
 
       console.log(`✅ Sessão de checkout criada: ${checkoutSession.id}`);
@@ -141,7 +146,7 @@ export const createCheckoutSession = authActionClient
         },
       };
     } catch (error) {
-      console.error('❌ Erro ao criar sessão de checkout:', error);
+      console.error("❌ Erro ao criar sessão de checkout:", error);
 
       if (error instanceof Stripe.errors.StripeError) {
         return {
@@ -155,7 +160,7 @@ export const createCheckoutSession = authActionClient
       return {
         success: false,
         errors: {
-          _form: ['Erro interno do servidor'],
+          _form: ["Erro interno do servidor"],
         },
       };
     }

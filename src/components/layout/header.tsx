@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings, User, LogOut, CreditCard, Globe } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
-import { useParams } from "next/navigation";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { CreditsDisplay } from "@/components/ui/credits-display";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -28,17 +27,16 @@ export function Header({ className }: HeaderProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const params = useParams();
-  const locale = params.locale as string;
+
   const { pageTitle } = usePageTitle();
 
   const handleSignOut = async () => {
     await signOut();
-    router.push(`/${locale}/sign-in`);
+    router.push(`/sign-in`);
   };
 
   const handleSignIn = () => {
-    router.push(`/${locale}/sign-in`);
+    router.push(`/sign-in`);
   };
 
   const handleLanguageChange = (newLocale: string) => {
@@ -151,7 +149,7 @@ export function Header({ className }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-pixoo-purple/20" />
-                <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
+                {/*<DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
                   <User className="mr-2 h-4 w-4 text-pixoo-purple" />
                   <span>{t("profile")}</span>
                 </DropdownMenuItem>
@@ -162,7 +160,7 @@ export function Header({ className }: HeaderProps) {
                 <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
                   <Settings className="mr-2 h-4 w-4 text-pixoo-pink" />
                   <span>{t("settings")}</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem>*/}
                 <DropdownMenuSeparator className="bg-pixoo-purple/20" />
                 <DropdownMenuItem
                   onClick={handleSignOut}

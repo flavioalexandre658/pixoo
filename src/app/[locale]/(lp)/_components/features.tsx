@@ -59,7 +59,7 @@ const Features = () => {
   return (
     <div
       id="features"
-      className="relative max-w-screen-xl mx-auto w-full py-20 xs:py-28 px-6 overflow-hidden"
+      className="relative max-w-screen-xl mx-auto w-full py-12 xs:py-16 px-6 overflow-hidden"
     >
       {/* Background elements */}
       <div className="absolute top-10 right-10 w-40 h-40 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10 rounded-full blur-3xl" />
@@ -91,7 +91,7 @@ const Features = () => {
                   <feature.icon className="text-white w-8 h-8 group-hover:rotate-12 transition-transform duration-500" />
                 </div>
 
-                <h4 className="text-xl font-bold tracking-tight mb-4 group-hover:text-pixoo-magenta transition-colors duration-300">
+                <h4 className="text-2xl font-bold tracking-tight mb-4 group-hover:text-pixoo-magenta transition-colors duration-300">
                   {feature.title}
                 </h4>
 

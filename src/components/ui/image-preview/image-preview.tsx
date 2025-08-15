@@ -55,16 +55,11 @@ function ImagePreviewComponent({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Elementos decorativos flutuantes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-4 -left-4 w-24 h-24 bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 rounded-full blur-xl animate-pulse" />
-        <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-purple/20 rounded-full blur-xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-pixoo-magenta/10 to-pixoo-pink/10 rounded-full blur-lg animate-bounce delay-500" />
-      </div>
-
+    <div
+      className={`relative flex items-center justify-center w-full h-full ${className}`}
+    >
       {isGenerating ? (
-        <div className="relative flex flex-col items-center justify-center h-full space-y-6 p-8">
+        <div className="relative flex flex-col items-center justify-center space-y-6 p-8">
           {/* Gradiente de fundo */}
           <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 rounded-xl" />
 
@@ -97,7 +92,7 @@ function ImagePreviewComponent({
           </div>
         </div>
       ) : generatedImage ? (
-        <div className="relative space-y-6 p-6">
+        <div className="relative space-y-6 p-6 w-full max-w-2xl">
           {/* Gradiente de fundo */}
           <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 rounded-xl" />
 

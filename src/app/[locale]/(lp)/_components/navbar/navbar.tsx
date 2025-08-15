@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
 import Logo from "@/components/branding/logo";

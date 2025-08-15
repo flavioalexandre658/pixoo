@@ -1,6 +1,6 @@
 import { Menu, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from "next/navigation";
 
 import Logo from "@/components/branding/logo";
 import { Button } from "@/components/ui/button";

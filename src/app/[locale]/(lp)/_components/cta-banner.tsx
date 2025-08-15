@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ export default function CTABanner() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    router.push("/sign-up");
+    router.push("/create-image");
   };
 
   const handleExplore = () => {
@@ -20,7 +20,7 @@ export default function CTABanner() {
   };
 
   return (
-    <section className="relative py-12 sm:py-20 lg:py-28 px-4 sm:px-6 overflow-hidden">
+    <section className="relative py-12 sm:py-12 lg:py-16 px-4 sm:px-6 overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/10 via-pixoo-pink/5 to-pixoo-magenta/10" />
       <div className="absolute top-5 sm:top-10 left-1/4 w-48 h-48 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-magenta/20 rounded-full blur-3xl animate-pulse" />
