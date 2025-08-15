@@ -241,6 +241,15 @@
     "cinema": "Cinema",
     "wide": "Panorâmico"
   },
+  "advancedSettingsDialog": {
+    "title": "Opções Avançadas",
+    "close": "Fechar",
+    "scrollToViewMore": "Role para ver mais opções",
+    "settingsContent": "Conteúdo das configurações"
+  },
+  "generate": {
+    "advancedOptions": "Opções Avançadas"
+  },
   "pricing": {
     "title": "Planos e Preços",
     "freePlan": "Plano Gratuito",

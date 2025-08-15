@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { usePathname, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Logo from "@/components/branding/logo";
 import {
   Search,
@@ -13,7 +12,6 @@ import {
   Wand2,
   Image as ImgIcon,
   History,
-  Menu,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -21,6 +19,7 @@ import { SubscriptionRequiredModal } from "@/components/modals/subscription-requ
 
 interface SidebarProps {
   className?: string;
+  isMobile?: boolean;
 }
 
 interface NavItem {
@@ -83,7 +82,7 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
   },
 ];
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, isMobile = false }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
   const t = useTranslations("navigation");
@@ -96,7 +95,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const navigationSections = getNavigationSections(t, currentPath);
 
-  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+  const SidebarContent = () => (
     <div
       className={cn("flex h-full flex-col relative overflow-hidden", className)}
     >
@@ -246,33 +245,19 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div
-        className={cn(
-          "hidden md:flex h-screen bg-background/95 backdrop-blur-sm border-r border-pixoo-purple/20 transition-all duration-300 relative overflow-hidden",
-          isCollapsed ? "w-16" : "w-64"
-        )}
-      >
-        <SidebarContent />
-      </div>
-
-      {/* Mobile Sidebar */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden fixed top-4 left-4 z-50 h-8 w-8 p-0 bg-gradient-to-r from-pixoo-purple/10 to-pixoo-magenta/10 hover:from-pixoo-purple/20 hover:to-pixoo-magenta/20 border border-pixoo-purple/20 backdrop-blur-sm transition-all duration-300"
-          >
-            <Menu className="h-4 w-4 text-pixoo-purple" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent
-          side="left"
-          className="w-64 p-0 bg-background/95 backdrop-blur-sm border-pixoo-purple/20"
+      {!isMobile && (
+        <div
+          className={cn(
+            "hidden md:flex h-screen bg-background/95 backdrop-blur-sm border-r border-pixoo-purple/20 transition-all duration-300 relative overflow-hidden",
+            isCollapsed ? "w-16" : "w-64"
+          )}
         >
-          <SidebarContent isMobile />
-        </SheetContent>
-      </Sheet>
+          <SidebarContent />
+        </div>
+      )}
+
+      {/* Mobile Sidebar Content */}
+      {isMobile && <SidebarContent />}
 
       {/* Plans Modal */}
       <SubscriptionRequiredModal

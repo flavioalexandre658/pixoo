@@ -47,6 +47,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
 import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
 import { useParams } from "next/navigation";
+import { AdvancedSettingsDialog } from "./advanced-settings-dialog";
 
 const formTextToImageSchema = z.object({
   prompt: z.string().min(1, "promptRequired"),
@@ -626,30 +627,12 @@ export function FormTextToImage({
               {/* Mobile View */}
               <div className="md:hidden space-y-4">
                 <div className="flex items-center gap-2">
-                  <Dialog
-                    open={isSettingsOpen}
+                  <AdvancedSettingsDialog
+                    isOpen={isSettingsOpen}
                     onOpenChange={setIsSettingsOpen}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
-                      >
-                        <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
-                          <Settings className="h-4 w-4 text-pixoo-purple" />
-                        </div>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="border-pixoo-purple/20 bg-background/95 backdrop-blur-sm">
-                      <DialogHeader>
-                        <DialogTitle className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
-                          {t("advancedOptions")}
-                        </DialogTitle>
-                      </DialogHeader>
-                      {settingsContent}
-                    </DialogContent>
-                  </Dialog>
+                    {settingsContent}
+                  </AdvancedSettingsDialog>
                   <div className="flex-grow">
                     <Select
                       value={form.watch("model")}

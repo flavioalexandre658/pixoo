@@ -12,11 +12,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, User, LogOut, CreditCard, Globe } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { Settings, User, LogOut, CreditCard, Globe, Menu } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { CreditsDisplay } from "@/components/ui/credits-display";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { Sidebar } from "@/components/layout/sidebar";
+import Logo from "@/components/branding/logo";
 
 interface HeaderProps {
   className?: string;
@@ -58,9 +67,42 @@ export function Header({ className }: HeaderProps) {
       <div className="absolute top-1 right-32 w-6 h-6 bg-gradient-to-br from-pixoo-purple/15 to-pixoo-pink/15 rounded-full blur-md animate-pulse delay-500" />
 
       <div className="flex h-14 items-center justify-between px-4 relative">
-        {/* Left side - could be used for breadcrumbs or page title */}
-        <div className="flex items-center gap-4">
-          <div className="md:hidden" /> {/* Space for mobile menu button */}
+        {/* Left side - Mobile menu button, logo and page title */}
+        <div className="flex items-center gap-3">
+          {/* Mobile Sidebar */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden h-8 w-8 p-0 bg-gradient-to-r from-pixoo-purple/10 to-pixoo-magenta/10 hover:from-pixoo-purple/20 hover:to-pixoo-magenta/20 border border-pixoo-purple/20 backdrop-blur-sm transition-all duration-300"
+              >
+                <Menu className="h-4 w-4 text-pixoo-purple" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="w-64 p-0 bg-background/95 backdrop-blur-sm border-pixoo-purple/20"
+            >
+              <VisuallyHidden>
+                <SheetTitle>Menu de Navegação</SheetTitle>
+              </VisuallyHidden>
+              <Sidebar isMobile />
+            </SheetContent>
+          </Sheet>
+
+          {/* Mobile Logo */}
+          <div className="md:hidden">
+            <Logo
+              width={32}
+              height={32}
+              customLogo="../images/icon.svg"
+              showText={false}
+              className="flex items-center"
+            />
+          </div>
+
+          {/* Desktop Page Title */}
           <div className="hidden md:block">
             <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground via-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent">
               {pageTitle}
@@ -148,19 +190,6 @@ export function Header({ className }: HeaderProps) {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-pixoo-purple/20" />
-                {/*<DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
-                  <User className="mr-2 h-4 w-4 text-pixoo-purple" />
-                  <span>{t("profile")}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
-                  <CreditCard className="mr-2 h-4 w-4 text-pixoo-magenta" />
-                  <span>{t("billing")}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
-                  <Settings className="mr-2 h-4 w-4 text-pixoo-pink" />
-                  <span>{t("settings")}</span>
-                </DropdownMenuItem>*/}
                 <DropdownMenuSeparator className="bg-pixoo-purple/20" />
                 <DropdownMenuItem
                   onClick={handleSignOut}
