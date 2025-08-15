@@ -22,9 +22,10 @@ interface GridImage {
 
 interface ExploreGridProps {
   images: GridImage[];
+  lastElementRef?: (node: HTMLElement | null) => void;
 }
 
-export function ExploreGrid({ images }: ExploreGridProps) {
+export function ExploreGrid({ images, lastElementRef }: ExploreGridProps) {
   const t = useTranslations("explore");
 
   if (images.length === 0) {
@@ -42,10 +43,10 @@ export function ExploreGrid({ images }: ExploreGridProps) {
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-semibold bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
-                {t("noImagesFound")}
+                {t("noImages")}
               </h3>
-              <p className="text-sm text-muted-foreground bg-gradient-to-r from-muted-foreground to-pixoo-purple bg-clip-text text-transparent">
-                {t("tryAdjustingFilters")}
+              <p className="text-muted-foreground">
+                {t("noImagesDescription")}
               </p>
             </div>
           </div>
@@ -61,21 +62,26 @@ export function ExploreGrid({ images }: ExploreGridProps) {
       <div className="absolute bottom-1/4 -left-2 w-6 h-6 bg-gradient-to-br from-pixoo-pink/15 to-pixoo-purple/15 rounded-full blur-md opacity-40 animate-float-delayed" />
 
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-4">
-        {images.map((image) => (
-          <ExploreImageCard
+        {images.map((image, index) => (
+          <div
             key={image.id}
-            image={{
-              id: image.id,
-              url: image.url,
-              prompt: image.prompt,
-              model: image.model,
-              aspectRatio: image.aspectRatio,
-              likes: image.likes,
-              category: image.category,
-              createdAt: image.createdAt,
-              user: image.user,
-            }}
-          />
+            ref={index === images.length - 1 ? lastElementRef : undefined}
+            className="break-inside-avoid mb-4"
+          >
+            <ExploreImageCard
+              image={{
+                id: image.id,
+                url: image.url,
+                prompt: image.prompt,
+                model: image.model,
+                aspectRatio: image.aspectRatio,
+                likes: image.likes,
+                category: image.category,
+                createdAt: image.createdAt,
+                user: image.user,
+              }}
+            />
+          </div>
         ))}
       </div>
     </div>

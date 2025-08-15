@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import {
   PageContainer,
@@ -10,6 +10,9 @@ import { ExploreFilters } from "./explore-filters";
 import { ExploreGrid } from "./explore-grid";
 import { Sparkles } from "lucide-react";
 import { PixooLoading } from "@/components/ui/pixoo-loading";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { useAction } from "next-safe-action/hooks";
+import { getPublicImages } from "@/actions/images/get/get-public-images.action";
 
 interface ExploreImage {
   id: string;
@@ -31,7 +34,7 @@ interface ExplorePageProps {
   images: ExploreImage[];
 }
 
-function ExplorePage({ images }: ExplorePageProps) {
+function ExplorePage({ images: initialImages }: ExplorePageProps) {
   const t = useTranslations("explore");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedModel, setSelectedModel] = useState("all");
@@ -39,27 +42,75 @@ function ExplorePage({ images }: ExplorePageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Estados para paginação
+  const [allImages, setAllImages] = useState<ExploreImage[]>(initialImages);
+  const [offset, setOffset] = useState(initialImages.length);
+  const [hasMore, setHasMore] = useState(initialImages.length >= 50); // Assumindo que o limite inicial é 50
+  const [isFetching, setIsFetching] = useState(false);
+  const limit = 20; // Imagens por página
+
+  // Action para buscar mais imagens
+  const { execute: executeGetPublicImages } = useAction(getPublicImages, {
+    onSuccess: (result) => {
+      if (result.data?.success && result.data.data) {
+        const newImages = result.data.data as ExploreImage[];
+        setAllImages((prev) => [...prev, ...newImages]);
+        setOffset((prev) => prev + newImages.length);
+        setHasMore(result.data.hasMore || false);
+      }
+      setIsFetching(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao carregar mais imagens:", error);
+      setIsFetching(false);
+    },
+  });
+
+  // Função para carregar mais imagens
+  const fetchMoreImages = useCallback(async () => {
+    if (isFetching || !hasMore) return;
+
+    setIsFetching(true);
+    await executeGetPublicImages({
+      limit,
+      offset,
+    });
+  }, [executeGetPublicImages, isFetching, hasMore, limit, offset]);
+
+  // Hook de scroll infinito - CORRIGIDO: passando os parâmetros corretos
+  const { lastElementRef } = useInfiniteScroll(hasMore, fetchMoreImages, {
+    threshold: 0.8,
+    rootMargin: "200px",
+  });
+
+  // Reset da paginação quando os filtros mudam
+  useEffect(() => {
+    setOffset(initialImages.length);
+    setHasMore(initialImages.length >= 50);
+    setAllImages(initialImages);
+  }, [selectedCategory, selectedModel, sortBy, searchTerm, initialImages]);
+
   // Get unique categories and models from the data
   const categories = useMemo(() => {
     const uniqueCategories = [
-      ...new Set(images.map((img) => img.category).filter(Boolean)),
+      ...new Set(allImages.map((img) => img.category).filter(Boolean)),
     ] as string[];
     return uniqueCategories;
-  }, [images]);
+  }, [allImages]);
 
   const models = useMemo(() => {
-    const uniqueModels = [...new Set(images.map((img) => img.model))];
+    const uniqueModels = [...new Set(allImages.map((img) => img.model))];
     return uniqueModels.map((model) => {
-      const imageWithModel = images.find((img) => img.model === model);
+      const imageWithModel = allImages.find((img) => img.model === model);
       return {
         name: imageWithModel?.modelName || model,
         id: model,
       };
     });
-  }, [images]);
+  }, [allImages]);
 
   const filteredImages = useMemo(() => {
-    return images.filter((image) => {
+    return allImages.filter((image) => {
       if (!image.imageUrl) return false;
 
       const matchesCategory =
@@ -71,7 +122,7 @@ function ExplorePage({ images }: ExplorePageProps) {
         .includes(searchTerm.toLowerCase());
       return matchesCategory && matchesModel && matchesSearch;
     });
-  }, [images, selectedCategory, selectedModel, searchTerm]);
+  }, [allImages, selectedCategory, selectedModel, searchTerm]);
 
   const sortedImages = useMemo(() => {
     return [...filteredImages].sort((a, b) => {
@@ -88,7 +139,7 @@ function ExplorePage({ images }: ExplorePageProps) {
     });
   }, [filteredImages, sortBy]);
 
-  // Transform data for ExploreGrid component
+  // Transform data for ExploreGrid component - CORRIGIDO: removendo a propriedade ref
   const gridImages = sortedImages.map((image) => ({
     id: image.id,
     url: image.imageUrl!,
@@ -167,7 +218,21 @@ function ExplorePage({ images }: ExplorePageProps) {
             categories={categories}
           />
 
-          <ExploreGrid images={gridImages} />
+          <ExploreGrid images={gridImages} lastElementRef={lastElementRef} />
+
+          {/* Indicadores de carregamento */}
+          {isFetching && (
+            <div className="flex justify-center py-8">
+              <PixooLoading size="md" />
+            </div>
+          )}
+
+          {/* Mensagem quando todas as imagens foram carregadas */}
+          {!hasMore && !isFetching && gridImages.length > 0 && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">{t("allImagesLoaded")}</p>
+            </div>
+          )}
         </div>
       </PageContainer>
     </div>

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const getPublicImagesSchema = z.object({
-  limit: z.number().min(1).max(50).optional().default(20),
+  limit: z.number().min(1).max(50).optional().default(10),
   offset: z.number().min(0).optional().default(0),
   category: z.string().optional(),
 });

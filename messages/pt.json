@@ -307,7 +307,8 @@
     "anonymousUser": "Usuário Anônimo",
     "copyPromptError": "Erro ao copiar prompt",
     "aiGeneratedImage": "Imagem Gerada por IA",
-    "shareError": "Erro ao compartilhar"
+    "shareError": "Erro ao compartilhar",
+    "allImagesLoaded": "Todas as imagens foram carregadas"
   },
   "authRequired": {
     "title": "Login Necessário",

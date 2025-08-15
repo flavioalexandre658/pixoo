@@ -21,6 +21,7 @@ import { FilterSelect } from "./filter-select";
 import { ZoomControls } from "./zoom-controls";
 import { toast } from "sonner";
 import { PixooLoading } from "@/components/ui/pixoo-loading";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 import { ImageHistoryCard } from "./image-history-card";
 import { getImagesHistory } from "@/actions/images/history/get-images-history.action";
@@ -69,6 +70,12 @@ export function ImageHistory({
     imageId?: string;
     count?: number;
   }>({ isOpen: false, type: "single" });
+
+  // Estados para paginação
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const limit = 12; // Número de imagens por página
+
   const { executeAsync: executeGetImagesHistory } = useAction(getImagesHistory);
   const { executeAsync: executeDeleteImage } = useAction(deleteImage);
   const { executeAsync: executeDeleteMultipleImages } =
@@ -77,30 +84,88 @@ export function ImageHistory({
     updateImagePublicStatus
   );
 
-  const fetchImages = useCallback(async () => {
+  // Hook de scroll infinito
+  const { isFetching, setIsFetching, lastElementRef } = useInfiniteScroll(
+    hasMore,
+    fetchMoreImages,
+    { threshold: 100, rootMargin: "100px" }
+  );
+
+  // Função para carregar mais imagens
+  async function fetchMoreImages() {
+    if (isFetching || !hasMore) return;
+
     try {
       const { data } = await executeGetImagesHistory({
-        limit: 100,
+        limit,
+        offset,
       });
+
       if (data?.success && data.data) {
-        setImages(
-          data.data.map((img) => ({
-            ...img,
-            createdAt: img.createdAt.toString(),
-            completedAt: img.completedAt?.toString() || null,
-          }))
-        );
+        const newImages = data.data.map((img) => ({
+          ...img,
+          createdAt: img.createdAt.toString(),
+          completedAt: img.completedAt?.toString() || null,
+        }));
+
+        if (newImages.length < limit) {
+          setHasMore(false);
+        }
+
+        setImages((prev) => [...prev, ...newImages]);
+        setOffset((prev) => prev + limit);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error fetching more images:", error);
+      setHasMore(false);
+    } finally {
+      setIsFetching(false);
+    }
+  }
+
+  const fetchImages = useCallback(async () => {
+    try {
+      setLoading(true);
+      setOffset(0);
+      setHasMore(true);
+
+      const { data } = await executeGetImagesHistory({
+        limit,
+        offset: 0,
+      });
+
+      if (data?.success && data.data) {
+        const newImages = data.data.map((img) => ({
+          ...img,
+          createdAt: img.createdAt.toString(),
+          completedAt: img.completedAt?.toString() || null,
+        }));
+
+        setImages(newImages);
+        setOffset(limit);
+
+        if (newImages.length < limit) {
+          setHasMore(false);
+        }
       }
     } catch (error) {
       console.error("Error fetching image history:", error);
     } finally {
       setLoading(false);
     }
-  }, [executeGetImagesHistory]);
+  }, [executeGetImagesHistory, limit]);
 
   useEffect(() => {
     fetchImages();
   }, [refreshTrigger, fetchImages]);
+
+  // Reset paginação quando filtros mudam
+  useEffect(() => {
+    setOffset(0);
+    setHasMore(true);
+  }, [search, modelFilter, statusFilter]);
 
   const downloadImage = async (imageUrl: string) => {
     try {
@@ -477,35 +542,61 @@ export function ImageHistory({
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-              {filteredImages.map((image) => (
-                <div key={image.id} className="relative">
-                  {isSelectionMode && (
-                    <div className="absolute top-2 left-2 z-10">
-                      <Checkbox
-                        checked={selectedImages.has(image.id)}
-                        onCheckedChange={() => toggleImageSelection(image.id)}
-                        className="bg-white/90 border-2 border-pixoo-purple/30 shadow-lg backdrop-blur-sm data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-pixoo-purple data-[state=checked]:to-pixoo-magenta data-[state=checked]:border-0"
+            <>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                {filteredImages.map((image, index) => {
+                  const isLastElement = index === filteredImages.length - 1;
+                  return (
+                    <div
+                      key={image.id}
+                      className="relative"
+                      ref={isLastElement ? lastElementRef : null}
+                    >
+                      {isSelectionMode && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <Checkbox
+                            checked={selectedImages.has(image.id)}
+                            onCheckedChange={() =>
+                              toggleImageSelection(image.id)
+                            }
+                            className="bg-white/90 border-2 border-pixoo-purple/30 shadow-lg backdrop-blur-sm data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-pixoo-purple data-[state=checked]:to-pixoo-magenta data-[state=checked]:border-0"
+                          />
+                        </div>
+                      )}
+                      <ImageHistoryCard
+                        image={image}
+                        getModelBadgeColor={getModelBadgeColor}
+                        formatTime={formatTime}
+                        onDownload={downloadImage}
+                        onViewFull={viewFullImage}
+                        onDelete={handleDeleteImage}
+                        zoom={zoom}
+                        cropped={cropped}
+                        isSelectionMode={isSelectionMode}
+                        isDeleting={isDeleting}
+                        onPromptReuse={onPromptReuse}
+                        onTogglePublic={handleTogglePublic}
                       />
                     </div>
-                  )}
-                  <ImageHistoryCard
-                    image={image}
-                    getModelBadgeColor={getModelBadgeColor}
-                    formatTime={formatTime}
-                    onDownload={downloadImage}
-                    onViewFull={viewFullImage}
-                    onDelete={handleDeleteImage}
-                    zoom={zoom}
-                    cropped={cropped}
-                    isSelectionMode={isSelectionMode}
-                    isDeleting={isDeleting}
-                    onPromptReuse={onPromptReuse}
-                    onTogglePublic={handleTogglePublic}
-                  />
+                  );
+                })}
+              </div>
+
+              {/* Indicadores de carregamento */}
+              {isFetching && (
+                <div className="flex justify-center py-8">
+                  <PixooLoading size="sm" />
                 </div>
-              ))}
-            </div>
+              )}
+
+              {!hasMore && filteredImages.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground bg-gradient-to-r from-muted-foreground to-pixoo-purple bg-clip-text text-transparent">
+                    Todas as imagens foram carregadas
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
 
@@ -521,22 +612,22 @@ export function ImageHistory({
             <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/3 via-transparent to-pixoo-pink/3 rounded-lg" />
 
             <AlertDialogHeader className="relative">
-              <AlertDialogTitle className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent text-xl font-semibold">
-                {deleteConfirmation.type === "single"
-                  ? "Confirmar deleção de imagem"
-                  : "Confirmar deleção de múltiplas imagens"}
+              <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-red-100 to-red-200">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                </div>
+                Confirmar Deleção
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-muted-foreground text-base mt-2">
+              <AlertDialogDescription className="text-muted-foreground">
                 {deleteConfirmation.type === "single"
                   ? "Tem certeza que deseja deletar esta imagem? Esta ação não pode ser desfeita."
                   : `Tem certeza que deseja deletar ${deleteConfirmation.count} imagem(ns)? Esta ação não pode ser desfeita.`}
               </AlertDialogDescription>
             </AlertDialogHeader>
-
-            <AlertDialogFooter className="relative mt-6 gap-3">
+            <AlertDialogFooter className="relative gap-2">
               <AlertDialogCancel
                 disabled={isDeleting}
-                className="border-2 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/5 hover:to-pixoo-pink/5 transition-all duration-300 font-medium"
+                className="border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300"
               >
                 Cancelar
               </AlertDialogCancel>
@@ -547,7 +638,7 @@ export function ImageHistory({
                     : confirmDeleteMultipleImages
                 }
                 disabled={isDeleting}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg shadow-red-500/20 transition-all duration-300 font-medium hover:scale-105 disabled:hover:scale-100"
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg shadow-red-500/30 transition-all duration-300"
               >
                 {isDeleting ? "Deletando..." : "Deletar"}
               </AlertDialogAction>
@@ -556,43 +647,24 @@ export function ImageHistory({
         </AlertDialog>
       </Card>
 
-      {/* Animações CSS */}
       <style jsx>{`
         @keyframes float {
           0%,
           100% {
-            transform: translateY(0px) rotate(0deg);
+            transform: translateY(0px);
           }
           50% {
-            transform: translateY(-10px) rotate(5deg);
-          }
-        }
-        @keyframes float-delayed {
-          0%,
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          50% {
-            transform: translateY(-8px) rotate(-3deg);
-          }
-        }
-        @keyframes float-slow {
-          0%,
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          50% {
-            transform: translateY(-6px) rotate(2deg);
+            transform: translateY(-10px);
           }
         }
         .animate-float {
           animation: float 6s ease-in-out infinite;
         }
         .animate-float-delayed {
-          animation: float-delayed 8s ease-in-out infinite;
+          animation: float 6s ease-in-out infinite 2s;
         }
         .animate-float-slow {
-          animation: float-slow 10s ease-in-out infinite;
+          animation: float 8s ease-in-out infinite 1s;
         }
       `}</style>
     </div>

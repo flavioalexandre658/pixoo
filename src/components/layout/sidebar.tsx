@@ -113,7 +113,7 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
           "flex items-center border-b border-pixoo-purple/20 backdrop-blur-sm bg-card/80",
           isCollapsed && !isMobile
             ? "justify-center p-2"
-            : "justify-between p-4"
+            : "justify-between p-[12px]"
         )}
       >
         <Logo

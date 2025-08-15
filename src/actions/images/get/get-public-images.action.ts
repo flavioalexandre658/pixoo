@@ -10,11 +10,11 @@ const action = createSafeActionClient();
 
 export const getPublicImages = action
   .schema(getPublicImagesSchema)
-  .action(async ({ parsedInput: { limit = 20, offset = 0, category } }) => {
+  .action(async ({ parsedInput: { limit = 10, offset = 0, category } }) => {
     try {
       let whereCondition: SQL<unknown> = eq(generatedImages.isPublic, true);
-      
-      if (category && category !== 'all') {
+
+      if (category && category !== "all") {
         const categoryCondition = and(
           eq(generatedImages.isPublic, true),
           eq(generatedImages.category, category)
@@ -51,6 +51,7 @@ export const getPublicImages = action
       return {
         success: true,
         data: images,
+        hasMore: images.length === limit, // Se retornou o limite completo, pode haver mais
       };
     } catch (error) {
       console.error("Error fetching public images:", error);

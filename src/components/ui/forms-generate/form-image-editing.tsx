@@ -93,13 +93,8 @@ export function FormImageEditing({
   preloadedPrompt,
 }: FormImageEditingProps) {
   const t = useTranslations("imageEditingForm");
-  const {
-    credits,
-    hasEnoughCredits,
-    reserveCredits,
-    fetchCredits,
-    cancelReservation,
-  } = useCredits();
+  const { hasEnoughCredits, reserveCredits, fetchCredits, cancelReservation } =
+    useCredits();
   const [currentReservation, setCurrentReservation] = useState<{
     reservationId: string;
     cost: number;
@@ -994,7 +989,7 @@ export function FormImageEditing({
                   {isGenerating || startedGeneration ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white mr-3" />
-                      {t("generating")}
+                      {t("editing")}
                     </>
                   ) : selectedModel &&
                     selectedModel.credits > 0 &&
