@@ -52,10 +52,14 @@ export function Header({ className }: HeaderProps) {
     router.push(pathname, { locale: newLocale });
   };
 
+  const handleLogoClick = () => {
+    router.push("/");
+  };
+
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 relative overflow-hidden",
+        "fixed top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 relative overflow-hidden",
         className
       )}
     >
@@ -93,13 +97,19 @@ export function Header({ className }: HeaderProps) {
 
           {/* Mobile Logo */}
           <div className="md:hidden">
-            <Logo
-              width={32}
-              height={32}
-              customLogo="../images/icon.svg"
-              showText={false}
-              className="flex items-center"
-            />
+            <Button
+              variant="ghost"
+              className="p-0 h-auto hover:bg-transparent"
+              onClick={handleLogoClick}
+            >
+              <Logo
+                width={32}
+                height={32}
+                customLogo="../images/icon.svg"
+                showText={false}
+                className="flex items-center"
+              />
+            </Button>
           </div>
 
           {/* Desktop Page Title */}
