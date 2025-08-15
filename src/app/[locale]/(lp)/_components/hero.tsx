@@ -24,16 +24,16 @@ const Hero = () => {
 
       <div className="flex items-center justify-center md:mt-6 relative z-10">
         <div className="max-w-2xl text-center">
-          <Badge className="text-xl relative rounded-xl border-none bg-gradient-to-r from-pixoo-pink to-pixoo-magenta py-2 px-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Badge className="text-md relative rounded-xl border-none bg-gradient-to-r from-pixoo-pink to-pixoo-magenta py-2 px-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <Sparkles className="w-8 h-8 mr-2 animate-pulse" />
             {t("badge")}
           </Badge>
 
-          <h1 className="mt-8 max-w-[20ch] text-4xl font-bold !leading-[1.1] tracking-tight xs:text-5xl sm:text-5xl md:text-6xl bg-gradient-to-br from-foreground via-foreground to-pixoo-purple bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <h1 className="mt-6 max-w-[20ch] text-3xl font-bold !leading-[1.1] tracking-tight xs:text-4xl sm:text-5xl md:text-6xl bg-gradient-to-br from-foreground via-foreground to-pixoo-purple bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-1000">
             {t("title")}
           </h1>
 
-          <p className="mt-2 max-w-[60ch] text-lg xs:text-xl text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+          <p className="mt-2 max-w-[60ch] text-md xs:text-md text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
             {t("subtitle")}
           </p>
 

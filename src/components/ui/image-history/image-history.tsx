@@ -167,51 +167,181 @@ export function ImageHistory({
     setHasMore(true);
   }, [search, modelFilter, statusFilter]);
 
+  // Função para detectar dispositivo móvel
+  const isMobileDevice = () => {
+    return (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) || window.innerWidth <= 768
+    );
+  };
+
   const downloadImage = async (imageUrl: string) => {
     try {
       toast.loading("Preparando download...", { id: "download" });
 
-      // Tentar fetch direto primeiro
-      let response;
-      try {
-        response = await fetch(imageUrl, {
-          mode: "cors",
-          credentials: "omit",
-        });
-      } catch (corsError) {
-        console.log(corsError);
-        // Se falhar por CORS, tentar através de proxy
-        response = await fetch(
-          `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`
+      const isMobile = isMobileDevice();
+      let downloadSuccess = false;
+      let lastError: Error | null = null;
+
+      // Estratégia 1: Tentar fetch direto primeiro
+      if (!downloadSuccess) {
+        try {
+          const response = await fetch(imageUrl, {
+            mode: "cors",
+            credentials: "omit",
+            headers: {
+              "User-Agent": isMobile
+                ? "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+                : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+          });
+
+          if (response.ok) {
+            const blob = await response.blob();
+            await downloadBlob(blob, `image-${Date.now()}.png`);
+            downloadSuccess = true;
+          } else {
+            lastError = new Error(
+              `HTTP ${response.status}: ${response.statusText}`
+            );
+          }
+        } catch (corsError) {
+          console.log("Fetch direto falhou:", corsError);
+          lastError = corsError as Error;
+        }
+      }
+
+      // Estratégia 2: Tentar através do proxy
+      if (!downloadSuccess) {
+        try {
+          const response = await fetch(
+            `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`,
+            {
+              headers: {
+                "User-Agent": isMobile
+                  ? "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+                  : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+              },
+            }
+          );
+
+          if (response.ok) {
+            const blob = await response.blob();
+            await downloadBlob(blob, `image-${Date.now()}.png`);
+            downloadSuccess = true;
+          } else {
+            lastError = new Error(
+              `Proxy HTTP ${response.status}: ${response.statusText}`
+            );
+          }
+        } catch (proxyError) {
+          console.log("Proxy falhou:", proxyError);
+          lastError = proxyError as Error;
+        }
+      }
+
+      // Estratégia 3: Para mobile, tentar data URL
+      if (!downloadSuccess && isMobile) {
+        try {
+          const response = await fetch(
+            `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`
+          );
+
+          if (response.ok) {
+            const blob = await response.blob();
+            const reader = new FileReader();
+
+            reader.onload = () => {
+              const dataUrl = reader.result as string;
+              const a = document.createElement("a");
+              a.href = dataUrl;
+              a.download = `image-${Date.now()}.png`;
+              a.style.display = "none";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            };
+
+            reader.readAsDataURL(blob);
+            downloadSuccess = true;
+          }
+        } catch (dataUrlError) {
+          console.log("Data URL falhou:", dataUrlError);
+          lastError = dataUrlError as Error;
+        }
+      }
+
+      // Estratégia 4: Fallback final - abrir em nova aba (para todos os dispositivos)
+      if (!downloadSuccess) {
+        try {
+          // Tentar abrir a imagem em nova aba como último recurso
+          window.open(imageUrl, "_blank");
+          toast.success(
+            isMobile
+              ? "Imagem aberta em nova aba. Pressione e segure para salvar."
+              : "Imagem aberta em nova aba. Clique com o botão direito para salvar.",
+            { id: "download" }
+          );
+          downloadSuccess = true;
+        } catch (openError) {
+          console.log("Abertura em nova aba falhou:", openError);
+          lastError = openError as Error;
+        }
+      }
+
+      // Se ainda não teve sucesso, mostrar erro específico
+      if (!downloadSuccess) {
+        throw (
+          lastError || new Error("Todas as estratégias de download falharam")
         );
+      } else if (downloadSuccess && !lastError) {
+        toast.success("Imagem baixada com sucesso!", { id: "download" });
       }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      a.download = `image-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-
-      // Cleanup
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 100);
-
-      toast.success("Imagem baixada com sucesso!", { id: "download" });
     } catch (error) {
       console.error("Error downloading image:", error);
-      toast.error("Falha ao baixar a imagem. Tente novamente.", {
-        id: "download",
-      });
+
+      // Mensagens de erro mais específicas
+      let errorMessage = "Falha ao baixar a imagem.";
+
+      if (
+        error instanceof TypeError &&
+        error.message.includes("Failed to fetch")
+      ) {
+        errorMessage =
+          "Erro de conexão. Verifique sua internet e tente novamente.";
+      } else if (error instanceof Error && error.message.includes("CORS")) {
+        errorMessage = "Erro de permissão. Tente usar o botão de visualizar.";
+      } else if (error instanceof Error && error.message.includes("HTTP 404")) {
+        errorMessage = "Imagem não encontrada. O link pode ter expirado.";
+      } else if (error instanceof Error && error.message.includes("HTTP 403")) {
+        errorMessage = "Acesso negado. Tente visualizar a imagem em nova aba.";
+      } else if (imageUrl.includes("together.ai")) {
+        errorMessage = "Link temporário expirado. Tente gerar uma nova imagem.";
+      } else if (isMobileDevice()) {
+        errorMessage =
+          "Erro no download mobile. Tente visualizar a imagem e salvar manualmente.";
+      }
+
+      toast.error(errorMessage, { id: "download" });
     }
+  };
+
+  // Função auxiliar para download de blob
+  const downloadBlob = async (blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 100);
   };
 
   const viewFullImage = (url: string) => {
