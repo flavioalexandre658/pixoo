@@ -1,8 +1,8 @@
 {
   "metadata": {
     "lp": {
-      "title": "Pixoo - Crea Imágenes Increíbles con IA",
-      "description": "Transforma tus ideas en arte visual con los modelos de IA más avanzados. Crea imágenes profesionales, editadas y personalizadas en segundos."
+      "title": "Pixoo – Crea y Edita Imágenes con Inteligencia Artificial",
+      "description": "Genera imágenes profesionales a partir de texto o edítalas con comandos simples usando IA avanzada. Crea, transforma y personaliza en segundos — directamente en el navegador."
     }
   },
   "common": {
@@ -23,21 +23,21 @@
   "navigation": {
     "home": "Inicio",
     "explore": "Explorar",
-    "textToImage": "Texto a Imagen",
-    "imageToImage": "Imagen a Imagen",
-    "imageToPrompt": "Imagen a Prompt",
+    "textToImage": "Crear Imagen",
+    "imageEditing": "Edición de Imagen",
+    "imageToPrompt": "Prompt de Imagen",
     "fluxLora": "Flux Lora",
     "fluxTools": "Herramientas Flux",
     "fluxDesigner": "Flux Designer",
     "textToVideo": "Texto a Video",
     "imageToVideo": "Imagen a Video",
     "history": "Historial",
-    "upgradeToPro": "Actualizar",
+    "upgradeToPro": "Upgrade",
     "generate": "Generar Imagen",
     "gallery": "Galería",
     "pricing": "Precios",
     "profile": "Perfil",
-    "logout": "Salir"
+    "logout": "Cerrar sesión"
   },
   "header": {
     "notifications": "Notificaciones",
@@ -49,45 +49,137 @@
     "changeLanguage": "Cambiar idioma"
   },
   "textToImage": {
-    "title": "Generación de Imagen con IA",
-    "modelSelection": "Selección del Modelo",
+    "title": "Crear Imagen",
+    "description": "Crea imágenes increíbles con IA usando los modelos avanzados de Pixoo"
+  },
+  "imageEditing": {
+    "title": "Edición de Imagen",
+    "description": "Edita imágenes con IA usando los modelos avanzados de Pixoo"
+  },
+  "formTextToImage": {
+    "title": "Generación de Imágenes con IA",
+    "modelSelection": "Selección de Modelo",
     "prompt": "Prompt",
-    "promptPlaceholder": "Describe la imagen que quieres generar...",
-    "aspectRatio": "Relación de Aspecto",
+    "promptPlaceholder": "Describe la imagen que deseas generar...",
+    "aspectRatio": "Relación de Aspecto de la Imagen",
     "advancedOptions": "Opciones Avanzadas",
     "imagePublic": "Imagen Pública",
-    "imagePublicDescription": "Hacer esta imagen visible para otros usuarios",
-    "generateImage": "Generar Imagen"
+    "imagePublicDescription": "Hacer que esta imagen sea visible para otros usuarios",
+    "generateImage": "Generar Imagen",
+    "insufficientFreeCredits": "Créditos gratuitos insuficientes para usar este modelo",
+    "freeCreditsRequired": "Necesitas créditos gratuitos para usar el modelo flux-schnell",
+    "generating": "Generando...",
+    "noImageGenerated": "No se generó ninguna imagen",
+    "startingGeneration": "Iniciando la generación de imagen...",
+    "checkingStatus": "Comprobando estado...",
+    "imageGeneratedSuccess": "¡Imagen generada con éxito!",
+    "insufficientCredits": "Créditos insuficientes. Agrega más créditos para continuar.",
+    "rateLimitExceeded": "Límite de solicitudes excedido. Inténtalo de nuevo en unos minutos.",
+    "generationFailed": "Error al generar la imagen. Inténtalo de nuevo.",
+    "seed": "Seed (Opcional)",
+    "seedPlaceholder": "Seed aleatoria para resultados reproducibles",
+    "steps": "Pasos (1-50)",
+    "guidance": "Escala de Orientación (1-20)",
+    "costCredits": "Esto costará {credits} créditos"
+  },
+  "formImageEditing": {
+    "startingGeneration": "Iniciando la generación de imagen...",
+    "inputImage": "Imagen",
+    "dragDropImage": "Arrastra tu imagen aquí",
+    "selectImage": "Seleccionar imagen",
+    "title": "Edición de Imagen con IA",
+    "modelSelection": "Selección de Modelo",
+    "prompt": "Prompt",
+    "promptDescription": "Describe cómo quieres editar la imagen...",
+    "promptPlaceholder": "Describe cómo quieres editar la imagen...",
+    "uploadImage": "Subir Imagen",
+    "uploadImageDescription": "Arrastra y suelta una imagen o haz clic para seleccionar",
+    "supportedFormats": "Formatos compatibles: JPG, PNG, WebP (máx. 10MB)",
+    "aspectRatio": "Relación de Aspecto de la Imagen",
+    "advancedOptions": "Opciones Avanzadas",
+    "imagePublic": "Imagen Pública",
+    "imagePublicDescription": "Hacer que esta imagen sea visible para otros usuarios",
+    "editImage": "Editar Imagen",
+    "editing": "Editando...",
+    "noImageGenerated": "No se editó ninguna imagen",
+    "startingEditing": "Iniciando la edición de imagen...",
+    "checkingStatus": "Comprobando estado...",
+    "imageEditedSuccess": "¡Imagen editada con éxito!",
+    "insufficientCredits": "Créditos insuficientes. Agrega más créditos para continuar.",
+    "rateLimitExceeded": "Límite de solicitudes excedido. Inténtalo de nuevo en unos minutos.",
+    "editingFailed": "Error al editar la imagen. Inténtalo de nuevo.",
+    "seed": "Seed (Opcional)",
+    "seedPlaceholder": "Seed aleatoria para resultados reproducibles",
+    "steps": "Pasos (1-50)",
+    "guidance": "Escala de Orientación (1-20)",
+    "costCredits": "Esto costará {credits} créditos",
+    "removeImage": "Eliminar Imagen",
+    "imageRequired": "Se requiere una imagen para la edición",
+    "invalidFileType": "Tipo de archivo no válido. Usa JPG, PNG o WebP.",
+    "fileTooLarge": "Archivo demasiado grande. Máximo 10MB.",
+    "uploadError": "Error al subir la imagen"
+  },
+  "imagePreview": {
+    "noImageGenerated": "No se generó ninguna imagen",
+    "download": "Descargar",
+    "viewFull": "Ver",
+    "viewFullSize": "Ver en Tamaño Completo",
+    "generating": "Generando tu imagen...",
+    "generatedImage": "Imagen Generada",
+    "generatedImageAlt": "Imagen generada",
+    "seconds": "segundos",
+    "preparingDownload": "Preparando descarga...",
+    "downloadSuccess": "¡Imagen descargada con éxito!",
+    "downloadFailed": "Error al descargar la imagen. Inténtalo de nuevo.",
+    "noImageToDownload": "No hay imagen para descargar",
+    "imageLoadError": "Error al cargar la imagen",
+    "retryWithProxy": "Intentar vía Proxy",
+    "openInNewTab": "Abrir en una nueva pestaña"
   },
   "auth": {
     "loading": "Cargando...",
-    "login": "Iniciar Sesión",
+    "login": "Iniciar sesión",
     "register": "Registrarse",
-    "email": "Correo Electrónico",
+    "email": "Correo electrónico",
     "password": "Contraseña",
-    "confirmPassword": "Confirmar Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "signInWithGoogle": "Iniciar sesión con Google",
+    "signUpWithGoogle": "Crear cuenta con Google",
     "forgotPassword": "Olvidé mi contraseña",
+    "resetPassword": "Restablecer contraseña",
+    "sendResetLink": "Enviar enlace de restablecimiento",
+    "backToSignIn": "Volver al inicio de sesión",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "dontHaveAccount": "¿No tienes una cuenta?",
+    "name": "Nombre",
+    "fullName": "Nombre completo",
+    "enterEmail": "Introduce tu correo electrónico",
+    "enterPassword": "Introduce tu contraseña",
+    "enterName": "Introduce tu nombre",
+    "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+    "emailRequired": "El correo electrónico es obligatorio",
+    "passwordRequired": "La contraseña es obligatoria",
+    "nameRequired": "El nombre es obligatorio",
+    "invalidEmail": "Correo electrónico no válido",
+    "passwordsNotMatch": "Las contraseñas no coinciden",
+    "signInSuccess": "Inicio de sesión exitoso",
+    "signUpSuccess": "Cuenta creada con éxito",
+    "resetLinkSent": "Se envió el enlace de restablecimiento a tu correo",
+    "passwordResetSuccess": "Contraseña restablecida con éxito",
+    "signInError": "Error al iniciar sesión",
+    "signUpError": "Error al crear la cuenta",
+    "resetPasswordError": "Error al restablecer la contraseña",
+    "welcomeBack": "Bienvenido de nuevo",
+    "createAccount": "Crea tu cuenta",
+    "resetYourPassword": "Restablece tu contraseña",
+    "enterEmailToReset": "Introduce tu correo para recibir el enlace de restablecimiento",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
     "loginTitle": "Inicia sesión en tu cuenta",
     "registerTitle": "Crea tu cuenta",
-    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
-    "dontHaveAccount": "¿No tienes una cuenta?"
-  },
-  "imageGeneration": {
-    "title": "Texto a Imagen",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Describe la imagen que quieres generar...",
-    "modelSelection": "Selección de Modelo",
-    "aspectRatio": "Proporción de Imagen: 1:1",
-    "advancedOptions": "Opciones Avanzadas",
-    "imagePublic": "Imagen Pública:",
-    "generateImage": "Generar Imagen",
-    "generating": "Generando imagen...",
-    "noImageGenerated": "Ninguna imagen generada",
-    "imageGenerated": "¡Imagen generada con éxito!",
-    "noImageToDownload": "No hay imagen para descargar",
-    "imageLoadError": "Error al cargar imagen",
-    "retryWithProxy": "Reintentar con Proxy",
-    "openInNewTab": "Abrir en Nueva Pestaña"
+    "passwordComplexity": "La contraseña debe contener al menos una letra mayúscula, un número y un carácter especial"
   },
   "models": {
     "fluxSchnell": "Flux Schnell",
@@ -99,66 +191,108 @@
     "freeUnlimited": "gratis ilimitado",
     "credits": "créditos"
   },
-  "pricing": {
-    "title": "Planes y Precios",
-    "freePlan": "Plan Gratuito",
-    "starterPlan": "Plan Inicial",
-    "premiumPlan": "Plan Premium",
-    "advancedPlan": "Plan Avanzado",
-    "oneTimePlan": "Plan Único",
-    "monthly": "Mensual",
-    "annually": "Anual",
-    "creditsPerMonth": "créditos por mes",
-    "dailyCredits": "créditos diarios",
-    "unlimitedUse": "Uso Ilimitado",
-    "commercialLicense": "Licencia Comercial",
-    "historyRecords": "Registros de Historial",
-    "permanentHistory": "Historial Permanente",
-    "choosePlan": "Elegir Plan"
+  "imageHistory": {
+    "title": "Historial de Imágenes",
+    "description": "Tus imágenes generadas recientemente con detalles de tiempo y créditos",
+    "searchPlaceholder": "Buscar por prompt o similitud",
+    "allModels": "Todos",
+    "allStatus": "Todos los estados",
+    "ready": "Listo",
+    "pending": "Pendiente",
+    "processing": "Procesando",
+    "error": "Error",
+    "noImagesFound": "No se encontraron imágenes",
+    "download": "Descargar",
+    "viewFull": "Ver",
+    "generating": "Generando...",
+    "failedToLoad": "Error al cargar la imagen",
+    "credits": "créditos",
+    "generationTime": "Tiempo de generación",
+    "creditsUsed": "Créditos usados",
+    "model": "Modelo",
+    "status": "Estado",
+    "createdAt": "Creado el",
+    "downloadError": "Error al descargar la imagen",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "cropToggle": "Alternar recorte",
+    "filter": "Filtrar",
+    "selectLabel": "Seleccionar",
+    "selecteds": "seleccionada(s)",
+    "selecteAllButtonLabel": "Seleccionar todas",
+    "selecteAllButtonLabelMobile": "Todas",
+    "deleteAllButtonLabel": "Eliminar",
+    "deletingAllButtonLabel": "Eliminando...",
+    "copyPromptTitle": "Copiar y reutilizar prompt",
+    "editImageTitle": "Editar imagen",
+    "togglePublicTitle": "Hacer pública",
+    "togglePrivateTitle": "Hacer privada",
+    "viewFullTitle": "Ver imagen completa",
+    "downloadTitle": "Descargar imagen",
+    "deleteTitle": "Eliminar imagen"
   },
-  "imageEditing": {
-    "title": "Edición de Imagen"
-  },
-  "formImageEditing": {
-    "title": "Edición de Imagen con IA",
-    "modelSelection": "Selección de Modelo",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Describe cómo quieres editar la imagen...",
-    "uploadImage": "Subir Imagen",
-    "uploadImageDescription": "Arrastra y suelta una imagen o haz clic para seleccionar",
-    "supportedFormats": "Formatos soportados: JPG, PNG, WebP (máx. 10MB)",
-    "aspectRatio": "Relación de Aspecto",
-    "advancedOptions": "Opciones Avanzadas",
-    "imagePublic": "Imagen Pública",
-    "imagePublicDescription": "Hacer esta imagen visible para otros usuarios",
-    "editImage": "Editar Imagen",
-    "editing": "Editando...",
-    "noImageGenerated": "Ninguna imagen editada",
-    "startingEditing": "Iniciando edición de imagen...",
-    "checkingStatus": "Verificando estado...",
-    "imageEditedSuccess": "¡Imagen editada con éxito!",
-    "insufficientCredits": "Créditos insuficientes. Agrega más créditos para continuar.",
-    "rateLimitExceeded": "Límite de velocidad excedido. Inténtalo de nuevo en unos minutos.",
-    "editingFailed": "Error al editar imagen. Inténtalo de nuevo.",
-    "seed": "Seed (Opcional)",
-    "seedPlaceholder": "Seed aleatoria para resultados reproducibles",
+  "dimensionSelector": {
+    "aspectRatio": "Relación de aspecto",
+    "customResolution": "Resolución personalizada",
+    "width": "Ancho",
+    "height": "Alto",
+    "save": "Guardar",
+    "custom": "Otro",
+    "imageDimensions": "Dimensiones de la imagen",
+    "socials": "Redes sociales",
+    "devices": "Dispositivos",
+    "film": "Películas",
+    "socialPresets": "Preajustes para redes",
+    "devicePresets": "Preajustes de dispositivos",
+    "moviePresets": "Preajustes de cine",
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "mobile": "Móvil",
+    "desktop": "Escritorio",
+    "tablet": "Tableta",
+    "cinema": "Cine",
+    "wide": "Panorámico",
+    "autoDetectFromImage": "(detectar de la imagen)",
+    "square": "Cuadrado",
+    "landscape": "Horizontal",
+    "portrait": "Vertical",
+    "standard": "Estándar",
+    "ultrawide": "Ultrapanorámico",
+    "seed": "Seed",
+    "seedPlaceholder": "Dejar en blanco para aleatorio",
     "steps": "Pasos (1-50)",
-    "guidance": "Escala de Orientación (1-20)",
-    "costCredits": "Esto costará {credits} créditos",
-    "removeImage": "Eliminar Imagen",
-    "imageRequired": "Se requiere una imagen para editar",
-    "invalidFileType": "Tipo de archivo inválido. Usa JPG, PNG o WebP.",
-    "fileTooLarge": "Archivo demasiado grande. Máximo 10MB.",
-    "uploadError": "Error al subir imagen"
+    "guidance": "Escala de orientación (1-20)",
+    "promptUpsampling": "Mejora automática del prompt",
+    "promptUpsamplingDescription": "Modifica el prompt automáticamente para una generación más creativa",
+    "imagePublic": "Imagen pública",
+    "imagePublicDescription": "Permitir que otros vean esta imagen en la galería pública",
+    "modelSelection": "Selección de modelo",
+    "credits": "créditos",
+    "costCredits": "Costo: {credits} créditos",
+    "dimensions": "Dimensiones",
+    "presets": "Preajustes",
+    "small": "Pequeño",
+    "medium": "Mediano",
+    "large": "Grande"
+  },
+  "advancedSettingsDialog": {
+    "title": "Opciones Avanzadas",
+    "close": "Cerrar",
+    "scrollToViewMore": "Desplázate para ver más opciones",
+    "settingsContent": "Contenido de la configuración"
+  },
+  "generate": {
+    "advancedOptions": "Opciones Avanzadas"
   },
   "history": {
     "title": "Historial de Imágenes",
-    "description": "Ver y gestionar todas tus imágenes generadas"
+    "description": "Visualiza y gestiona todas tus imágenes generadas"
   },
   "errors": {
     "somethingWentWrong": "Algo salió mal",
-    "errorLoadingHistory": "Ocurrió un error al cargar el historial de imágenes.",
-    "tryAgain": "Intentar de Nuevo"
+    "errorLoadingHistory": "Se produjo un error al cargar el historial de imágenes.",
+    "tryAgain": "Intentar de nuevo"
   },
   "explore": {
     "title": "Explorar",
@@ -172,13 +306,357 @@
       "architecture": "Arquitectura",
       "character": "Personaje",
       "food": "Comida",
-      "sci-fi": "Ciencia Ficción"
+      "sci-fi": "Ciencia ficción"
     },
-    "selectModel": "Seleccionar Modelo",
-    "allModels": "Todos los Modelos",
+    "selectModel": "Seleccionar modelo",
+    "allModels": "Todos los modelos",
+    "allCategories": "Todas las categorías",
     "loading": "Cargando...",
     "noImages": "No se encontraron imágenes",
-    "loadMore": "Cargar Más",
-    "remix": "Remix"
+    "noImagesDescription": "Intenta ajustar tus filtros o términos de búsqueda",
+    "loadMore": "Cargar más",
+    "remix": "Remix",
+    "searchPlaceholder": "Buscar imágenes por prompt...",
+    "category": "Categoría",
+    "model": "Modelo",
+    "sortBy": "Ordenar por",
+    "mostRecent": "Más recientes",
+    "mostPopular": "Más populares",
+    "anonymousUser": "Usuario anónimo",
+    "copyPromptError": "Error al copiar el prompt",
+    "aiGeneratedImage": "Imagen generada por IA",
+    "shareError": "Error al compartir",
+    "allImagesLoaded": "Todas las imágenes han sido cargadas",
+    "doneButtonLabel": "¡Copiado!",
+    "promptButtonLabel": "¡Copiar prompt!"
+  },
+  "authRequired": {
+    "title": "Se requiere inicio de sesión",
+    "description": "Para generar imágenes, debes iniciar sesión o crear una cuenta. ¡Es rápido y gratuito!",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta"
+  },
+  "subscriptionRequired": {
+    "title": "Se requiere upgrade",
+    "description": "Para usar este modelo o función, necesitas un plan activo. ¡Elige el plan ideal para ti!",
+    "popular": "Más popular",
+    "viewAllPlans": "Ver todos los planes",
+    "plans": {
+      "basic": {
+        "name": "Pixoo Basic",
+        "price": "R$ 19,90/mes",
+        "description": "Ideal para uso personal",
+        "features": [
+          "500 créditos mensuales",
+          "Acceso a modelos básicos",
+          "Soporte por correo"
+        ]
+      },
+      "pro": {
+        "name": "Pixoo Pro",
+        "price": "R$ 39,90/mes",
+        "description": "Para profesionales y creadores",
+        "features": [
+          "2000 créditos mensuales",
+          "Acceso a todos los modelos",
+          "Optimización de prompt con IA",
+          "Soporte prioritario"
+        ]
+      }
+    }
+  },
+  "credits": {
+    "yourCredits": "Tus créditos",
+    "freeCredits": "Créditos gratis",
+    "creditsAvailable": "Créditos disponibles",
+    "add": "Añadir",
+    "totalEarned": "Total ganado",
+    "totalSpent": "Total gastado",
+    "recentTransactions": "Transacciones recientes",
+    "currentBalance": "Saldo actual: {balance} créditos",
+    "onlyForPixooFree": "Solo para Pixoo Free",
+    "renewalAvailable": "Renovación disponible",
+    "nextRenewalIn": "Próxima renovación en {hours}h",
+    "loginToSeeCredits": "Inicia sesión para ver tus créditos",
+    "importantInfo": "ℹ️ Información importante:",
+    "validOnlyForFluxSchnell": "• Válidos solo para el modelo flux-schnell",
+    "renewedEvery24Hours": "• Se renuevan automáticamente cada 24 horas",
+    "renewalAvailableNow": "• Renovación disponible ahora",
+    "nextRenewalInHours": "• Próxima renovación en {hours}h"
+  },
+  "pricing": {
+    "title": "Elige el plan ideal para ti",
+    "subtitle": "Desbloquea todo el potencial de la generación de imágenes con IA. Planes flexibles para todo tipo de creadores.",
+    "features": {
+      "fastGeneration": {
+        "title": "Generación rápida",
+        "description": "Crea imágenes increíbles en segundos con nuestra tecnología avanzada"
+      },
+      "premiumQuality": {
+        "title": "Calidad premium",
+        "description": "Imágenes de alta resolución con detalles impresionantes"
+      },
+      "commercialLicense": {
+        "title": "Licencia comercial",
+        "description": "Usa tus creaciones en proyectos comerciales sin restricciones"
+      }
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "questions": {
+        "cancel": {
+          "question": "¿Puedo cancelar mi suscripción en cualquier momento?",
+          "answer": "Sí, puedes cancelar tu suscripción cuando quieras. Mantendrás el acceso a las funciones hasta el final del período pagado."
+        },
+        "credits": {
+          "question": "¿Los créditos no utilizados caducan?",
+          "answer": "Los créditos se renuevan mensualmente. Los créditos no utilizados no se acumulan para el mes siguiente."
+        },
+        "commercial": {
+          "question": "¿Puedo usar comercialmente las imágenes generadas?",
+          "answer": "Sí, todos los planes de pago incluyen licencia comercial. Puedes usar las imágenes en proyectos personales y comerciales."
+        },
+        "free": {
+          "question": "¿Cómo funciona el plan gratuito?",
+          "answer": "El plan gratuito ofrece 5 créditos diarios que se renuevan automáticamente. Ideal para probar nuestra plataforma."
+        }
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Crea imágenes increíbles con IA usando los modelos más avanzados. Convierte tus ideas en arte visual.",
+    "platform": "Plataforma",
+    "links": {
+      "features": "Funciones",
+      "pricing": "Precios",
+      "faq": "FAQ",
+      "testimonials": "Testimonios"
+    },
+    "newsletter": {
+      "title": "Mantente al día",
+      "description": "Recibe actualizaciones sobre nuevas funciones y modelos de IA.",
+      "emailPlaceholder": "Introduce tu correo electrónico",
+      "subscribe": "Suscribirse"
+    },
+    "copyright": "Todos los derechos reservados."
+  },
+  "imageEditingForm": {
+    "title": "Edición de Imagen con IA",
+    "editInstructionRequired": "La instrucción de edición es obligatoria",
+    "inputImageRequired": "Se requiere una imagen de entrada",
+    "pleaseUploadValidImage": "Por favor, sube un archivo de imagen válido",
+    "imageSizeMustBeLess": "El tamaño de la imagen debe ser menor a 20MB",
+    "processingImage": "Procesando imagen...",
+    "imageProcessedSuccessfully": "Imagen procesada con éxito",
+    "failedToProcessImage": "Error al procesar la imagen",
+    "enterPromptFirst": "Introduce primero un prompt",
+    "uploadImageFirst": "Sube primero una imagen",
+    "optimizingPromptForImageEditing": "Optimizando el prompt para la edición de imagen...",
+    "promptOptimizedSuccessfully": "¡Prompt optimizado con éxito para la edición de imagen!",
+    "errorOptimizingPrompt": "Error al optimizar el prompt",
+    "modelNotFound": "Modelo no encontrado",
+    "insufficientCreditsModel": "Créditos insuficientes. Necesitas {credits} créditos para usar este modelo.",
+    "pleaseUploadImageForAuto": "Sube una imagen para usar la detección automática de relación de aspecto",
+    "startingGeneration": "Iniciando la generación...",
+    "apiEditingFailure": "Fallo en la API de edición",
+    "failedToEditImage": "Error al editar la imagen",
+    "checkingStatus": "Comprobando estado...",
+    "editingCompletedSuccessfully": "Edición completada con éxito. Los créditos se confirmarán vía webhook para reserva:",
+    "imageEditedSuccess": "Imagen editada con éxito",
+    "invalidServerResponse": "Respuesta del servidor no válida",
+    "editingError": "Error en la edición:",
+    "insufficientCredits": "Créditos insuficientes",
+    "rateLimitExceeded": "Límite de solicitudes excedido",
+    "editingFailed": "Edición fallida",
+    "advancedOptions": "Opciones avanzadas",
+    "aspectRatio": "Relación de aspecto",
+    "autoDetectFromImage": "(detectar de la imagen)",
+    "square": "Cuadrado",
+    "landscape": "Horizontal",
+    "portrait": "Vertical",
+    "standard": "Estándar",
+    "ultrawide": "Ultrapanorámico",
+    "seed": "Seed",
+    "seedPlaceholder": "Dejar en blanco para aleatorio",
+    "steps": "Pasos (1-50)",
+    "guidance": "Escala de orientación (1-20)",
+    "promptUpsampling": "Mejora automática del prompt",
+    "promptUpsamplingDescription": "Modifica el prompt automáticamente para una generación más creativa",
+    "imagePublic": "Imagen pública",
+    "imagePublicDescription": "Permitir que otros vean esta imagen en la galería pública",
+    "modelSelection": "Selección de modelo",
+    "credits": "créditos",
+    "costCredits": "Costo: {credits} créditos",
+    "inputImage": "Imagen de entrada",
+    "dragDropImage": "Arrastra y suelta una imagen aquí",
+    "supportedFormats": "PNG, JPG, JPEG, WEBP (máx. 20MB)",
+    "selectImage": "Seleccionar imagen",
+    "uploadedImage": "Imagen subida",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe cómo quieres editar la imagen...",
+    "optimizePromptWithAI": "Optimizar prompt con IA",
+    "promptDescription": "Describe los cambios que quieres realizar en la imagen",
+    "englishPromptsWork": "Los prompts en inglés generan mejores resultados.",
+    "cost": "Costo:",
+    "editing": "Editando...",
+    "insufficientCreditsButton": "Créditos insuficientes",
+    "editImage": "Editar Imagen"
+  },
+  "textToImageForm": {
+    "title": "Generación de Imágenes con IA",
+    "promptRequired": "El prompt es obligatorio",
+    "enterPromptFirst": "Introduce primero un prompt",
+    "optimizingPrompt": "Optimizando prompt...",
+    "promptOptimizedSuccessfully": "¡Prompt optimizado con éxito!",
+    "errorOptimizingPrompt": "Error al optimizar el prompt",
+    "modelNotFound": "Modelo no encontrado",
+    "insufficientCreditsModel": "Créditos insuficientes. Necesitas {credits} créditos para usar este modelo.",
+    "startingGeneration": "Iniciando la generación...",
+    "apiGenerationFailure": "Fallo en la API de generación",
+    "failedToGenerateImage": "Error al generar la imagen",
+    "checkingStatus": "Comprobando estado...",
+    "generationCompletedSuccessfully": "Generación completada con éxito. Los créditos se confirmarán vía webhook para reserva:",
+    "imageGeneratedSuccess": "Imagen generada con éxito",
+    "invalidServerResponse": "Respuesta del servidor no válida",
+    "generationError": "Error en la generación:",
+    "insufficientCredits": "Créditos insuficientes",
+    "rateLimitExceeded": "Límite de solicitudes excedido",
+    "generationFailed": "Generación fallida",
+    "advancedOptions": "Opciones avanzadas",
+    "aspectRatio": "Relación de aspecto",
+    "square": "Cuadrado",
+    "landscape": "Horizontal",
+    "portrait": "Vertical",
+    "standard": "Estándar",
+    "ultrawide": "Ultrapanorámico",
+    "seed": "Seed",
+    "seedPlaceholder": "Dejar en blanco para aleatorio",
+    "promptUpsampling": "Mejora automática del prompt",
+    "promptUpsamplingDescription": "Modifica el prompt automáticamente para una generación más creativa",
+    "imagePublic": "Imagen pública",
+    "imagePublicDescription": "Permitir que otros vean esta imagen en la galería pública",
+    "modelSelection": "Selección de modelo",
+    "credits": "créditos",
+    "costCredits": "Costo: {credits} créditos",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe la imagen que quieres generar...",
+    "optimizePromptWithAI": "Optimizar prompt con IA",
+    "promptTip": "💡 Los prompts en inglés tienden a producir mejores resultados",
+    "englishPromptsWork": "Los prompts en inglés tienden a producir mejores resultados",
+    "cost": "Costo:",
+    "generating": "Generando...",
+    "insufficientCreditsButton": "Créditos insuficientes",
+    "generateImage": "Generar Imagen",
+    "steps": "Pasos (1-50)",
+    "guidance": "Escala de orientación (1-20)"
+  },
+  "TermsOfUse": {
+    "title": "Términos de Uso",
+    "lastUpdated": "Última actualización: {date, date, medium}"
+  },
+  "PrivacyPolicy": {
+    "title": "Política de Privacidad",
+    "lastUpdated": "Última actualización: {date, date, medium}"
+  },
+  "landingPage": {
+    "navbar": {
+      "features": "Funciones",
+      "pricing": "Planes",
+      "about": "Sobre nosotros",
+      "contact": "Contáctanos",
+      "signIn": "Iniciar sesión",
+      "signUp": "Crear cuenta",
+      "getStarted": "Empezar ahora",
+      "start": "Iniciar",
+      "faq": "Preguntas",
+      "testimonials": "Testimonios"
+    },
+    "hero": {
+      "badge": "Creación y edición con IA – Empieza gratis",
+      "title": "Crea y edita imágenes con Inteligencia Artificial, en minutos",
+      "subtitle": "Convierte cualquier idea en arte visual profesional. Crea desde cero o edita con comandos simples usando IA de vanguardia — directamente en tu navegador.",
+      "ctaPrimary": "Crear imagen con IA",
+      "ctaSecondary": "Editar imagen con IA",
+      "trustedBy": "Más de 10.000 creadores confían en Pixoo para dar vida a sus ideas"
+    },
+    "features": {
+      "title": "Creación y Edición con el Poder de la IA",
+      "subtitle": "Una plataforma completa para convertir ideas en imágenes con pocos clics",
+      "feature1": {
+        "title": "Generación de Imágenes con IA Avanzada",
+        "description": "Crea imágenes únicas a partir de texto con modelos potentes como Flux Pro. Calidad profesional en segundos."
+      },
+      "feature2": {
+        "title": "Edición Visual con Comandos Simples",
+        "description": "Borra, reemplaza, mejora o transforma cualquier imagen con IA. Tú lo describes, Pixoo lo hace."
+      },
+      "feature3": {
+        "title": "Formatos para Todo Tipo de Proyecto",
+        "description": "Imágenes optimizadas para redes sociales, e-commerce, presentaciones, campañas y mucho más."
+      },
+      "feature4": {
+        "title": "Procesamiento Ultrarrápido",
+        "description": "Obtén resultados en segundos con una infraestructura hecha para velocidad y estabilidad."
+      },
+      "feature5": {
+        "title": "Libertad Comercial Total",
+        "description": "Usa tus imágenes en proyectos personales o comerciales. Sin royalties. Sin limitaciones."
+      },
+      "feature6": {
+        "title": "Interfaz Fácil, Resultados Profesionales",
+        "description": "No necesitas ser diseñador. Con Pixoo, cualquiera puede crear y editar imágenes con calidad de estudio."
+      }
+    },
+    "pricing": {
+      "title": "Planes Transparentes y Asequibles",
+      "subtitle": "Elige el plan ideal para transformar tus ideas en imágenes increíbles",
+      "common": {
+        "choosePlan": "Seleccionar plan"
+      }
+    },
+    "testimonials": {
+      "title": "Testimonios Reales. Resultados Increíbles.",
+      "subtitle": "Mira lo que dicen creadores, diseñadores y empresas sobre Pixoo"
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "subtitle": "Resuelve tus dudas sobre nuestra plataforma de generación de imágenes con IA",
+      "questions": {
+        "whatIsPixoo": {
+          "question": "¿Qué es Pixoo?",
+          "answer": "Pixoo es una plataforma de inteligencia artificial que permite crear imágenes increíbles a partir de descripciones de texto. Nuestra IA avanzada convierte tus ideas en arte visual de alta calidad."
+        },
+        "howItWorks": {
+          "question": "¿Cómo funciona la generación de imágenes?",
+          "answer": "Simplemente describe en texto lo que quieres ver y nuestra IA creará una imagen única basada en tu descripción. Puedes ajustar estilos, dimensiones y otros parámetros para obtener el resultado perfecto."
+        },
+        "commercialUse": {
+          "question": "¿Puedo usar las imágenes comercialmente?",
+          "answer": "¡Sí! Con nuestros planes de pago, tienes derechos comerciales completos sobre las imágenes generadas. Puedes usarlas en proyectos personales, comerciales, marketing y más."
+        },
+        "imageQuality": {
+          "question": "¿Cuál es la calidad de las imágenes generadas?",
+          "answer": "Nuestras imágenes se generan en alta resolución con calidad profesional. Ofrecemos diferentes tamaños y estilos para cubrir tus necesidades específicas."
+        },
+        "technicalKnowledge": {
+          "question": "¿Necesito conocimientos técnicos?",
+          "answer": "¡No! Pixoo está diseñado para ser intuitivo y fácil de usar. Cualquier persona puede crear imágenes increíbles, sin importar su experiencia técnica."
+        },
+        "editExisting": {
+          "question": "¿Puedo editar imágenes existentes?",
+          "answer": "¡Sí! Además de crear nuevas imágenes, puedes subir imágenes existentes y usar nuestra IA para editarlas, eliminar fondos, cambiar estilos y mucho más."
+        }
+      }
+    },
+    "ctaBanner": {
+      "title": "Crea o Edita tu Imagen con IA Ahora",
+      "description": "Únete a miles de usuarios que ya están creando y transformando imágenes con inteligencia artificial. Empieza gratis y descubre el poder creativo de Pixoo.",
+      "getStarted": "Empezar gratis",
+      "exploreGallery": "Ver ejemplos",
+      "features": "✨ No se requiere tarjeta de crédito • 🎨 Créditos gratis al registrarte"
+    },
+    "logoCloud": {
+      "title": "Confiado por Creadores de Todo el Mundo"
+    }
   }
 }

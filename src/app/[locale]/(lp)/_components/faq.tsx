@@ -24,39 +24,33 @@ const FAQ = () => {
 
   const faqItems = [
     {
-      question: "O que é o Pixoo?",
-      answer:
-        "O Pixoo é uma plataforma de inteligência artificial que permite criar imagens incríveis a partir de descrições de texto. Nossa IA avançada transforma suas ideias em arte visual de alta qualidade.",
+      question: t("questions.whatIsPixoo.question"),
+      answer: t("questions.whatIsPixoo.answer"),
       icon: iconMap.shieldCheck,
     },
     {
-      question: "Como funciona a geração de imagens?",
-      answer:
-        "Simplesmente descreva o que você quer ver em texto e nossa IA criará uma imagem única baseada na sua descrição. Você pode ajustar estilos, dimensões e outros parâmetros para obter o resultado perfeito.",
+      question: t("questions.howItWorks.question"),
+      answer: t("questions.howItWorks.answer"),
       icon: iconMap.notebookText,
     },
     {
-      question: "Posso usar as imagens comercialmente?",
-      answer:
-        "Sim! Com nossos planos pagos, você tem direitos comerciais completos sobre as imagens geradas. Pode usar em projetos pessoais, comerciais, marketing e muito mais.",
+      question: t("questions.commercialUse.question"),
+      answer: t("questions.commercialUse.answer"),
       icon: iconMap.creditCard,
     },
     {
-      question: "Qual a qualidade das imagens geradas?",
-      answer:
-        "Nossas imagens são geradas em alta resolução com qualidade profissional. Oferecemos diferentes tamanhos e estilos para atender suas necessidades específicas.",
+      question: t("questions.imageQuality.question"),
+      answer: t("questions.imageQuality.answer"),
       icon: iconMap.hardDriveDownload,
     },
     {
-      question: "Preciso de conhecimento técnico?",
-      answer:
-        "Não! O Pixoo foi projetado para ser intuitivo e fácil de usar. Qualquer pessoa pode criar imagens incríveis, independentemente do nível de experiência técnica.",
+      question: t("questions.technicalKnowledge.question"),
+      answer: t("questions.technicalKnowledge.answer"),
       icon: iconMap.messageCircle,
     },
     {
-      question: "Posso editar imagens existentes?",
-      answer:
-        "Sim! Além de criar novas imagens, você pode fazer upload de imagens existentes e usar nossa IA para editá-las, remover fundos, alterar estilos e muito mais.",
+      question: t("questions.editExisting.question"),
+      answer: t("questions.editExisting.answer"),
       icon: iconMap.refreshCcw,
     },
   ];

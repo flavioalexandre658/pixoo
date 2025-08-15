@@ -1,8 +1,8 @@
 {
   "metadata": {
     "lp": {
-      "title": "Pixoo - Crie Imagens Incríveis com IA",
-      "description": "Transforme suas ideias em arte visual com os modelos de IA mais avançados. Crie imagens profissionais, editadas e personalizadas em segundos."
+      "title": "Pixoo – Crie e Edite Imagens com Inteligência Artificial",
+      "description": "Gere imagens profissionais a partir de texto ou edite com comandos simples usando IA avançada. Crie, transforme e personalize em segundos — direto do navegador."
     }
   },
   "common": {
@@ -216,7 +216,20 @@
     "zoomIn": "Aumentar Zoom",
     "zoomOut": "Diminuir Zoom",
     "cropToggle": "Alternar Corte",
-    "filter": "Filtrar"
+    "filter": "Filtrar",
+    "selectLabel": "Selecionar",
+    "selecteds": "selecionada(s)",
+    "selecteAllButtonLabel": "Selecionar Todas",
+    "selecteAllButtonLabelMobile": "Todas",
+    "deleteAllButtonLabel": "Deletar",
+    "deletingAllButtonLabel": "Deletando...",
+    "copyPromptTitle": "Copiar e reutilizar prompt",
+    "editImageTitle": "Editar imagem",
+    "togglePublicTitle": "Tornar pública",
+    "togglePrivateTitle": "Tornar privada",
+    "viewFullTitle": "Ver imagem completa",
+    "downloadTitle": "Baixar imagem",
+    "deleteTitle": "Excluir imagem"
   },
   "dimensionSelector": {
     "aspectRatio": "Proporção",
@@ -239,7 +252,29 @@
     "desktop": "Desktop",
     "tablet": "Tablet",
     "cinema": "Cinema",
-    "wide": "Panorâmico"
+    "wide": "Panorâmico",
+    "autoDetectFromImage": "(detectar da imagem)",
+    "square": "Quadrado",
+    "landscape": "Paisagem",
+    "portrait": "Retrato",
+    "standard": "Padrão",
+    "ultrawide": "Ultra-wide",
+    "seed": "Seed",
+    "seedPlaceholder": "Deixe em branco para aleatório",
+    "steps": "Passos (1-50)",
+    "guidance": "Escala de Orientação (1-20)",
+    "promptUpsampling": "Prompt Upsampling",
+    "promptUpsamplingDescription": "Modifica automaticamente o prompt para geração mais criativa",
+    "imagePublic": "Imagem Pública",
+    "imagePublicDescription": "Permitir que outros vejam esta imagem na galeria pública",
+    "modelSelection": "Seleção de Modelo",
+    "credits": "créditos",
+    "costCredits": "Custo: {credits} créditos",
+    "dimensions": "Dimensões",
+    "presets": "Presets",
+    "small": "Pequeno",
+    "medium": "Médio",
+    "large": "Grande"
   },
   "advancedSettingsDialog": {
     "title": "Opções Avançadas",
@@ -249,23 +284,6 @@
   },
   "generate": {
     "advancedOptions": "Opções Avançadas"
-  },
-  "pricing": {
-    "title": "Planos e Preços",
-    "freePlan": "Plano Gratuito",
-    "starterPlan": "Plano Inicial",
-    "premiumPlan": "Plano Premium",
-    "advancedPlan": "Plano Avançado",
-    "oneTimePlan": "Plano Único",
-    "monthly": "Mensal",
-    "annually": "Anual",
-    "creditsPerMonth": "créditos por mês",
-    "dailyCredits": "créditos diários",
-    "unlimitedUse": "Uso ilimitado",
-    "commercialLicense": "Licença Comercial",
-    "historyRecords": "Histórico de Registros",
-    "permanentHistory": "Histórico Permanente",
-    "choosePlan": "Escolher Plano"
   },
   "history": {
     "title": "Histórico de Imagens",
@@ -308,7 +326,9 @@
     "copyPromptError": "Erro ao copiar prompt",
     "aiGeneratedImage": "Imagem Gerada por IA",
     "shareError": "Erro ao compartilhar",
-    "allImagesLoaded": "Todas as imagens foram carregadas"
+    "allImagesLoaded": "Todas as imagens foram carregadas",
+    "doneButtonLabel": "Copiado!",
+    "promptButtonLabel": "Copiar prompt!"
   },
   "authRequired": {
     "title": "Login Necessário",
@@ -538,79 +558,106 @@
     "title": "Política de Privacidade",
     "lastUpdated": "Última atualização: {date, date, medium}"
   },
+
   "landingPage": {
     "navbar": {
-      "features": "Recursos",
-      "pricing": "Preços",
-      "about": "Sobre",
-      "contact": "Contato",
+      "features": "Funcionalidades",
+      "pricing": "Planos",
+      "about": "Sobre Nós",
+      "contact": "Fale Conosco",
       "signIn": "Entrar",
       "signUp": "Criar Conta",
-      "getStarted": "Começar",
-      "start": "Começar",
-      "faq": "FAQ",
+      "getStarted": "Começar Agora",
+      "start": "Iniciar",
+      "faq": "Perguntas",
       "testimonials": "Depoimentos"
     },
     "hero": {
-      "badge": "Experimente grátis",
-      "title": "Crie Imagens Incríveis com IA",
-      "subtitle": "Transforme suas ideias em arte visual usando os modelos de IA mais avançados. Rápido, fácil e com qualidade profissional.",
-      "ctaPrimary": "Criar uma imagem",
-      "ctaSecondary": "Editar uma imagem",
-      "trustedBy": "Confiado por mais de 10.000 criadores"
+      "badge": "Criação e Edição com IA – Comece Grátis",
+      "title": "Crie e Edite Imagens com Inteligência Artificial, em Minutos",
+      "subtitle": "Transforme qualquer ideia em arte visual profissional. Crie do zero ou edite com comandos simples usando IA de ponta – direto do seu navegador.",
+      "ctaPrimary": "Criar Imagem com IA",
+      "ctaSecondary": "Editar Imagem com IA",
+      "trustedBy": "Mais de 10.000 criadores confiam no Pixoo para dar vida às suas ideias"
     },
     "features": {
-      "title": "Recursos Poderosos",
-      "subtitle": "Tudo que você precisa para criar imagens incríveis com IA",
+      "title": "Criação e Edição com o Poder da IA",
+      "subtitle": "Uma plataforma completa para transformar ideias em imagens com poucos cliques",
       "feature1": {
-        "title": "Geração com IA Avançada",
-        "description": "Use modelos de última geração como Flux Pro para criar imagens de alta qualidade a partir de texto."
+        "title": "Geração de Imagens com IA Avançada",
+        "description": "Crie imagens únicas a partir de texto com modelos poderosos como Flux Pro. Qualidade profissional em segundos."
       },
       "feature2": {
-        "title": "Edição Inteligente",
-        "description": "Edite suas imagens com precisão usando IA. Modifique, melhore e transforme com comandos simples."
+        "title": "Edição Visual com Comandos Simples",
+        "description": "Apague, substitua, melhore ou transforme qualquer imagem com IA. Você descreve, o Pixoo executa."
       },
       "feature3": {
-        "title": "Múltiplos Formatos",
-        "description": "Gere imagens em diferentes proporções e resoluções para qualquer projeto ou plataforma."
+        "title": "Formatos para Todo Tipo de Projeto",
+        "description": "Imagens otimizadas para redes sociais, e-commerce, apresentações, campanhas e muito mais."
       },
       "feature4": {
-        "title": "Processamento Rápido",
-        "description": "Resultados em segundos. Nossa infraestrutura otimizada garante velocidade sem comprometer a qualidade."
+        "title": "Processamento Ultrarrápido",
+        "description": "Tenha resultados em poucos segundos com uma infraestrutura feita para velocidade e estabilidade."
       },
       "feature5": {
-        "title": "Uso Comercial",
-        "description": "Todas as imagens geradas podem ser usadas em projetos comerciais sem restrições de licença."
+        "title": "Liberdade Comercial Total",
+        "description": "Use suas imagens em projetos pessoais ou comerciais. Sem royalties. Sem limitações."
       },
       "feature6": {
-        "title": "Fácil de Usar",
-        "description": "Interface intuitiva que permite criar imagens profissionais mesmo sem experiência técnica."
+        "title": "Interface Fácil, Resultados Profissionais",
+        "description": "Não precisa ser designer. Com o Pixoo, qualquer pessoa pode criar e editar imagens com qualidade de estúdio."
       }
     },
     "pricing": {
-      "title": "Planos Simples e Transparentes",
-      "subtitle": "Escolha o plano ideal para suas necessidades de criação",
+      "title": "Planos Transparentes e Acessíveis",
+      "subtitle": "Escolha o plano ideal para transformar suas ideias em imagens incríveis",
       "common": {
-        "choosePlan": "Escolher Plano"
+        "choosePlan": "Selecionar Plano"
       }
     },
     "testimonials": {
-      "title": "O que nossos usuários dizem",
-      "subtitle": "Milhares de criadores confiam no Pixoo para suas necessidades de geração de imagens"
+      "title": "Depoimentos Reais. Resultados Incríveis.",
+      "subtitle": "Veja o que criadores, designers e empresas estão dizendo sobre o Pixoo"
     },
     "faq": {
       "title": "Perguntas Frequentes",
-      "subtitle": "Encontre respostas para as dúvidas mais comuns sobre o Pixoo"
+      "subtitle": "Tire suas dúvidas sobre nossa plataforma de geração de imagens com IA",
+      "questions": {
+        "whatIsPixoo": {
+          "question": "O que é o Pixoo?",
+          "answer": "O Pixoo é uma plataforma de inteligência artificial que permite criar imagens incríveis a partir de descrições de texto. Nossa IA avançada transforma suas ideias em arte visual de alta qualidade."
+        },
+        "howItWorks": {
+          "question": "Como funciona a geração de imagens?",
+          "answer": "Simplesmente descreva o que você quer ver em texto e nossa IA criará uma imagem única baseada na sua descrição. Você pode ajustar estilos, dimensões e outros parâmetros para obter o resultado perfeito."
+        },
+        "commercialUse": {
+          "question": "Posso usar as imagens comercialmente?",
+          "answer": "Sim! Com nossos planos pagos, você tem direitos comerciais completos sobre as imagens geradas. Pode usar em projetos pessoais, comerciais, marketing e muito mais."
+        },
+        "imageQuality": {
+          "question": "Qual a qualidade das imagens geradas?",
+          "answer": "Nossas imagens são geradas em alta resolução com qualidade profissional. Oferecemos diferentes tamanhos e estilos para atender suas necessidades específicas."
+        },
+        "technicalKnowledge": {
+          "question": "Preciso de conhecimento técnico?",
+          "answer": "Não! O Pixoo foi projetado para ser intuitivo e fácil de usar. Qualquer pessoa pode criar imagens incríveis, independentemente do nível de experiência técnica."
+        },
+        "editExisting": {
+          "question": "Posso editar imagens existentes?",
+          "answer": "Sim! Além de criar novas imagens, você pode fazer upload de imagens existentes e usar nossa IA para editá-las, remover fundos, alterar estilos e muito mais."
+        }
+      }
     },
     "ctaBanner": {
-      "title": "Pronto para criar imagens incríveis?",
-      "description": "Junte-se a milhares de usuários que já estão criando arte digital com IA. Comece gratuitamente e descubra o poder da criatividade sem limites.",
-      "getStarted": "Começar Gratuitamente",
-      "exploreGallery": "Explorar Galeria",
-      "features": "✨ Sem cartão de crédito necessário • 🎨 Créditos gratuitos inclusos"
+      "title": "Crie ou Edite Sua Imagem com IA Agora",
+      "description": "Junte-se a milhares de usuários que já estão criando e transformando imagens com inteligência artificial. Comece gratuitamente e descubra o poder criativo do Pixoo.",
+      "getStarted": "Começar Grátis",
+      "exploreGallery": "Ver Exemplos",
+      "features": "✨ Não precisa de cartão de crédito • 🎨 Créditos gratuitos ao se cadastrar"
     },
     "logoCloud": {
-      "title": "Confiado por criadores ao redor do mundo"
+      "title": "Confiado por Criadores do Mundo Inteiro"
     }
   }
 }

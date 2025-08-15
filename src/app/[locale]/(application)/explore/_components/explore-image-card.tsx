@@ -218,12 +218,12 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
                 {isCopied ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    Copiado!
+                    {t("doneButtonLabel")}
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4 mr-2" />
-                    Copiar prompt
+                    {t("promptButtonLabel")}
                   </>
                 )}
               </Button>

@@ -33,36 +33,6 @@ const validateDimensions = (width: number, height: number) => {
   return { width: validWidth, height: validHeight };
 };
 
-const ASPECT_RATIOS = [
-  {
-    value: "2:3",
-    label: "2:3",
-    presets: [
-      { label: "Small", width: 736, height: 1120 },
-      { label: "Medium", width: 832, height: 1248 },
-      { label: "Large", width: 896, height: 1344 },
-    ],
-  },
-  {
-    value: "1:1",
-    label: "1:1",
-    presets: [
-      { label: "Small", width: 896, height: 896 },
-      { label: "Medium", width: 1024, height: 1024 },
-      { label: "Large", width: 1120, height: 1120 },
-    ],
-  },
-  {
-    value: "16:9",
-    label: "16:9",
-    presets: [
-      { label: "Small", width: 1280, height: 736 },
-      { label: "Medium", width: 1344, height: 768 },
-      { label: "Large", width: 1440, height: 832 },
-    ],
-  },
-];
-
 export interface Dimension {
   aspectRatio: string;
   width: number;
@@ -107,6 +77,37 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
   const [customHeight, setCustomHeight] = useState(value.height || 1024);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Mover ASPECT_RATIOS para dentro do componente onde t() está disponível
+  const ASPECT_RATIOS = [
+    {
+      value: "2:3",
+      label: "2:3",
+      presets: [
+        { label: t("small"), width: 736, height: 1120 },
+        { label: t("medium"), width: 832, height: 1248 },
+        { label: t("large"), width: 896, height: 1344 },
+      ],
+    },
+    {
+      value: "1:1",
+      label: "1:1",
+      presets: [
+        { label: t("small"), width: 896, height: 896 },
+        { label: t("medium"), width: 1024, height: 1024 },
+        { label: t("large"), width: 1120, height: 1120 },
+      ],
+    },
+    {
+      value: "16:9",
+      label: "16:9",
+      presets: [
+        { label: t("small"), width: 1280, height: 736 },
+        { label: t("medium"), width: 1344, height: 768 },
+        { label: t("large"), width: 1440, height: 832 },
+      ],
+    },
+  ];
+
   const handleRatioSelect = (ratio: string) => {
     setSelectedRatio(ratio);
     const ratioObj = ASPECT_RATIOS.find((r) => r.value === ratio);
@@ -145,7 +146,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
       {/* Título mais compacto */}
       <Label className="text-sm font-medium flex items-center gap-2">
         <Square className="h-3 w-3 text-pixoo-purple" />
-        Proporção
+        {t("aspectRatio")}
       </Label>
 
       {/* Botões de proporção - layout mobile otimizado */}
@@ -208,7 +209,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium flex items-center gap-1.5">
           <Square className="h-3 w-3 text-pixoo-purple" />
-          Dimensões
+          {t("dimensions")}
         </Label>
         <Switch
           checked={showAdvanced}
@@ -260,14 +261,14 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
         <DialogContent className="w-[95vw] max-w-sm p-3 sm:p-4">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base font-semibold text-center">
-              Dimensões
+              {t("dimensions")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
             {/* Proporções rápidas - grid compacto */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Proporção</Label>
+              <Label className="text-xs font-medium">{t("aspectRatio")}</Label>
               <div className="grid grid-cols-5 gap-1">
                 {["1:1", "16:9", "9:16", "4:3", "3:4"].map((ratio) => (
                   <Button
@@ -312,7 +313,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                   className="text-xs font-medium flex items-center gap-1"
                 >
                   <RectangleHorizontal className="h-3 w-3 text-pixoo-purple" />
-                  Largura
+                  {t("width")}
                 </Label>
                 <Input
                   id="custom-width"
@@ -335,7 +336,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
                   className="text-xs font-medium flex items-center gap-1"
                 >
                   <RectangleVertical className="h-3 w-3 text-pixoo-purple" />
-                  Altura
+                  {t("height")}
                 </Label>
                 <Input
                   id="custom-height"
@@ -356,13 +357,13 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
 
             {/* Presets simplificados */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Presets</Label>
+              <Label className="text-xs font-medium">{t("presets")}</Label>
               <div className="grid grid-cols-2 gap-1">
                 {[
-                  { label: "Instagram", width: 1088, height: 1344 },
-                  { label: "Facebook", width: 1440, height: 832 },
-                  { label: "TikTok", width: 800, height: 1440 },
-                  { label: "Desktop", width: 1440, height: 832 },
+                  { label: t("instagram"), width: 1088, height: 1344 },
+                  { label: t("facebook"), width: 1440, height: 832 },
+                  { label: t("tiktok"), width: 800, height: 1440 },
+                  { label: t("desktop"), width: 1440, height: 832 },
                 ].map((preset) => (
                   <Button
                     key={preset.label}
@@ -400,7 +401,7 @@ export function DimensionSelector({ value, onChange }: DimensionSelectorProps) {
             }}
             className="w-full h-9 bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white font-medium text-sm"
           >
-            Salvar
+            {t("save")}
           </Button>
         </DialogContent>
       </Dialog>

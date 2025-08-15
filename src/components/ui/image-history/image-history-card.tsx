@@ -14,7 +14,7 @@ import {
   Edit,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR, enUS, es } from "date-fns/locale";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -66,6 +66,19 @@ export function ImageHistoryCard({
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+
+  // Função para mapear locale para date-fns locale
+  const getDateFnsLocale = (locale: string) => {
+    switch (locale) {
+      case "pt":
+        return ptBR;
+      case "es":
+        return es;
+      case "en":
+      default:
+        return enUS;
+    }
+  };
 
   const handleImageError = () => {
     setImageError(true);
@@ -196,7 +209,7 @@ export function ImageHistoryCard({
         <div className="text-xs text-muted-foreground truncate bg-gradient-to-r from-muted-foreground to-pixoo-purple bg-clip-text text-transparent">
           {formatDistanceToNow(new Date(image.createdAt), {
             addSuffix: true,
-            locale: ptBR,
+            locale: getDateFnsLocale(locale),
           })}
         </div>
 
@@ -210,7 +223,7 @@ export function ImageHistoryCard({
                 size="sm"
                 onClick={handleCopyPrompt}
                 className="px-2 flex-shrink-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
-                title="Copiar e reutilizar prompt"
+                title={t("copyPromptTitle")}
               >
                 <Copy className="h-3 w-3 text-pixoo-purple" />
               </Button>
@@ -219,7 +232,7 @@ export function ImageHistoryCard({
                 size="sm"
                 onClick={handleEditImage}
                 className="px-2 flex-shrink-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
-                title="Editar imagem"
+                title={t("editImageTitle")}
               >
                 <Edit className="h-3 w-3 text-pixoo-purple" />
               </Button>
@@ -233,7 +246,11 @@ export function ImageHistoryCard({
                       ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white border-0 hover:from-pixoo-purple/90 hover:to-pixoo-magenta/90 shadow-lg shadow-pixoo-purple/30"
                       : "border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 hover:shadow-pixoo-purple/20"
                   }`}
-                  title={image.isPublic ? "Tornar privada" : "Tornar pública"}
+                  title={
+                    image.isPublic
+                      ? t("togglePrivateTitle")
+                      : t("togglePublicTitle")
+                  }
                 >
                   <Globe
                     className={`h-3 w-3 ${
@@ -248,6 +265,7 @@ export function ImageHistoryCard({
                   size="sm"
                   onClick={() => onViewFull(image.imageUrl!, image.prompt)}
                   className="px-2 flex-shrink-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                  title={t("viewFullTitle")}
                 >
                   <Eye className="h-3 w-3 text-pixoo-purple" />
                 </Button>
@@ -257,6 +275,7 @@ export function ImageHistoryCard({
                 size="sm"
                 onClick={() => onDownload(image.imageUrl!, image.prompt)}
                 className="px-2 flex-shrink-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                title={t("downloadTitle")}
               >
                 <Download className="h-3 w-3 text-pixoo-purple" />
               </Button>
@@ -266,6 +285,7 @@ export function ImageHistoryCard({
                 onClick={() => onDelete(image.id)}
                 disabled={isDeleting}
                 className="px-2 flex-shrink-0 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg shadow-red-500/30 transition-all duration-300"
+                title={t("deleteTitle")}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>

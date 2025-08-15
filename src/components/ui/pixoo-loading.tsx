@@ -11,7 +11,7 @@ interface PixooLoadingProps {
 }
 
 export function PixooLoading({
-  title = "Carregando...",
+  title = "",
   subtitle,
   className,
   size = "md",

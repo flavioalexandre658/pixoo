@@ -441,12 +441,12 @@ export function ImageHistory({
                   <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 mr-2">
                     <Sparkles className="h-3 w-3 text-pixoo-purple" />
                   </div>
-                  Selecionar
+                  {t("selectLabel")}
                 </Button>
               ) : (
                 <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
                   <span className="text-sm text-muted-foreground whitespace-nowrap order-1 w-full sm:w-auto text-center sm:text-left bg-gradient-to-r from-muted-foreground to-pixoo-purple bg-clip-text text-transparent">
-                    {selectedImages.size} selecionada(s)
+                    {selectedImages.size} {t("selecteds")}
                   </span>
                   <div className="flex gap-2 order-2 w-full sm:w-auto">
                     <Button
@@ -456,8 +456,12 @@ export function ImageHistory({
                       disabled={selectedImages.size === filteredImages.length}
                       className="flex-1 sm:flex-none whitespace-nowrap border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300"
                     >
-                      <span className="hidden sm:inline">Selecionar Todas</span>
-                      <span className="sm:hidden">Todas</span>
+                      <span className="hidden sm:inline">
+                        {t("selecteAllButtonLabel")}
+                      </span>
+                      <span className="sm:hidden">
+                        {t("selecteAllButtonLabelMobile")}
+                      </span>
                     </Button>
                     <Button
                       variant="destructive"
@@ -468,7 +472,9 @@ export function ImageHistory({
                     >
                       <Trash2 className="h-4 w-4 sm:mr-1" />
                       <span className="hidden sm:inline">
-                        {isDeleting ? "Deletando..." : "Deletar"}
+                        {isDeleting
+                          ? t("deletingAllButtonLabel")
+                          : t("deleteAllButtonLabel")}
                       </span>
                     </Button>
                     <Button
