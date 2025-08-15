@@ -141,13 +141,98 @@ export function FormImageEditing({
     },
   });
 
-  // Convert file to base64 directly
+  // Convert file to base64 with better error handling and compression
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(file);
+    });
+  };
+
+  // Enhanced function to handle iPhone images and other problematic formats
+  const processImageFile = async (
+    file: File
+  ): Promise<{
+    base64: string;
+    dimensions: { width: number; height: number };
+  }> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new window.Image();
+
+      if (!ctx) {
+        reject(new Error("Canvas context not available"));
+        return;
+      }
+
+      img.onload = () => {
+        try {
+          // Get original dimensions
+          const originalWidth = img.width;
+          const originalHeight = img.height;
+
+          // Calculate compression if image is too large
+          const maxDimension = 2048; // Reasonable max for editing
+          const maxFileSize = 5 * 1024 * 1024; // 5MB max
+
+          let targetWidth = originalWidth;
+          let targetHeight = originalHeight;
+          let quality = 0.9;
+
+          // Resize if dimensions are too large
+          if (originalWidth > maxDimension || originalHeight > maxDimension) {
+            const aspectRatio = originalWidth / originalHeight;
+            if (originalWidth > originalHeight) {
+              targetWidth = maxDimension;
+              targetHeight = maxDimension / aspectRatio;
+            } else {
+              targetHeight = maxDimension;
+              targetWidth = maxDimension * aspectRatio;
+            }
+          }
+
+          // Reduce quality for very large files
+          if (file.size > maxFileSize) {
+            quality = 0.7;
+          }
+
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+
+          // Draw image with potential resizing
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          // Convert to JPEG (universally supported)
+          const base64 = canvas.toDataURL("image/jpeg", quality);
+
+          resolve({
+            base64,
+            dimensions: { width: targetWidth, height: targetHeight },
+          });
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+
+      // Create object URL for the file (works with HEIC on supported browsers)
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+
+      // Cleanup object URL after loading
+      const originalOnload = img.onload;
+      img.onload = (event: Event) => {
+        URL.revokeObjectURL(objectUrl);
+        if (originalOnload && typeof originalOnload === "function") {
+          originalOnload.call(img, event);
+        }
+      };
     });
   };
 
@@ -241,16 +326,32 @@ export function FormImageEditing({
     });
   };
 
-  // Handle file upload
+  // Enhanced file upload handler
   const handleFileUpload = async (file: File) => {
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Enhanced file type validation
+    const validTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/heic", // iPhone format
+      "image/heif", // iPhone format
+    ];
+
+    const isValidType = validTypes.some(
+      (type) =>
+        file.type === type ||
+        file.name.toLowerCase().endsWith(type.split("/")[1])
+    );
+
+    if (!isValidType) {
       toast.error(t("pleaseUploadValidImage"));
       return;
     }
 
-    // Validate file size (20MB limit as per BFL docs)
-    if (file.size > 20 * 1024 * 1024) {
+    // Increased size limit for iPhone photos but with compression
+    if (file.size > 50 * 1024 * 1024) {
+      // 50MB absolute limit
       toast.error(t("imageSizeMustBeLess"));
       return;
     }
@@ -258,26 +359,66 @@ export function FormImageEditing({
     try {
       toast.info(t("processingImage"));
 
-      // Get image dimensions and calculate aspect ratio
-      const dimensions = await getImageDimensions(file);
+      // Use enhanced processing for better iPhone compatibility
+      const { base64, dimensions } = await processImageFile(file);
+
+      // Calculate aspect ratio from processed dimensions
       const aspectRatio = calculateAspectRatio(
         dimensions.width,
         dimensions.height
       );
       setDetectedAspectRatio(aspectRatio);
 
-      // If current aspect ratio is "auto", keep it as auto
-      // The actual aspect ratio will be used when submitting
-
-      const base64Data = await fileToBase64(file);
+      // Create preview URL
       const imageUrl = URL.createObjectURL(file);
-
       setUploadedImage(imageUrl);
-      form.setValue("inputImage", base64Data);
+
+      // Set form data
+      form.setValue("inputImage", base64);
+
       toast.success(`${t("imageProcessedSuccessfully")} (${aspectRatio})`);
+
+      // Log success for debugging
+      console.log("Image processed successfully:", {
+        originalSize: file.size,
+        processedSize: base64.length,
+        dimensions,
+        aspectRatio,
+        fileType: file.type,
+      });
     } catch (error) {
       console.error("Error processing image:", error);
-      toast.error(t("failedToProcessImage"));
+
+      // Fallback: try basic processing
+      try {
+        toast.info("Tentando processamento alternativo...");
+
+        const base64Data = await fileToBase64(file);
+        const imageUrl = URL.createObjectURL(file);
+
+        // Try to get dimensions with fallback
+        try {
+          const dimensions = await getImageDimensions(file);
+          const aspectRatio = calculateAspectRatio(
+            dimensions.width,
+            dimensions.height
+          );
+          setDetectedAspectRatio(aspectRatio);
+        } catch (dimensionError) {
+          console.warn("Could not detect dimensions, using default");
+          setDetectedAspectRatio("1:1"); // Safe fallback
+        }
+
+        setUploadedImage(imageUrl);
+        form.setValue("inputImage", base64Data);
+
+        toast.success(t("imageProcessedSuccessfully"));
+      } catch (fallbackError) {
+        console.error("Fallback processing also failed:", fallbackError);
+        toast.error(
+          "Não foi possível processar esta imagem. Tente converter para JPEG primeiro."
+        );
+      }
     }
   };
 
