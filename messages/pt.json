@@ -642,8 +642,34 @@
       "subtitle": "Veja o que criadores, designers e empresas estão dizendo sobre o Pixoo"
     },
     "faq": {
-      "title": "Dúvidas Frequentes",
-      "subtitle": "Respostas diretas para tudo que você precisa saber antes de começar"
+      "title": "Perguntas Frequentes",
+      "subtitle": "Obtenha respostas sobre nossa plataforma de geração de imagens com IA",
+      "questions": {
+        "whatIsPixoo": {
+          "question": "O que é o Pixoo?",
+          "answer": "O Pixoo é uma plataforma de inteligência artificial que permite criar imagens incríveis a partir de descrições em texto. Nossa IA avançada transforma suas ideias em arte visual de alta qualidade."
+        },
+        "howItWorks": {
+          "question": "Como funciona a geração de imagens?",
+          "answer": "Basta descrever em texto o que você quer ver e nossa IA cria uma imagem única com base na sua descrição. Você pode ajustar estilos, dimensões e outros parâmetros para chegar ao resultado perfeito."
+        },
+        "commercialUse": {
+          "question": "Posso usar as imagens comercialmente?",
+          "answer": "Sim! Com nossos planos pagos, você tem direitos comerciais completos sobre as imagens geradas. Use em projetos pessoais ou comerciais, marketing e muito mais."
+        },
+        "imageQuality": {
+          "question": "Qual é a qualidade das imagens geradas?",
+          "answer": "Nossas imagens são geradas em alta resolução com qualidade profissional. Oferecemos diferentes tamanhos e estilos para atender às suas necessidades específicas."
+        },
+        "technicalKnowledge": {
+          "question": "Preciso de conhecimento técnico?",
+          "answer": "Não! O Pixoo foi projetado para ser intuitivo e fácil de usar. Qualquer pessoa pode criar imagens incríveis, independentemente da experiência técnica."
+        },
+        "editExisting": {
+          "question": "Posso editar imagens existentes?",
+          "answer": "Sim! Além de criar novas imagens, você pode enviar imagens existentes e usar nossa IA para editá-las, remover fundos, alterar estilos e muito mais."
+        }
+      }
     },
     "ctaBanner": {
       "title": "Crie ou Edite Sua Imagem com IA Agora",
