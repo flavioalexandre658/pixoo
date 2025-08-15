@@ -9,6 +9,7 @@ import {
 import { ExploreFilters } from "./explore-filters";
 import { ExploreGrid } from "./explore-grid";
 import { Sparkles } from "lucide-react";
+import { PixooLoading } from "@/components/ui/pixoo-loading";
 
 interface ExploreImage {
   id: string;
@@ -36,6 +37,7 @@ function ExplorePage({ images }: ExplorePageProps) {
   const [selectedModel, setSelectedModel] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Get unique categories and models from the data
   const categories = useMemo(() => {
@@ -105,14 +107,35 @@ function ExplorePage({ images }: ExplorePageProps) {
       : undefined,
   }));
 
+  // Se houver loading, mostrar o PixooLoading
+  if (isLoading) {
+    return (
+      <div className="relative overflow-hidden">
+        <PageContainer>
+          <PageContainerHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 shadow-lg shadow-pixoo-purple/20">
+                <Sparkles className="h-6 w-6 text-pixoo-purple" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent">
+                  {t("title")}
+                </h1>
+                <p className="text-muted-foreground mt-2 bg-gradient-to-r from-muted-foreground to-pixoo-purple bg-clip-text text-transparent">
+                  {t("description")}
+                </p>
+              </div>
+            </div>
+          </PageContainerHeader>
+
+          <PixooLoading size="lg" />
+        </PageContainer>
+      </div>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden">
-      {/* Elementos decorativos flutuantes de fundo */}
-      <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-pixoo-purple/15 to-pixoo-magenta/15 rounded-full blur-2xl opacity-60 animate-float" />
-      <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-br from-pixoo-pink/15 to-pixoo-purple/15 rounded-full blur-xl opacity-40 animate-float-delayed" />
-      <div className="absolute bottom-1/3 -right-4 w-12 h-12 bg-gradient-to-br from-pixoo-magenta/15 to-pixoo-pink/15 rounded-full blur-lg opacity-50 animate-float-slow" />
-      <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-magenta/10 rounded-full blur-2xl opacity-30 animate-float" />
-
       <PageContainer>
         <PageContainerHeader>
           <div className="flex items-center gap-3">

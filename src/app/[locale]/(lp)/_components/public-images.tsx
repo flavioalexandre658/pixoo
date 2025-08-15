@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Heart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Marquee from "@/components/ui/marquee";
+import { PixooLoading } from "@/components/ui/pixoo-loading";
 import { getPublicImages } from "@/actions/images/get/get-public-images.action";
+import { useTranslations } from "next-intl";
 
 interface PublicImage {
   id: string;
@@ -27,6 +28,7 @@ interface PublicImage {
 const PublicImages = () => {
   const [images, setImages] = useState<PublicImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations();
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -49,28 +51,7 @@ const PublicImages = () => {
   const validImages = images.filter((img) => img.imageUrl);
 
   if (loading) {
-    return (
-      <div
-        id="testimonials"
-        className="relative flex items-center justify-center py-16 overflow-hidden"
-      >
-        {/* Background elements */}
-        <div className="absolute top-20 left-20 w-60 h-60 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-br from-pixoo-magenta/8 to-pixoo-purple/8 rounded-full blur-3xl animate-pulse delay-1000" />
-
-        <div className="relative z-10 h-full w-full text-center">
-          <h2 className="mb-12 px-6 text-4xl font-bold tracking-tight md:text-5xl bg-gradient-to-br from-foreground via-foreground to-pixoo-magenta bg-clip-text text-transparent">
-            Galeria da Comunidade
-          </h2>
-          <div className="flex justify-center">
-            <div className="relative">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-pixoo-purple/20 border-t-pixoo-magenta"></div>
-              <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-pixoo-pink animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <PixooLoading className="py-16" />;
   }
 
   return (
@@ -167,7 +148,7 @@ const ImageCard = ({ image }: { image: PublicImage }) => {
               : "-translate-y-full opacity-0"
           )}
         >
-          <div className="flex items-center gap-2 bg-gradient-to-r from-pixoo-pink/90 to-pixoo-magenta/90 rounded-full px-4 py-2 backdrop-blur-sm shadow-lg">
+          <div className="flex items-center gap-2 bg-gradient-to-r from-pixoo-purple/90 to-pixoo-magenta/90 rounded-full px-4 py-2 backdrop-blur-sm shadow-lg border border-pixoo-purple/30">
             <Heart className="w-4 h-4 text-white fill-current" />
             <span className="text-white text-sm font-semibold">
               {image.likes}
@@ -184,13 +165,13 @@ const ImageCard = ({ image }: { image: PublicImage }) => {
               : "translate-y-full opacity-0"
           )}
         >
-          <div className="bg-gradient-to-t from-black/60 to-transparent p-4 rounded-t-xl backdrop-blur-sm">
+          <div className="bg-gradient-to-t from-black/60 to-transparent p-4 rounded-t-xl">
             <p className="text-white text-sm leading-relaxed line-clamp-2 drop-shadow-lg font-medium">
               {image.prompt}
             </p>
             {image.user && (
               <div className="flex items-center gap-2 mt-3">
-                <div className="w-6 h-6 bg-gradient-to-br from-pixoo-purple to-pixoo-pink rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-pixoo-purple to-pixoo-magenta rounded-full flex items-center justify-center border border-pixoo-purple/30 shadow-sm">
                   <span className="text-white text-xs font-bold">
                     {image.user.name.charAt(0).toUpperCase()}
                   </span>

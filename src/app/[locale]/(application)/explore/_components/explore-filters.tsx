@@ -63,12 +63,7 @@ export function ExploreFilters({
 
   return (
     <div className="relative overflow-hidden">
-      {/* Elementos decorativos flutuantes */}
-      <div className="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 rounded-full blur-xl opacity-60 animate-float" />
-      <div className="absolute -bottom-2 -left-2 w-8 h-8 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-purple/20 rounded-full blur-lg opacity-40 animate-float-delayed" />
-      <div className="absolute top-1/2 -right-1 w-6 h-6 bg-gradient-to-br from-pixoo-magenta/20 to-pixoo-pink/20 rounded-full blur-md opacity-50 animate-float-slow" />
-
-      <div className="p-4 bg-gradient-to-br from-background/95 via-pixoo-purple/5 to-pixoo-pink/5 backdrop-blur-sm rounded-xl border border-pixoo-purple/20 shadow-xl shadow-pixoo-purple/10 hover:shadow-2xl hover:shadow-pixoo-purple/20 transition-all duration-500">
+      <div className="p-4 bg-gradient-to-br from-background/95 via-pixoo-purple/5 to-pixoo-pink/5 backdrop-blur-sm rounded-xl border border-pixoo-purple/20">
         {/* Search Bar */}
         <div className="mb-4">
           <SearchBar

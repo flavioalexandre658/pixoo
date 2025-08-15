@@ -11,11 +11,14 @@ import {
   Trash2,
   Copy,
   Globe,
+  Edit,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface ImageHistoryCardProps {
   image: {
@@ -60,6 +63,9 @@ export function ImageHistoryCard({
 }: ImageHistoryCardProps) {
   const [imageError, setImageError] = useState(false);
   const t = useTranslations("imageHistory");
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
 
   const handleImageError = () => {
     setImageError(true);
@@ -78,6 +84,15 @@ export function ImageHistoryCard({
     } catch (error) {
       console.error("Erro ao copiar prompt:", error);
       toast.error("Erro ao copiar prompt");
+    }
+  };
+
+  const handleEditImage = () => {
+    if (image.imageUrl && image.prompt) {
+      const editUrl = `/${locale}/edit-image?imageUrl=${encodeURIComponent(
+        image.imageUrl
+      )}&prompt=${encodeURIComponent(image.prompt)}`;
+      router.push(editUrl);
     }
   };
 
@@ -198,6 +213,15 @@ export function ImageHistoryCard({
                 title="Copiar e reutilizar prompt"
               >
                 <Copy className="h-3 w-3 text-pixoo-purple" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEditImage}
+                className="px-2 flex-shrink-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                title="Editar imagem"
+              >
+                <Edit className="h-3 w-3 text-pixoo-purple" />
               </Button>
               {onTogglePublic && (
                 <Button

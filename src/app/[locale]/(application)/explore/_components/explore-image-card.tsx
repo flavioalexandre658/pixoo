@@ -148,7 +148,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10 border-2 border-white/80 shadow-xl shadow-pixoo-purple/30 backdrop-blur-sm">
+              <Avatar className="w-10 h-10 border-2 border-pixoo-purple/60 shadow-xl shadow-pixoo-purple/30 backdrop-blur-sm">
                 {image.user?.avatar ? (
                   <img
                     src={image.user.avatar}
@@ -156,7 +156,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-pixoo-purple to-pixoo-magenta text-white">
+                  <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-pixoo-purple to-pixoo-magenta text-white border border-pixoo-purple/30">
                     {image.user?.name?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 )}
@@ -171,8 +171,9 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
               size="sm"
               variant="ghost"
               className={cn(
-                "text-white hover:bg-white/20 transition-all duration-300 rounded-full p-2 backdrop-blur-sm border border-white/20 shadow-lg shadow-pixoo-purple/20",
-                isLiked && "text-red-400 scale-110 bg-white/10"
+                "text-white hover:bg-pixoo-purple/30 transition-all duration-300 rounded-full p-2 backdrop-blur-sm border border-pixoo-purple/40 shadow-lg shadow-pixoo-purple/20 hover:border-pixoo-magenta/60",
+                isLiked &&
+                  "text-pixoo-pink scale-110 bg-pixoo-purple/20 border-pixoo-pink/50"
               )}
             >
               <Heart
@@ -198,7 +199,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
           <div className="space-y-3">
             {/* Prompt */}
             <div className="max-h-20 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-              <p className="text-white text-sm leading-relaxed drop-shadow-lg backdrop-blur-sm bg-black/20 rounded-lg p-3 border border-white/10">
+              <p className="text-white text-sm leading-relaxed drop-shadow-lg bg-black/60 rounded-lg p-3 border border-white/30">
                 {image.prompt}
               </p>
             </div>
@@ -209,9 +210,9 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
                 onClick={handleCopyPrompt}
                 size="sm"
                 className={cn(
-                  "bg-gradient-to-r from-white/90 to-white/80 hover:from-white hover:to-white/90 text-black font-medium transition-all duration-300 rounded-full px-6 shadow-xl shadow-pixoo-purple/30 border border-white/20 backdrop-blur-sm",
+                  "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta hover:from-pixoo-purple/90 hover:to-pixoo-magenta/90 text-white font-medium transition-all duration-300 rounded-full px-6 shadow-xl shadow-pixoo-purple/30 border border-pixoo-purple/30 hover:border-pixoo-magenta/50",
                   isCopied &&
-                    "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                    "bg-gradient-to-r from-green-500 to-green-600 text-white border-green-500/50"
                 )}
               >
                 {isCopied ? (

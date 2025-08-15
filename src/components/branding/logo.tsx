@@ -26,7 +26,14 @@ const Logo: React.FC<LogoProps> = ({
           alt="Pixoo Logo"
           width={width}
           height={height}
-          className="object-contain flex-shrink-0"
+          className="object-contain flex-shrink-0 select-none"
+          style={{
+            imageRendering: "crisp-edges",
+            filter: "none",
+            backfaceVisibility: "hidden",
+            transform: "translateZ(0)",
+          }}
+          draggable={false}
         />
         {showText && (
           <span className="bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent font-bold text-lg">
@@ -42,8 +49,13 @@ const Logo: React.FC<LogoProps> = ({
       className={cn("flex items-center", showText ? "gap-2" : "", className)}
     >
       <div
-        className="bg-pixoo-dark text-white rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0"
-        style={{ width, height }}
+        className="bg-pixoo-dark text-white rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 select-none"
+        style={{
+          width,
+          height,
+          backfaceVisibility: "hidden",
+          transform: "translateZ(0)",
+        }}
       >
         P
       </div>

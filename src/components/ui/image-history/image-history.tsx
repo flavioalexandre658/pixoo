@@ -20,6 +20,7 @@ import { SearchBar } from "./search-bar";
 import { FilterSelect } from "./filter-select";
 import { ZoomControls } from "./zoom-controls";
 import { toast } from "sonner";
+import { PixooLoading } from "@/components/ui/pixoo-loading";
 
 import { ImageHistoryCard } from "./image-history-card";
 import { getImagesHistory } from "@/actions/images/history/get-images-history.action";
@@ -317,10 +318,6 @@ export function ImageHistory({
   if (loading) {
     return (
       <div className="relative overflow-hidden">
-        {/* Elementos decorativos flutuantes */}
-        <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 rounded-full blur-xl opacity-60 animate-pulse" />
-        <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-purple/20 rounded-full blur-lg opacity-40 animate-pulse" />
-
         <Card className="border-pixoo-purple/20 bg-gradient-to-br from-background/95 via-pixoo-purple/5 to-pixoo-pink/5 backdrop-blur-sm shadow-xl shadow-pixoo-purple/10">
           <CardHeader className="border-b border-pixoo-purple/10">
             <CardTitle className="flex items-center gap-2">
@@ -333,14 +330,7 @@ export function ImageHistory({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-3">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-pixoo-purple/30 border-t-pixoo-purple" />
-                <span className="text-sm text-muted-foreground bg-gradient-to-r from-muted-foreground to-pixoo-purple bg-clip-text text-transparent">
-                  Carregando histórico...
-                </span>
-              </div>
-            </div>
+            <PixooLoading size="md" />
           </CardContent>
         </Card>
       </div>
@@ -487,7 +477,7 @@ export function ImageHistory({
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
               {filteredImages.map((image) => (
                 <div key={image.id} className="relative">
                   {isSelectionMode && (

@@ -24,7 +24,7 @@ const Hero = () => {
 
       <div className="flex items-center justify-center md:mt-6 relative z-10">
         <div className="max-w-2xl text-center">
-          <Badge className="relative rounded-xl border-none bg-gradient-to-r from-pixoo-pink to-pixoo-magenta py-2 px-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Badge className="text-xl relative rounded-xl border-none bg-gradient-to-r from-pixoo-pink to-pixoo-magenta py-2 px-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
             {t("badge")}
           </Badge>

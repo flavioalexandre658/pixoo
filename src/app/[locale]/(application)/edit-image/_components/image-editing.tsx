@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { FormImageEditing } from "@/components/ui/forms-generate/form-image-editing";
 import { ImageHistory } from "@/components/ui/image-history/image-history";
 import {
@@ -24,7 +25,12 @@ interface ImageEditingProps {
 
 export default function ImageEditing({ models }: ImageEditingProps) {
   const t = useTranslations("imageEditing");
+  const searchParams = useSearchParams();
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [preloadedImageUrl, setPreloadedImageUrl] = useState<string | null>(
+    null
+  );
+  const [preloadedPrompt, setPreloadedPrompt] = useState<string | null>(null);
 
   const handleImageGenerated = (imageUrl: string) => {
     setGeneratedImage(imageUrl);
@@ -350,6 +356,20 @@ export default function ImageEditing({ models }: ImageEditingProps) {
     }, 300000); // 5 minutos
   };
 
+  // Carregar imagem e prompt dos parâmetros da URL
+  useEffect(() => {
+    const imageUrl = searchParams.get("imageUrl");
+    const prompt = searchParams.get("prompt");
+
+    if (imageUrl) {
+      setPreloadedImageUrl(decodeURIComponent(imageUrl));
+    }
+
+    if (prompt) {
+      setPreloadedPrompt(decodeURIComponent(prompt));
+    }
+  }, [searchParams]);
+
   return (
     <PageContainer>
       <PageContainerHeader>
@@ -384,6 +404,8 @@ export default function ImageEditing({ models }: ImageEditingProps) {
             }}
             isGenerating={isGenerating}
             imagePreviewRef={imagePreviewRef}
+            preloadedImageUrl={preloadedImageUrl}
+            preloadedPrompt={preloadedPrompt}
           />
         </PageContainerLeft>
 

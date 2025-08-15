@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
 import { getPlansByCurrency } from "@/actions/plans/get/get-plans-by-currency.action";
 import { createCheckoutSession } from "@/actions/checkout/create/create-checkout-session.action";
+import { PixooLoading } from "@/components/ui/pixoo-loading";
 
 interface Plan {
   id: string;
@@ -189,17 +190,8 @@ export function PlansList({
 
   if (isLoadingPlans) {
     return (
-      <div className={`flex justify-center items-center py-12 ${className}`}>
-        <div className="flex flex-col items-center space-y-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-pixoo-purple to-pixoo-pink animate-spin">
-              <div className="absolute inset-2 bg-background rounded-full" />
-            </div>
-          </div>
-          <span className="text-muted-foreground font-medium">
-            Carregando planos...
-          </span>
-        </div>
+      <div className={className}>
+        <PixooLoading size="md" />
       </div>
     );
   }

@@ -44,6 +44,7 @@ import { useAction } from "next-safe-action/hooks";
 import Image from "next/image";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
+import { proxyImage } from "@/actions/proxy-image/proxy-image.action";
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/contexts/subscription-context";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
@@ -75,6 +76,8 @@ interface FormImageEditingProps {
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
   imagePreviewRef?: React.RefObject<HTMLDivElement | null>;
+  preloadedImageUrl?: string | null;
+  preloadedPrompt?: string | null;
 }
 
 export function FormImageEditing({
@@ -86,6 +89,8 @@ export function FormImageEditing({
   onGenerationButtonClick,
   isGenerating,
   imagePreviewRef,
+  preloadedImageUrl,
+  preloadedPrompt,
 }: FormImageEditingProps) {
   const t = useTranslations("imageEditingForm");
   const {
@@ -118,6 +123,7 @@ export function FormImageEditing({
   const locale = params.locale as string;
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
+  const { executeAsync: executeProxyImage } = useAction(proxyImage);
 
   // Reset startedGeneration when generation is complete
   useEffect(() => {
@@ -655,6 +661,54 @@ export function FormImageEditing({
       </div>
     </div>
   );
+
+  // Carregar imagem e prompt pré-definidos
+  useEffect(() => {
+    if (preloadedImageUrl) {
+      setUploadedImage(preloadedImageUrl);
+
+      // Verificar se é uma URL válida antes de tentar fazer proxy
+      try {
+        const url = new URL(preloadedImageUrl);
+
+        // Se for uma URL externa, usar a action proxy-image
+        if (url.protocol === "http:" || url.protocol === "https:") {
+          executeProxyImage({ url: preloadedImageUrl })
+            .then((result) => {
+              if (result?.data?.success && result.data.imageData) {
+                form.setValue("inputImage", result.data.imageData);
+                toast.success("Imagem carregada com sucesso!");
+              } else {
+                // Em caso de erro, usar a URL diretamente como fallback
+                form.setValue("inputImage", preloadedImageUrl);
+                toast.warning(
+                  result?.data?.error ||
+                    "Erro ao carregar imagem, usando URL diretamente"
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Erro ao fazer proxy da imagem:", error);
+              // Em caso de erro, usar a URL diretamente como fallback
+              form.setValue("inputImage", preloadedImageUrl);
+              toast.warning("Erro ao carregar imagem, usando URL diretamente");
+            });
+        } else {
+          // Para URLs locais ou data URLs, usar diretamente
+          form.setValue("inputImage", preloadedImageUrl);
+        }
+      } catch (urlError) {
+        console.error("URL inválida:", urlError);
+        // Se a URL for inválida, tentar usar como está
+        form.setValue("inputImage", preloadedImageUrl);
+        toast.error("URL de imagem inválida");
+      }
+    }
+
+    if (preloadedPrompt) {
+      form.setValue("prompt", preloadedPrompt);
+    }
+  }, [preloadedImageUrl, preloadedPrompt, form, executeProxyImage]);
 
   return (
     <>
