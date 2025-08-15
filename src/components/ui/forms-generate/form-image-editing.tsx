@@ -49,7 +49,7 @@ import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/contexts/subscription-context";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
 import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AdvancedSettingsDialog } from "./advanced-settings-dialog";
 
 const formImageEditingSchema = z.object({
@@ -116,6 +116,7 @@ export function FormImageEditing({
   const { subscription } = useSubscription();
   const params = useParams();
   const locale = params.locale as string;
+  const router = useRouter();
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
   const { executeAsync: executeProxyImage } = useAction(proxyImage);
@@ -181,6 +182,62 @@ export function FormImageEditing({
       };
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Get image dimensions from URL
+  const getImageDimensionsFromUrl = (
+    imageUrl: string
+  ): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = reject;
+      img.crossOrigin = "anonymous";
+      img.src = imageUrl;
+    });
+  };
+
+  // Compress image to reduce base64 size
+  const compressImage = (
+    imageUrl: string,
+    maxWidth: number = 512,
+    quality: number = 0.8
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          reject(new Error("Canvas context not available"));
+          return;
+        }
+
+        // Calculate new dimensions maintaining aspect ratio
+        const aspectRatio = img.width / img.height;
+        let newWidth = img.width;
+        let newHeight = img.height;
+
+        if (img.width > maxWidth) {
+          newWidth = maxWidth;
+          newHeight = maxWidth / aspectRatio;
+        }
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressedDataUrl);
+      };
+      img.onerror = reject;
+      img.crossOrigin = "anonymous";
+      img.src = imageUrl;
     });
   };
 
@@ -296,10 +353,36 @@ export function FormImageEditing({
     toast.info(t("optimizingPromptForImageEditing"));
 
     try {
+      let imageForOptimization = currentInputImage;
+
+      // Se a imagem base64 for muito grande (> 1MB), comprimir ou usar URL
+      if (
+        currentInputImage.startsWith("data:") &&
+        currentInputImage.length > 1024 * 1024
+      ) {
+        try {
+          // Tentar comprimir a imagem
+          const compressedImage = await compressImage(
+            currentInputImage,
+            512,
+            0.7
+          );
+          imageForOptimization = compressedImage;
+          console.log("Imagem comprimida para otimização de prompt");
+        } catch (compressionError) {
+          console.error("Erro ao comprimir imagem:", compressionError);
+          // Se a compressão falhar, enviar sem imagem
+          imageForOptimization = "";
+          toast.warning(
+            "Imagem muito grande, otimizando prompt sem referência visual"
+          );
+        }
+      }
+
       const result = await executeOptimizePrompt({
         prompt: currentPrompt,
         model: currentModel,
-        inputImage: currentInputImage,
+        inputImage: imageForOptimization,
         isImageEditing: true,
       });
 
@@ -326,6 +409,18 @@ export function FormImageEditing({
           block: "start",
         });
       }, 300);
+    }
+  };
+
+  // Função para remover query parameters da URL
+  const removeImageQueryParam = () => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("imageUrl");
+      url.searchParams.delete("prompt");
+
+      // Usar replace para não adicionar uma nova entrada no histórico
+      router.replace(url.pathname + url.search, { scroll: false });
     }
   };
 
@@ -669,41 +764,125 @@ export function FormImageEditing({
         // Se for uma URL externa, usar a action proxy-image
         if (url.protocol === "http:" || url.protocol === "https:") {
           executeProxyImage({ url: preloadedImageUrl })
-            .then((result) => {
+            .then(async (result) => {
               if (result?.data?.success && result.data.imageData) {
                 form.setValue("inputImage", result.data.imageData);
-                toast.success("Imagem carregada com sucesso!");
+
+                // Detectar proporção da imagem carregada
+                try {
+                  const dimensions = await getImageDimensionsFromUrl(
+                    result.data.imageData
+                  );
+                  const aspectRatio = calculateAspectRatio(
+                    dimensions.width,
+                    dimensions.height
+                  );
+                  setDetectedAspectRatio(aspectRatio);
+                  toast.success(
+                    `Imagem carregada com sucesso! (${aspectRatio})`
+                  );
+
+                  // Remover query parameter após carregar com sucesso
+                  removeImageQueryParam();
+                } catch (dimensionError) {
+                  console.error("Erro ao detectar dimensões:", dimensionError);
+                  toast.success("Imagem carregada com sucesso!");
+
+                  // Remover query parameter mesmo com erro de dimensão
+                  removeImageQueryParam();
+                }
               } else {
                 // Em caso de erro, usar a URL diretamente como fallback
                 form.setValue("inputImage", preloadedImageUrl);
+
+                // Tentar detectar proporção mesmo com fallback
+                try {
+                  const dimensions = await getImageDimensionsFromUrl(
+                    preloadedImageUrl
+                  );
+                  const aspectRatio = calculateAspectRatio(
+                    dimensions.width,
+                    dimensions.height
+                  );
+                  setDetectedAspectRatio(aspectRatio);
+                } catch (dimensionError) {
+                  console.error(
+                    "Erro ao detectar dimensões do fallback:",
+                    dimensionError
+                  );
+                }
+
                 toast.warning(
                   result?.data?.error ||
                     "Erro ao carregar imagem, usando URL diretamente"
                 );
+
+                // Remover query parameter mesmo com fallback
+                removeImageQueryParam();
               }
             })
-            .catch((error) => {
+            .catch(async (error) => {
               console.error("Erro ao fazer proxy da imagem:", error);
               // Em caso de erro, usar a URL diretamente como fallback
               form.setValue("inputImage", preloadedImageUrl);
+
+              // Tentar detectar proporção mesmo com erro
+              try {
+                const dimensions = await getImageDimensionsFromUrl(
+                  preloadedImageUrl
+                );
+                const aspectRatio = calculateAspectRatio(
+                  dimensions.width,
+                  dimensions.height
+                );
+                setDetectedAspectRatio(aspectRatio);
+              } catch (dimensionError) {
+                console.error("Erro ao detectar dimensões:", dimensionError);
+              }
+
               toast.warning("Erro ao carregar imagem, usando URL diretamente");
+
+              // Remover query parameter mesmo com erro
+              removeImageQueryParam();
             });
         } else {
           // Para URLs locais ou data URLs, usar diretamente
           form.setValue("inputImage", preloadedImageUrl);
+
+          // Detectar proporção para URLs locais/data URLs
+          getImageDimensionsFromUrl(preloadedImageUrl)
+            .then((dimensions) => {
+              const aspectRatio = calculateAspectRatio(
+                dimensions.width,
+                dimensions.height
+              );
+              setDetectedAspectRatio(aspectRatio);
+
+              // Remover query parameter após carregar com sucesso
+              removeImageQueryParam();
+            })
+            .catch((error) => {
+              console.error("Erro ao detectar dimensões:", error);
+
+              // Remover query parameter mesmo com erro
+              removeImageQueryParam();
+            });
         }
       } catch (urlError) {
         console.error("URL inválida:", urlError);
         // Se a URL for inválida, tentar usar como está
         form.setValue("inputImage", preloadedImageUrl);
         toast.error("URL de imagem inválida");
+
+        // Remover query parameter mesmo com URL inválida
+        removeImageQueryParam();
       }
     }
 
     if (preloadedPrompt) {
       form.setValue("prompt", preloadedPrompt);
     }
-  }, [preloadedImageUrl, preloadedPrompt, form, executeProxyImage]);
+  }, [preloadedImageUrl, preloadedPrompt, form, executeProxyImage, router]);
 
   return (
     <>
