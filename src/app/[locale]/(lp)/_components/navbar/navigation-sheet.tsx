@@ -33,10 +33,7 @@ export const NavigationSheet = ({ locale }: { locale: string }) => {
       <SheetContent className="bg-gradient-to-br from-background via-background/95 to-pixoo-purple/5 backdrop-blur-xl border-l-2 border-pixoo-magenta/20">
         <SheetHeader className="border-b border-pixoo-magenta/20 p-4">
           <SheetTitle className="font-medium flex items-center gap-3">
-            <Logo width={32} height={32} customLogo="/images/icon.svg" />
-            <span className="bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent font-bold">
-              Pixoo
-            </span>
+            <Logo width={42} height={42} customLogo="/images/icon.svg" />
           </SheetTitle>
         </SheetHeader>
 

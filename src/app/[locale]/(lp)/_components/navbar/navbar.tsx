@@ -21,7 +21,7 @@ const Navbar = ({ locale }: { locale: string }) => {
 
       <div className="relative z-10 mx-auto flex h-full items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <Logo width={32} height={32} customLogo="/images/icon.svg" />
+          <Logo width={42} height={42} customLogo="/images/icon.svg" />
         </div>
 
         {/* Desktop Menu */}

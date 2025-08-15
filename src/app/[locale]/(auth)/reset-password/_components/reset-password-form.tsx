@@ -71,13 +71,22 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <Label htmlFor="password">{t("password")}</Label>
+        <Label
+          htmlFor="password"
+          className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+        >
+          {t("password")}
+        </Label>
         <div className="relative mt-1">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
             {...register("password")}
-            className={errors.password ? "border-red-500" : ""}
+            className={
+              errors.password
+                ? "border-red-500"
+                : "border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
+            }
           />
           <button
             type="button"
@@ -85,9 +94,9 @@ export function ResetPasswordForm() {
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? (
-              <EyeOff className="h-4 w-4 text-gray-400" />
+              <EyeOff className="h-4 w-4 text-pixoo-purple hover:text-pixoo-magenta transition-colors" />
             ) : (
-              <Eye className="h-4 w-4 text-gray-400" />
+              <Eye className="h-4 w-4 text-pixoo-purple hover:text-pixoo-magenta transition-colors" />
             )}
           </button>
         </div>
@@ -99,13 +108,22 @@ export function ResetPasswordForm() {
       </div>
 
       <div>
-        <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
+        <Label
+          htmlFor="confirmPassword"
+          className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+        >
+          {t("confirmPassword")}
+        </Label>
         <div className="relative mt-1">
           <Input
             id="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
             {...register("confirmPassword")}
-            className={errors.confirmPassword ? "border-red-500" : ""}
+            className={
+              errors.confirmPassword
+                ? "border-red-500"
+                : "border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
+            }
           />
           <button
             type="button"
@@ -113,9 +131,9 @@ export function ResetPasswordForm() {
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           >
             {showConfirmPassword ? (
-              <EyeOff className="h-4 w-4 text-gray-400" />
+              <EyeOff className="h-4 w-4 text-pixoo-purple hover:text-pixoo-magenta transition-colors" />
             ) : (
-              <Eye className="h-4 w-4 text-gray-400" />
+              <Eye className="h-4 w-4 text-pixoo-purple hover:text-pixoo-magenta transition-colors" />
             )}
           </button>
         </div>
@@ -126,7 +144,11 @@ export function ResetPasswordForm() {
         )}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button
+        type="submit"
+        className="w-full bg-gradient-to-r from-pixoo-purple to-pixoo-magenta hover:from-pixoo-magenta hover:to-pixoo-pink text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/30"
+        disabled={isLoading}
+      >
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

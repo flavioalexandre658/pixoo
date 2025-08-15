@@ -6,9 +6,9 @@ export default function SignUpPage() {
   const t = useTranslations("auth");
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8">
+    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl rounded-lg p-8 border border-pixoo-purple/20">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent">
           {t("createAccount")}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">{t("signUp")}</p>
@@ -21,7 +21,7 @@ export default function SignUpPage() {
           {t("alreadyHaveAccount")}{" "}
           <Link
             href="/sign-in"
-            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+            className="font-medium text-pixoo-purple hover:text-pixoo-magenta transition-colors duration-300"
           >
             {t("signIn")}
           </Link>

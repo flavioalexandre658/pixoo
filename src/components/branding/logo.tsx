@@ -29,7 +29,7 @@ const Logo: React.FC<LogoProps> = ({
           className="object-contain flex-shrink-0"
         />
         {showText && (
-          <span className="hidden sm:block bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent font-bold text-lg">
+          <span className="bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent font-bold text-lg">
             Pixoo
           </span>
         )}
