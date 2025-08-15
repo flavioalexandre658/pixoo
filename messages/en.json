@@ -3,6 +3,29 @@
     "lp": {
       "title": "Pixoo – Create and Edit Stunning Images with AI",
       "description": "Generate professional-quality visuals from text or edit them effortlessly with advanced AI tools. Create, transform, and customize images in seconds — right from your browser."
+    },
+    "seo": {
+      "title": "Pixoo - AI Image Generator, Photo Editing, Digital Art & More",
+      "description": "Create stunning images with AI, edit photos, and generate digital art with Pixoo’s advanced models. A complete tool for designers, artists, and content creators. Image generation, editing, prompts, and more.",
+      "keywords": "ai image generator, artificial intelligence images, edit photos ai, digital art ai, ai design tool, generate images online, ai art creation, ai prompts, flux models, pixoo ai, turn text to image, ai image editing, ai image optimization, ai graphic design, ai illustration, ai photography, ai creative tools, ai solutions for art, ai creation platform, ai art generator, text to image, image editing ai, digital art generator, stable diffusion, dall-e alternative, midjourney alternative, free ai image generator, professional image creation",
+      "openGraph": {
+        "title": "Pixoo - AI Image Generator, Photo Editing, Digital Art",
+        "description": "Create stunning images with AI, edit photos, and generate digital art with Pixoo’s advanced models. A complete tool for designers, artists, and content creators.",
+        "siteName": "Pixoo",
+        "imageAlt": "Pixoo - AI Image Generator"
+      },
+      "twitter": {
+        "title": "Pixoo - AI Image Generator, Photo Editing, Digital Art",
+        "description": "Create stunning images with AI, edit photos, and generate digital art with Pixoo’s advanced models. A complete tool for designers, artists, and content creators.",
+        "creator": "@pixoo_ai"
+      },
+      "authors": {
+        "name": "Pixoo Team"
+      },
+      "creator": "Pixoo",
+      "publisher": "Pixoo",
+      "category": "Technology",
+      "classification": "Artificial Intelligence Tool for Image Generation and Editing"
     }
   },
   "common": {

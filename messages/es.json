@@ -3,6 +3,29 @@
     "lp": {
       "title": "Pixoo – Crea y Edita Imágenes con Inteligencia Artificial",
       "description": "Genera imágenes profesionales a partir de texto o edítalas con comandos simples usando IA avanzada. Crea, transforma y personaliza en segundos — directamente en el navegador."
+    },
+    "seo": {
+      "title": "Pixoo - Generador de Imágenes con IA, Edición de Fotos, Arte Digital y más",
+      "description": "Crea imágenes increíbles con IA, edita fotos y genera arte digital con los modelos avanzados de Pixoo. Herramienta completa para diseñadores, artistas y creadores de contenido. Generación de imágenes, edición, prompts y más.",
+      "keywords": "generador de imágenes ia, imágenes de inteligencia artificial, editar fotos ia, arte digital ia, herramienta de diseño ia, generar imágenes online, creación de arte ia, prompts ia, modelos flux, pixoo ia, convertir texto en imagen, edición de imagen ia, optimización de imagen ia, diseño gráfico ia, ilustración ia, fotografía ia, herramientas creativas ia, soluciones ia para arte, plataforma de creación ia, generador de arte ia, texto a imagen, edición de imágenes ia, generador de arte digital, stable diffusion, alternativa a dall-e, alternativa a midjourney, generador de imágenes ia gratis, creación de imágenes profesional",
+      "openGraph": {
+        "title": "Pixoo - Generador de Imágenes con IA, Edición de Fotos, Arte Digital",
+        "description": "Crea imágenes increíbles con IA, edita fotos y genera arte digital con los modelos avanzados de Pixoo. Herramienta completa para diseñadores, artistas y creadores de contenido.",
+        "siteName": "Pixoo",
+        "imageAlt": "Pixoo - Generador de Imágenes con IA"
+      },
+      "twitter": {
+        "title": "Pixoo - Generador de Imágenes con IA, Edición de Fotos, Arte Digital",
+        "description": "Crea imágenes increíbles con IA, edita fotos y genera arte digital con los modelos avanzados de Pixoo. Herramienta completa para diseñadores, artistas y creadores de contenido.",
+        "creator": "@pixoo_ai"
+      },
+      "authors": {
+        "name": "Equipo Pixoo"
+      },
+      "creator": "Pixoo",
+      "publisher": "Pixoo",
+      "category": "Tecnología",
+      "classification": "Herramienta de Inteligencia Artificial para Generación y Edición de Imágenes"
     }
   },
   "common": {

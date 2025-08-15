@@ -3,6 +3,29 @@
     "lp": {
       "title": "Pixoo – Crie e Edite Imagens com Inteligência Artificial",
       "description": "Gere imagens profissionais a partir de texto ou edite com comandos simples usando IA avançada. Crie, transforme e personalize em segundos — direto do navegador."
+    },
+    "seo": {
+      "title": "Pixoo - Gerador de Imagens IA, Edição de Fotos, Arte Digital e Muito mais.",
+      "description": "Crie imagens incríveis com IA, edite fotos e gere arte digital com os modelos avançados do Pixoo. Ferramenta completa para designers, artistas e criadores de conteúdo. Geração de imagens, edição, prompts e muito mais.",
+      "keywords": "gerador de imagens ia, inteligência artificial imagens, editar fotos ia, arte digital ia, ferramenta ia design, gerar imagens online, criação de arte ia, prompts ia, modelos flux, pixoo ia, transformar texto em imagem, edição de imagem ia, otimização de imagem ia, design gráfico ia, ilustração ia, fotografia ia, ferramentas criativas ia, soluções ia para arte, plataforma de criação ia, gerador de arte ia, ai image generator, text to image, image editing ai, digital art generator, flux models, stable diffusion, dall-e alternative, midjourney alternative, free ai image generator, professional image creation",
+      "openGraph": {
+        "title": "Pixoo - Gerador de Imagens IA, Edição de Fotos, Arte Digital",
+        "description": "Crie imagens incríveis com IA, edite fotos e gere arte digital com os modelos avançados do Pixoo. Ferramenta completa para designers, artistas e criadores de conteúdo.",
+        "siteName": "Pixoo",
+        "imageAlt": "Pixoo - Gerador de Imagens IA"
+      },
+      "twitter": {
+        "title": "Pixoo - Gerador de Imagens IA, Edição de Fotos, Arte Digital",
+        "description": "Crie imagens incríveis com IA, edite fotos e gere arte digital com os modelos avançados do Pixoo. Ferramenta completa para designers, artistas e criadores de conteúdo.",
+        "creator": "@pixoo_ai"
+      },
+      "authors": {
+        "name": "Equipe Pixoo"
+      },
+      "creator": "Pixoo",
+      "publisher": "Pixoo",
+      "category": "Tecnologia",
+      "classification": "Ferramenta de Inteligência Artificial para Geração e Edição de Imagens"
     }
   },
   "common": {
@@ -558,106 +581,79 @@
     "title": "Política de Privacidade",
     "lastUpdated": "Última atualização: {date, date, medium}"
   },
-
   "landingPage": {
     "navbar": {
-      "features": "Funcionalidades",
-      "pricing": "Planos",
-      "about": "Sobre Nós",
-      "contact": "Fale Conosco",
+      "features": "Recursos",
+      "pricing": "Preços",
+      "about": "Sobre",
+      "contact": "Contato",
       "signIn": "Entrar",
       "signUp": "Criar Conta",
-      "getStarted": "Começar Agora",
-      "start": "Iniciar",
-      "faq": "Perguntas",
+      "getStarted": "Começar",
+      "start": "Começar",
+      "faq": "FAQ",
       "testimonials": "Depoimentos"
     },
     "hero": {
-      "badge": "Criação e Edição com IA",
-      "title": "Crie e Edite Imagens com Inteligência Artificial, em Minutos",
-      "subtitle": "Transforme qualquer ideia em arte visual profissional. Crie do zero ou edite com comandos simples usando IA de ponta – direto do seu navegador.",
-      "ctaPrimary": "Criar Imagem com IA",
-      "ctaSecondary": "Editar Imagem com IA",
-      "trustedBy": "Mais de 10.000 criadores confiam no Pixoo para dar vida às suas ideias"
+      "badge": "Experimente grátis",
+      "title": "Crie Imagens Incríveis com IA",
+      "subtitle": "Transforme suas ideias em arte visual usando os modelos de IA mais avançados. Rápido, fácil e com qualidade profissional.",
+      "ctaPrimary": "Criar uma imagem",
+      "ctaSecondary": "Editar uma imagem",
+      "trustedBy": "Confiado por mais de 10.000 criadores"
     },
     "features": {
-      "title": "Criação e Edição com o Poder da IA",
-      "subtitle": "Uma plataforma completa para transformar ideias em imagens com poucos cliques",
+      "title": "Recursos Poderosos",
+      "subtitle": "Tudo que você precisa para criar imagens incríveis com IA",
       "feature1": {
-        "title": "Geração de Imagens com IA Avançada",
-        "description": "Crie imagens únicas a partir de texto com modelos poderosos como Flux Pro. Qualidade profissional em segundos."
+        "title": "Geração com IA Avançada",
+        "description": "Use modelos de última geração como Flux Pro para criar imagens de alta qualidade a partir de texto."
       },
       "feature2": {
-        "title": "Edição Visual com Comandos Simples",
-        "description": "Apague, substitua, melhore ou transforme qualquer imagem com IA. Você descreve, o Pixoo executa."
+        "title": "Edição Inteligente",
+        "description": "Edite suas imagens com precisão usando IA. Modifique, melhore e transforme com comandos simples."
       },
       "feature3": {
-        "title": "Formatos para Todo Tipo de Projeto",
-        "description": "Imagens otimizadas para redes sociais, e-commerce, apresentações, campanhas e muito mais."
+        "title": "Múltiplos Formatos",
+        "description": "Gere imagens em diferentes proporções e resoluções para qualquer projeto ou plataforma."
       },
       "feature4": {
-        "title": "Processamento Ultrarrápido",
-        "description": "Tenha resultados em poucos segundos com uma infraestrutura feita para velocidade e estabilidade."
+        "title": "Processamento Rápido",
+        "description": "Resultados em segundos. Nossa infraestrutura otimizada garante velocidade sem comprometer a qualidade."
       },
       "feature5": {
-        "title": "Liberdade Comercial Total",
-        "description": "Use suas imagens em projetos pessoais ou comerciais. Sem royalties. Sem limitações."
+        "title": "Uso Comercial",
+        "description": "Todas as imagens geradas podem ser usadas em projetos comerciais sem restrições de licença."
       },
       "feature6": {
-        "title": "Interface Fácil, Resultados Profissionais",
-        "description": "Não precisa ser designer. Com o Pixoo, qualquer pessoa pode criar e editar imagens com qualidade de estúdio."
+        "title": "Fácil de Usar",
+        "description": "Interface intuitiva que permite criar imagens profissionais mesmo sem experiência técnica."
       }
     },
     "pricing": {
-      "title": "Planos Transparentes e Acessíveis",
-      "subtitle": "Escolha o plano ideal para transformar suas ideias em imagens incríveis",
+      "title": "Planos Simples e Transparentes",
+      "subtitle": "Escolha o plano ideal para suas necessidades de criação",
       "common": {
-        "choosePlan": "Selecionar Plano"
+        "choosePlan": "Escolher Plano"
       }
     },
     "testimonials": {
-      "title": "Depoimentos Reais. Resultados Incríveis.",
-      "subtitle": "Veja o que criadores, designers e empresas estão dizendo sobre o Pixoo"
+      "title": "O que nossos usuários dizem",
+      "subtitle": "Milhares de criadores confiam no Pixoo para suas necessidades de geração de imagens"
     },
     "faq": {
       "title": "Perguntas Frequentes",
-      "subtitle": "Tire suas dúvidas sobre nossa plataforma de geração de imagens com IA",
-      "questions": {
-        "whatIsPixoo": {
-          "question": "O que é o Pixoo?",
-          "answer": "O Pixoo é uma plataforma de inteligência artificial que permite criar imagens incríveis a partir de descrições de texto. Nossa IA avançada transforma suas ideias em arte visual de alta qualidade."
-        },
-        "howItWorks": {
-          "question": "Como funciona a geração de imagens?",
-          "answer": "Simplesmente descreva o que você quer ver em texto e nossa IA criará uma imagem única baseada na sua descrição. Você pode ajustar estilos, dimensões e outros parâmetros para obter o resultado perfeito."
-        },
-        "commercialUse": {
-          "question": "Posso usar as imagens comercialmente?",
-          "answer": "Sim! Com nossos planos pagos, você tem direitos comerciais completos sobre as imagens geradas. Pode usar em projetos pessoais, comerciais, marketing e muito mais."
-        },
-        "imageQuality": {
-          "question": "Qual a qualidade das imagens geradas?",
-          "answer": "Nossas imagens são geradas em alta resolução com qualidade profissional. Oferecemos diferentes tamanhos e estilos para atender suas necessidades específicas."
-        },
-        "technicalKnowledge": {
-          "question": "Preciso de conhecimento técnico?",
-          "answer": "Não! O Pixoo foi projetado para ser intuitivo e fácil de usar. Qualquer pessoa pode criar imagens incríveis, independentemente do nível de experiência técnica."
-        },
-        "editExisting": {
-          "question": "Posso editar imagens existentes?",
-          "answer": "Sim! Além de criar novas imagens, você pode fazer upload de imagens existentes e usar nossa IA para editá-las, remover fundos, alterar estilos e muito mais."
-        }
-      }
+      "subtitle": "Encontre respostas para as dúvidas mais comuns sobre o Pixoo"
     },
     "ctaBanner": {
-      "title": "Crie ou Edite Sua Imagem com IA Agora",
-      "description": "Junte-se a milhares de usuários que já estão criando e transformando imagens com inteligência artificial. Comece gratuitamente e descubra o poder criativo do Pixoo.",
-      "getStarted": "Começar Grátis",
-      "exploreGallery": "Ver Exemplos",
-      "features": "✨ Não precisa de cartão de crédito • 🎨 Créditos gratuitos ao se cadastrar"
+      "title": "Pronto para criar imagens incríveis?",
+      "description": "Junte-se a milhares de usuários que já estão criando arte digital com IA. Comece gratuitamente e descubra o poder da criatividade sem limites.",
+      "getStarted": "Começar Gratuitamente",
+      "exploreGallery": "Explorar Galeria",
+      "features": "✨ Sem cartão de crédito necessário • 🎨 Créditos gratuitos inclusos"
     },
     "logoCloud": {
-      "title": "Confiado por Criadores do Mundo Inteiro"
+      "title": "Confiado por criadores ao redor do mundo"
     }
   }
 }
