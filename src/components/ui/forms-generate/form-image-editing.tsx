@@ -74,15 +74,18 @@ interface FormImageEditingProps {
   onGenerationComplete?: () => void;
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
+  imagePreviewRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function FormImageEditing({
   models,
+  onImageGenerated,
   onGenerationStart,
   onStartPolling,
   onGenerationComplete,
   onGenerationButtonClick,
   isGenerating,
+  imagePreviewRef,
 }: FormImageEditingProps) {
   const t = useTranslations("imageEditingForm");
   const {
@@ -313,6 +316,18 @@ export function FormImageEditing({
     }
   };
 
+  // Função para fazer scroll para o preview da imagem em mobile
+  const scrollToImagePreview = () => {
+    if (imagePreviewRef?.current && window.innerWidth <= 768) {
+      setTimeout(() => {
+        imagePreviewRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  };
+
   const onSubmit = async (data: FormImageEditingForm) => {
     if (startedGeneration || isGenerating) {
       return false;
@@ -347,7 +362,12 @@ export function FormImageEditing({
 
     // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
     setStartedGeneration(true);
+    // Remover esta linha que causa erro:
+    // setGenerationStartTime(Date.now());
     onGenerationButtonClick?.();
+
+    // Fazer scroll para o preview em mobile
+    scrollToImagePreview();
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;

@@ -48,6 +48,9 @@ export default function TextToImage({ models }: TextToImage) {
 
   const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
+  // Adicionar a referência para o preview da imagem
+  const imagePreviewRef = useRef<HTMLDivElement>(null);
+
   // Contador de tempo em tempo real
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -384,11 +387,12 @@ export default function TextToImage({ models }: TextToImage) {
             }}
             isGenerating={isGenerating}
             promptValue={promptValue}
+            imagePreviewRef={imagePreviewRef}
           />
         </PageContainerLeft>
 
         {/* Right side - Preview */}
-        <PageContainerRight>
+        <PageContainerRight ref={imagePreviewRef}>
           <ImagePreview
             isGenerating={isGenerating}
             isWaitingWebhook={isWaitingWebhook}

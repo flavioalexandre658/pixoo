@@ -75,6 +75,7 @@ interface FormTextToImageProps {
   onGenerationButtonClick?: () => void;
   isGenerating?: boolean;
   promptValue?: string;
+  imagePreviewRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function FormTextToImage({
@@ -86,6 +87,7 @@ export function FormTextToImage({
   onGenerationButtonClick,
   isGenerating,
   promptValue,
+  imagePreviewRef,
 }: FormTextToImageProps) {
   const t = useTranslations("textToImageForm");
   const {
@@ -236,6 +238,18 @@ export function FormTextToImage({
     }
   };
 
+  // Função para fazer scroll para o preview da imagem em mobile
+  const scrollToImagePreview = () => {
+    if (imagePreviewRef?.current && window.innerWidth <= 768) {
+      setTimeout(() => {
+        imagePreviewRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  };
+
   const onSubmit = async (data: FormTextToImageForm) => {
     if (startedGeneration || isGenerating) {
       return false;
@@ -279,6 +293,9 @@ export function FormTextToImage({
     setStartedGeneration(true);
     setGenerationStartTime(Date.now());
     onGenerationButtonClick?.();
+
+    // Fazer scroll para o preview em mobile
+    scrollToImagePreview();
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;

@@ -50,6 +50,9 @@ export default function ImageEditing({ models }: ImageEditingProps) {
 
   const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
+  // Adicionar a referência para o preview da imagem
+  const imagePreviewRef = useRef<HTMLDivElement>(null);
+
   // Contador de tempo em tempo real
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -380,11 +383,12 @@ export default function ImageEditing({ models }: ImageEditingProps) {
               handleGenerationStart(now);
             }}
             isGenerating={isGenerating}
+            imagePreviewRef={imagePreviewRef}
           />
         </PageContainerLeft>
 
         {/* Right side - Preview */}
-        <PageContainerRight>
+        <PageContainerRight ref={imagePreviewRef}>
           <ImagePreview
             isGenerating={isGenerating}
             isWaitingWebhook={isWaitingWebhook}
