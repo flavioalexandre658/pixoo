@@ -351,7 +351,10 @@ export function FormImageEditing({
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
     // Para flux-schnell com assinatura ativa, não reservar créditos (é ilimitado)
-    if (selectedModel.credits > 0 && !(data.model === "flux-schnell" && subscription)) {
+    if (
+      selectedModel.credits > 0 &&
+      !(data.model === "flux-schnell" && subscription)
+    ) {
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
@@ -366,9 +369,7 @@ export function FormImageEditing({
     try {
       // Validate that if "auto" is selected, we have a detected aspect ratio
       if (data.aspectRatio === "auto" && !detectedAspectRatio) {
-        toast.error(
-          t("pleaseUploadImageForAuto")
-        );
+        toast.error(t("pleaseUploadImageForAuto"));
         setStartedGeneration(false);
         return false;
       }
@@ -421,9 +422,9 @@ export function FormImageEditing({
           result.taskId,
           reservation
             ? {
-              reservationId: reservation.reservationId,
-              modelId: selectedModel.modelId,
-            }
+                reservationId: reservation.reservationId,
+                modelId: selectedModel.modelId,
+              }
             : undefined
         );
       } else if (result?.success) {
@@ -433,7 +434,9 @@ export function FormImageEditing({
         // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
           console.log(
-            `✅ ${t("editingCompletedSuccessfully")} ${reservation.reservationId}`
+            `✅ ${t("editingCompletedSuccessfully")} ${
+              reservation.reservationId
+            }`
           );
           setCurrentReservation(null);
         }
@@ -489,65 +492,115 @@ export function FormImageEditing({
           type="button"
           variant="outline"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center justify-between w-full p-3 h-auto font-medium border-dashed hover:border-solid transition-all duration-200 hover:bg-muted/50"
+          className="flex items-center justify-between w-full p-3 h-auto font-medium border-dashed border-pixoo-purple/30 hover:border-solid hover:border-pixoo-magenta/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 hover:shadow-lg hover:shadow-pixoo-purple/20"
         >
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span>{t("advancedOptions")}</span>
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+              <Settings className="h-4 w-4 text-pixoo-purple" />
+            </div>
+            <span className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+              {t("advancedOptions")}
+            </span>
           </div>
           {showAdvanced ? (
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-4 w-4 text-pixoo-magenta" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4 text-pixoo-magenta" />
           )}
         </Button>
 
         {showAdvanced && (
-          <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+          <div className="space-y-4 p-4 border border-pixoo-purple/20 rounded-xl bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 backdrop-blur-sm shadow-lg">
             {/* Aspect Ratio */}
             <div className="space-y-2">
-              <Label>{t("aspectRatio")}</Label>
+              <Label className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+                {t("aspectRatio")}
+              </Label>
               <Select
                 value={form.watch("aspectRatio")}
                 onValueChange={(value) => form.setValue("aspectRatio", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">
+                <SelectContent className="border-pixoo-purple/20 bg-background/95 backdrop-blur-sm">
+                  <SelectItem
+                    value="auto"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
                     Auto{" "}
                     {detectedAspectRatio
                       ? `(${detectedAspectRatio})`
                       : t("autoDetectFromImage")}
                   </SelectItem>
-                  <SelectItem value="1:1">1:1 ({t("square")})</SelectItem>
-                  <SelectItem value="16:9">16:9 ({t("landscape")})</SelectItem>
-                  <SelectItem value="9:16">9:16 ({t("portrait")})</SelectItem>
-                  <SelectItem value="4:3">4:3 ({t("standard")})</SelectItem>
-                  <SelectItem value="3:4">3:4 ({t("portrait")})</SelectItem>
-                  <SelectItem value="21:9">21:9 ({t("ultrawide")})</SelectItem>
+                  <SelectItem
+                    value="1:1"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
+                    1:1 ({t("square")})
+                  </SelectItem>
+                  <SelectItem
+                    value="16:9"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
+                    16:9 ({t("landscape")})
+                  </SelectItem>
+                  <SelectItem
+                    value="9:16"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
+                    9:16 ({t("portrait")})
+                  </SelectItem>
+                  <SelectItem
+                    value="4:3"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
+                    4:3 ({t("standard")})
+                  </SelectItem>
+                  <SelectItem
+                    value="3:4"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
+                    3:4 ({t("portrait")})
+                  </SelectItem>
+                  <SelectItem
+                    value="21:9"
+                    className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                  >
+                    21:9 ({t("ultrawide")})
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Seed */}
             <div className="space-y-2">
-              <Label htmlFor="seed">{t("seed")}</Label>
+              <Label
+                htmlFor="seed"
+                className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+              >
+                {t("seed")}
+              </Label>
               <Input
                 id="seed"
                 type="number"
                 placeholder={t("seedPlaceholder")}
                 defaultValue={"-1"}
+                className="border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
                 {...form.register("seed", { valueAsNumber: true })}
               />
             </div>
 
             {/* Prompt Upsampling */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-pixoo-purple/10 to-pixoo-pink/10 border border-pixoo-purple/20">
               <div className="space-y-0.5">
-                <Label htmlFor="promptUpsampling">{t("promptUpsampling")}</Label>
-                <p className="text-sm text-muted-foreground">
+                <Label
+                  htmlFor="promptUpsampling"
+                  className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+                >
+                  {t("promptUpsampling")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
                   {t("promptUpsamplingDescription")}
                 </p>
               </div>
@@ -561,10 +614,15 @@ export function FormImageEditing({
       </div>
 
       {/* Image Public Toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-pixoo-purple/10 to-pixoo-pink/10 border border-pixoo-purple/20">
         <div className="space-y-0.5">
-          <Label htmlFor="imagePublic">{t("imagePublic")}</Label>
-          <p className="text-sm text-muted-foreground">
+          <Label
+            htmlFor="imagePublic"
+            className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+          >
+            {t("imagePublic")}
+          </Label>
+          <p className="text-xs text-muted-foreground">
             {t("imagePublicDescription")}
           </p>
         </div>
@@ -579,266 +637,336 @@ export function FormImageEditing({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            {t("title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Mobile View */}
-            <div className="md:hidden space-y-4">
-              <div className="flex items-center gap-2">
-                <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Settings className="h-5 w-5" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t("advancedOptions")}</DialogTitle>
-                    </DialogHeader>
-                    {settingsContent}
-                  </DialogContent>
-                </Dialog>
-                <div className="flex-grow">
+      <div className="relative overflow-hidden">
+        {/* Background gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-pixoo-pink/5 to-pixoo-magenta/10 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent -z-10" />
+
+        {/* Floating decorative elements */}
+        <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-magenta/20 rounded-full blur-xl animate-pulse" />
+        <div className="absolute top-20 right-16 w-32 h-32 bg-gradient-to-br from-pixoo-purple/15 to-pixoo-pink/15 rounded-full blur-2xl animate-pulse delay-1000" />
+        <div className="absolute bottom-10 left-1/4 w-16 h-16 bg-gradient-to-br from-pixoo-magenta/10 to-pixoo-purple/10 rounded-full blur-lg animate-pulse delay-500" />
+
+        <Card className="relative border-2 border-pixoo-purple/20 bg-background/95 backdrop-blur-sm shadow-xl hover:shadow-2xl hover:shadow-pixoo-purple/10 transition-all duration-500 hover:border-pixoo-magenta/30">
+          {/* Card background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 rounded-lg" />
+
+          <CardHeader className="relative">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-pixoo-pink to-pixoo-magenta shadow-lg">
+                <Sparkles className="h-5 w-5 text-white animate-pulse" />
+              </div>
+              <span className="bg-gradient-to-r from-foreground via-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent">
+                {t("title")}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Mobile View */}
+              <div className="md:hidden space-y-4">
+                <div className="flex items-center gap-2">
+                  <Dialog
+                    open={isSettingsOpen}
+                    onOpenChange={setIsSettingsOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                      >
+                        <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+                          <Settings className="h-4 w-4 text-pixoo-purple" />
+                        </div>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="border-pixoo-purple/20 bg-background/95 backdrop-blur-sm">
+                      <DialogHeader>
+                        <DialogTitle className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+                          {t("advancedOptions")}
+                        </DialogTitle>
+                      </DialogHeader>
+                      {settingsContent}
+                    </DialogContent>
+                  </Dialog>
+                  <div className="flex-grow">
+                    <Select
+                      value={form.watch("model")}
+                      onValueChange={(value) => form.setValue("model", value)}
+                    >
+                      <SelectTrigger className="border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="border-pixoo-purple/20 bg-background/95 backdrop-blur-sm">
+                        {models.map((model) => (
+                          <SelectItem
+                            key={model.modelId}
+                            value={model.modelId}
+                            className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span>{model.modelName}</span>
+                              <div className="flex items-center gap-2 ml-2">
+                                {model.credits > 0 && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Coins className="h-3 w-3 text-pixoo-purple" />
+                                    {model.credits} {t("credits")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden md:block space-y-6">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="model"
+                    className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+                  >
+                    {t("modelSelection")}
+                  </Label>
                   <Select
                     value={form.watch("model")}
                     onValueChange={(value) => form.setValue("model", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="border-pixoo-purple/20 bg-background/95 backdrop-blur-sm">
                       {models.map((model) => (
-                        <SelectItem key={model.modelId} value={model.modelId}>
+                        <SelectItem
+                          key={model.modelId}
+                          value={model.modelId}
+                          className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10"
+                        >
                           <div className="flex items-center justify-between w-full">
                             <span>{model.modelName}</span>
                             <div className="flex items-center gap-2 ml-2">
                               {model.credits > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                {model.credits} {t("credits")}
-                              </span>
-                            )}
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Coins className="h-3 w-3 text-pixoo-purple" />
+                                  {model.credits} {t("credits")}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedModel && selectedModel.credits > 0 && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Coins className="h-3 w-3 text-pixoo-purple" />
+                      {t("costCredits", { credits: selectedModel.credits })}
+                    </p>
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* Desktop View */}
-            <div className="hidden md:block space-y-6">
+              {/* Image Upload Section */}
               <div className="space-y-2">
-                <Label htmlFor="model">{t("modelSelection")}</Label>
-                <Select
-                  value={form.watch("model")}
-                  onValueChange={(value) => form.setValue("model", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {models.map((model) => (
-                      <SelectItem key={model.modelId} value={model.modelId}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{model.modelName}</span>
-                          <div className="flex items-center gap-2 ml-2">
-                            {model.credits > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                {model.credits} {t("credits")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedModel && selectedModel.credits > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("costCredits", { credits: selectedModel.credits })}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Image Upload */}
-            <div className="space-y-2">
-              <Label>{t("inputImage")}</Label>
-              {!uploadedImage ? (
+                <Label className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+                  {t("inputImage")}
+                </Label>
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
-                    }`}
+                  className={`relative border-2 border-dashed rounded-xl p-6 transition-all duration-300 ${
+                    isDragging
+                      ? "border-pixoo-magenta/50 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10"
+                      : "border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-br hover:from-pixoo-purple/5 hover:to-pixoo-pink/5"
+                  }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="p-4 rounded-full bg-muted">
-                      <Upload className="h-8 w-8 text-muted-foreground" />
+                  {uploadedImage ? (
+                    <div className="relative">
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden border border-pixoo-purple/20">
+                        <Image
+                          src={uploadedImage}
+                          alt="Uploaded image"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500/80 hover:bg-red-600 backdrop-blur-sm"
+                        onClick={removeUploadedImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      {detectedAspectRatio && (
+                        <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded backdrop-blur-sm">
+                          {detectedAspectRatio}
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{t("dragDropImage")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("supportedFormats")}
+                  ) : (
+                    <div className="text-center">
+                      <div className="mx-auto w-12 h-12 mb-4 p-3 rounded-xl bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+                        <ImageIcon className="w-full h-full text-pixoo-purple" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {t("dragDropImage")}
                       </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300"
+                      >
+                        <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 mr-2">
+                          <Upload className="h-4 w-4 text-pixoo-purple" />
+                        </div>
+                        {t("selectImage")}
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      {t("selectImage")}
-                    </Button>
-                  </div>
+                  )}
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    className="hidden"
                     onChange={handleFileInputChange}
+                    className="hidden"
                   />
                 </div>
-              ) : (
-                <div className="relative border rounded-lg overflow-hidden">
-                  <div className="aspect-video relative">
-                    <Image
-                      src={uploadedImage}
-                      alt={t("uploadedImage")}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={removeUploadedImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              {form.formState.errors.inputImage && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.inputImage.message}
+                <p className="text-xs text-muted-foreground">
+                  {t("supportedFormats")}
                 </p>
-              )}
-            </div>
-
-            {/* Prompt (Common for both views) */}
-            <div className="space-y-2">
-              <Label htmlFor="prompt">{t("prompt")}</Label>
-              <div className="relative">
-                <Textarea
-                  id="prompt"
-                  placeholder={t("promptPlaceholder")}
-                  className="min-h-[100px] resize-none pr-12"
-                  {...form.register("prompt")}
-                />
-                {form.watch("prompt")?.trim() && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 h-8 w-8 p-0"
-                    onClick={handleOptimizePrompt}
-                    disabled={isOptimizingPrompt}
-                    title={t("optimizePromptWithAI")}
-                  >
-                    {isOptimizingPrompt ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                    ) : (
-                      <Zap className="h-4 w-4" />
-                    )}
-                  </Button>
+                {form.formState.errors.inputImage && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.inputImage.message}
+                  </p>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t("promptDescription")} • {t("englishPromptsWork")}
-              </p>
-              {form.formState.errors.prompt && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.prompt.message}
-                </p>
-              )}
-            </div>
 
-            {/* Desktop Settings - Moved to end */}
-            <div className="hidden md:block">{settingsContent}</div>
-
-            {/* Generate Button (Common for both views) */}
-            <div>
-              {selectedModel && selectedModel.credits > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{t("cost")}</span>
-                  <div className="flex items-center gap-1">
-                    <Coins className="h-4 w-4" />
-                    <span
-                      className={
-                        hasEnoughCredits(selectedModel.credits)
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
+              {/* Prompt (Common for both views) */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="prompt"
+                  className="text-sm font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent"
+                >
+                  {t("prompt")}
+                </Label>
+                <div className="relative">
+                  <Textarea
+                    id="prompt"
+                    placeholder={t("promptPlaceholder")}
+                    className="min-h-[100px] resize-none pr-12 border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
+                    {...form.register("prompt")}
+                  />
+                  {form.watch("prompt")?.trim() && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-gradient-to-r hover:from-pixoo-purple/20 hover:to-pixoo-pink/20 transition-all duration-300"
+                      onClick={handleOptimizePrompt}
+                      disabled={isOptimizingPrompt}
+                      title={t("optimizePromptWithAI")}
                     >
-                      {selectedModel.credits} {t("credits")}
-                    </span>
-                  </div>
+                      {isOptimizingPrompt ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-pixoo-purple/30 border-t-pixoo-magenta" />
+                      ) : (
+                        <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+                          <Zap className="h-3 w-3 text-pixoo-purple" />
+                        </div>
+                      )}
+                    </Button>
+                  )}
                 </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={
-                  isGenerating ||
-                  startedGeneration ||
-                  !form.watch("inputImage") ||
-                  (selectedModel &&
-                    selectedModel.credits > 0 &&
-                    !hasEnoughCredits(selectedModel.credits))
-                }
-              >
-                {isGenerating || startedGeneration ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    {t("editing")}
-                  </>
-                ) : selectedModel &&
-                  selectedModel.credits > 0 &&
-                  !hasEnoughCredits(selectedModel.credits) ? (
-                  <>
-                    <Coins className="mr-2" />
-                    {t("insufficientCreditsButton")}
-                  </>
-                ) : (
-                  <>
-                    <WandSparkles className="mr-2" />
-                    {t("editImage")}
-                    {selectedModel && selectedModel.credits > 0 && (
-                      <span className="ml-2 opacity-75">
-                        (-{selectedModel.credits})
-                      </span>
-                    )}
-                  </>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-pixoo-purple" />
+                  {t("englishPromptsWork")}
+                </p>
+                {form.formState.errors.prompt && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.prompt.message}
+                  </p>
                 )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              </div>
+
+              {/* Desktop Settings - Moved to end */}
+              <div className="hidden md:block">{settingsContent}</div>
+
+              {/* Generate Button (Common for both views) */}
+              <div className="space-y-3">
+                {selectedModel && selectedModel.credits > 0 && (
+                  <div className="flex items-center justify-between text-sm p-3 rounded-lg bg-gradient-to-r from-pixoo-purple/10 to-pixoo-pink/10 border border-pixoo-purple/20">
+                    <span className="text-muted-foreground">{t("cost")}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+                        <Coins className="h-3 w-3 text-pixoo-purple" />
+                      </div>
+                      <span
+                        className={
+                          hasEnoughCredits(selectedModel.credits)
+                            ? "text-green-600 font-medium"
+                            : "text-red-600 font-medium"
+                        }
+                      >
+                        {selectedModel.credits} {t("credits")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 font-semibold text-base bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl hover:shadow-pixoo-purple/20 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  size="lg"
+                  disabled={
+                    isGenerating ||
+                    startedGeneration ||
+                    !form.watch("inputImage") ||
+                    (selectedModel &&
+                      selectedModel.credits > 0 &&
+                      !hasEnoughCredits(selectedModel.credits))
+                  }
+                >
+                  {isGenerating || startedGeneration ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white mr-3" />
+                      {t("generating")}
+                    </>
+                  ) : selectedModel &&
+                    selectedModel.credits > 0 &&
+                    !hasEnoughCredits(selectedModel.credits) ? (
+                    <>
+                      <div className="p-1 rounded-md bg-white/20 mr-3">
+                        <Coins className="h-4 w-4" />
+                      </div>
+                      {t("insufficientCreditsButton")}
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-1 rounded-md bg-white/20 mr-3">
+                        <WandSparkles className="h-4 w-4" />
+                      </div>
+                      {t("editImage")}
+                      {selectedModel && selectedModel.credits > 0 && (
+                        <span className="ml-2 opacity-75">
+                          (-{selectedModel.credits})
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Modals */}
       <AuthRequiredModal

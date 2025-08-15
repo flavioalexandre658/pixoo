@@ -38,11 +38,18 @@ export function PageContainerRight({
   return (
     <div
       className={cn(
-        "flex items-center justify-center min-h-[400px] bg-muted rounded-lg border-2 border-dashed",
+        "relative flex items-center justify-center min-h-[600px] rounded-xl bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm border-2 border-dashed border-pixoo-purple/30 shadow-lg shadow-pixoo-purple/10 group hover:border-pixoo-magenta/40 transition-all duration-300",
         className
       )}
     >
-      {children}
+      {/* Gradiente de fundo */}
+      <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 rounded-xl" />
+
+      {/* Elementos decorativos internos */}
+      <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 rounded-full blur-sm animate-pulse" />
+      <div className="absolute bottom-4 left-4 w-6 h-6 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-purple/20 rounded-full blur-sm animate-pulse delay-700" />
+
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

@@ -97,15 +97,9 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
 
   const showOverlay = isHovered || isClicked;
 
-  // Calcular aspect ratio da imagem
-  const getAspectRatio = () => {
-    const [width, height] = image.aspectRatio.split(":").map(Number);
-    return height / width;
-  };
-
   return (
     <div
-      className="relative cursor-pointer break-inside-avoid mb-4 rounded-xl overflow-hidden bg-muted group"
+      className="relative cursor-pointer break-inside-avoid mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-background/95 to-pixoo-purple/10 backdrop-blur-sm border border-pixoo-purple/20 shadow-lg shadow-pixoo-purple/10 hover:shadow-2xl hover:shadow-pixoo-purple/30 hover:border-pixoo-magenta/40 transition-all duration-500 group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
@@ -113,12 +107,16 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
         aspectRatio: `${image.aspectRatio.replace(":", "/")}`,
       }}
     >
+      {/* Elementos decorativos flutuantes */}
+      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-pixoo-purple/30 to-pixoo-magenta/30 rounded-full blur-sm opacity-0 group-hover:opacity-60 transition-opacity duration-300 animate-float" />
+      <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-gradient-to-br from-pixoo-pink/30 to-pixoo-purple/30 rounded-full blur-sm opacity-0 group-hover:opacity-40 transition-opacity duration-300 animate-float-delayed" />
+
       {/* Image */}
       <Image
         src={image.url}
         alt={image.prompt}
         fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         onError={handleImageError}
       />
@@ -126,7 +124,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
       {/* Video Play Button (if applicable) */}
       {image.model.includes("video") && (
         <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="bg-pixoo-dark/50 rounded-full p-3">
+          <div className="bg-gradient-to-br from-pixoo-purple/80 to-pixoo-magenta/80 backdrop-blur-sm rounded-full p-4 shadow-xl shadow-pixoo-purple/30 border border-pixoo-purple/30">
             <Play className="w-8 h-8 text-white fill-white" />
           </div>
         </div>
@@ -135,14 +133,14 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
       {/* Overlay */}
       <div
         className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 transition-opacity duration-300",
+          "absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/50 transition-opacity duration-500",
           showOverlay ? "opacity-100" : "opacity-0"
         )}
       >
         {/* Top Section - User Info and Like */}
         <div
           className={cn(
-            "absolute top-0 left-0 right-0 p-4 transition-all duration-300",
+            "absolute top-0 left-0 right-0 p-4 transition-all duration-500",
             showOverlay
               ? "translate-y-0 opacity-100"
               : "-translate-y-full opacity-0"
@@ -150,7 +148,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10 border-2 border-white shadow-lg">
+              <Avatar className="w-10 h-10 border-2 border-white/80 shadow-xl shadow-pixoo-purple/30 backdrop-blur-sm">
                 {image.user?.avatar ? (
                   <img
                     src={image.user.avatar}
@@ -158,7 +156,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                  <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-pixoo-purple to-pixoo-magenta text-white">
                     {image.user?.name?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 )}
@@ -173,8 +171,8 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
               size="sm"
               variant="ghost"
               className={cn(
-                "text-white hover:bg-white/20 transition-all duration-200 rounded-full p-2",
-                isLiked && "text-red-400 scale-110"
+                "text-white hover:bg-white/20 transition-all duration-300 rounded-full p-2 backdrop-blur-sm border border-white/20 shadow-lg shadow-pixoo-purple/20",
+                isLiked && "text-red-400 scale-110 bg-white/10"
               )}
             >
               <Heart
@@ -191,7 +189,7 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
         {/* Bottom Section - Prompt and Copy Button */}
         <div
           className={cn(
-            "absolute bottom-0 left-0 right-0 p-4 transition-all duration-300",
+            "absolute bottom-0 left-0 right-0 p-4 transition-all duration-500",
             showOverlay
               ? "translate-y-0 opacity-100"
               : "translate-y-full opacity-0"
@@ -199,9 +197,11 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
         >
           <div className="space-y-3">
             {/* Prompt */}
-            <p className="text-white text-sm leading-relaxed line-clamp-2 drop-shadow-lg">
-              {image.prompt}
-            </p>
+            <div className="max-h-20 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+              <p className="text-white text-sm leading-relaxed drop-shadow-lg backdrop-blur-sm bg-black/20 rounded-lg p-3 border border-white/10">
+                {image.prompt}
+              </p>
+            </div>
 
             {/* Copy Button */}
             <div className="flex justify-center">
@@ -209,8 +209,9 @@ export function ExploreImageCard({ image }: ExploreImageCardProps) {
                 onClick={handleCopyPrompt}
                 size="sm"
                 className={cn(
-                  "bg-white/90 hover:bg-gray text-black font-medium transition-all duration-200 rounded-full px-6",
-                  isCopied && "bg-green-500 text-white"
+                  "bg-gradient-to-r from-white/90 to-white/80 hover:from-white hover:to-white/90 text-black font-medium transition-all duration-300 rounded-full px-6 shadow-xl shadow-pixoo-purple/30 border border-white/20 backdrop-blur-sm",
+                  isCopied &&
+                    "bg-gradient-to-r from-green-500 to-green-600 text-white"
                 )}
               >
                 {isCopied ? (

@@ -48,16 +48,25 @@ export function Header({ className }: HeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "sticky top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 relative overflow-hidden",
         className
       )}
     >
-      <div className="flex h-14 items-center justify-between px-4">
+      {/* Background gradients */}
+      <div className="absolute inset-0 bg-gradient-to-r from-pixoo-purple/5 via-pixoo-pink/5 to-pixoo-magenta/10 -z-10" />
+
+      {/* Floating decorative elements */}
+      <div className="absolute top-2 left-20 w-8 h-8 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-magenta/20 rounded-full blur-lg animate-pulse" />
+      <div className="absolute top-1 right-32 w-6 h-6 bg-gradient-to-br from-pixoo-purple/15 to-pixoo-pink/15 rounded-full blur-md animate-pulse delay-500" />
+
+      <div className="flex h-14 items-center justify-between px-4 relative">
         {/* Left side - could be used for breadcrumbs or page title */}
         <div className="flex items-center gap-4">
           <div className="md:hidden" /> {/* Space for mobile menu button */}
           <div className="hidden md:block">
-            <h1 className="text-lg font-semibold">{pageTitle}</h1>
+            <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground via-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent">
+              {pageTitle}
+            </h1>
           </div>
         </div>
 
@@ -66,21 +75,39 @@ export function Header({ className }: HeaderProps) {
           {/* Language Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Globe className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
+              >
+                <Globe className="h-4 w-4 text-pixoo-purple" />
                 <span className="sr-only">{t("changeLanguage")}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("language")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
+            <DropdownMenuContent
+              align="end"
+              className="backdrop-blur-sm bg-card/95 border-pixoo-purple/20"
+            >
+              <DropdownMenuLabel className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+                {t("language")}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-pixoo-purple/20" />
+              <DropdownMenuItem
+                onClick={() => handleLanguageChange("en")}
+                className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
+              >
                 <span className="flex items-center gap-2">🇺🇸 English</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleLanguageChange('pt')}>
+              <DropdownMenuItem
+                onClick={() => handleLanguageChange("pt")}
+                className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
+              >
                 <span className="flex items-center gap-2">🇧🇷 Português</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleLanguageChange('es')}>
+              <DropdownMenuItem
+                onClick={() => handleLanguageChange("es")}
+                className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
+              >
                 <span className="flex items-center gap-2">🇪🇸 Español</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -89,31 +116,33 @@ export function Header({ className }: HeaderProps) {
           {/* Credits Display */}
           {session?.user && <CreditsDisplay variant="compact" />}
 
-          {/* Notifications 
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
-            <span className="sr-only">{t("notifications")}</span>
-          </Button>*/}
-
           {/* User Menu */}
           {session?.user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full hover:ring-2 hover:ring-pixoo-purple/20 transition-all duration-300"
+                >
+                  <Avatar className="h-8 w-8 ring-2 ring-pixoo-purple/20">
                     <AvatarImage
                       src={session?.user?.image || "/avatars/01.png"}
                       alt={session?.user?.name}
                     />
-                    <AvatarFallback>{session?.user?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-pixoo-purple to-pixoo-magenta text-white">
+                      {session?.user?.name?.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent
+                className="w-56 backdrop-blur-sm bg-card/95 border-pixoo-purple/20"
+                align="end"
+                forceMount
+              >
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
+                    <p className="text-sm font-medium leading-none bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
                       {session?.user?.name || "Usuário"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
@@ -121,22 +150,25 @@ export function Header({ className }: HeaderProps) {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
+                <DropdownMenuSeparator className="bg-pixoo-purple/20" />
+                <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
+                  <User className="mr-2 h-4 w-4 text-pixoo-purple" />
                   <span>{t("profile")}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCard className="mr-2 h-4 w-4" />
+                <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
+                  <CreditCard className="mr-2 h-4 w-4 text-pixoo-magenta" />
                   <span>{t("billing")}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
+                <DropdownMenuItem className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300">
+                  <Settings className="mr-2 h-4 w-4 text-pixoo-pink" />
                   <span>{t("settings")}</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                <DropdownMenuSeparator className="bg-pixoo-purple/20" />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-600/10 transition-all duration-300"
+                >
+                  <LogOut className="mr-2 h-4 w-4 text-red-500" />
                   <span>{t("logout")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -144,11 +176,13 @@ export function Header({ className }: HeaderProps) {
           ) : (
             <Button
               variant="ghost"
-              className="relative h-8 w-8 rounded-full"
+              className="relative h-8 w-8 rounded-full hover:ring-2 hover:ring-pixoo-purple/20 transition-all duration-300"
               onClick={handleSignIn}
             >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>AN</AvatarFallback>
+              <Avatar className="h-8 w-8 ring-2 ring-pixoo-purple/20">
+                <AvatarFallback className="bg-gradient-to-br from-pixoo-purple to-pixoo-magenta text-white">
+                  AN
+                </AvatarFallback>
               </Avatar>
             </Button>
           )}

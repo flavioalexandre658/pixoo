@@ -2,14 +2,8 @@
 
 import { Search, Filter, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchBar } from "@/components/ui/image-history/search-bar";
+import { FilterSelect } from "@/components/ui/image-history/filter-select";
 
 interface ExploreFiltersProps {
   selectedCategory: string;
@@ -37,71 +31,95 @@ export function ExploreFilters({
   categories,
 }: ExploreFiltersProps) {
   const t = useTranslations("explore");
-  
+
   const sortOptions = [
     { id: "recent", name: t("mostRecent") },
     { id: "popular", name: t("mostPopular") },
   ];
+
+  const categoryOptions = [
+    { label: t("allCategories"), value: "all" },
+    ...categories.map((category) => ({
+      label: category.charAt(0).toUpperCase() + category.slice(1),
+      value: category,
+    })),
+  ];
+
+  const modelOptions = [
+    { label: t("allModels"), value: "all" },
+    ...models.map((model) => ({
+      label: model.name,
+      value: model.id,
+    })),
+  ];
+
+  const sortSelectOptions = [
+    { label: t("sortBy"), value: "" },
+    ...sortOptions.map((option) => ({
+      label: option.name,
+      value: option.id,
+    })),
+  ];
+
   return (
-    <div className="flex flex-col gap-4 p-4 bg-card rounded-lg border">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder={t("searchPlaceholder")}
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+    <div className="relative overflow-hidden">
+      {/* Elementos decorativos flutuantes */}
+      <div className="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20 rounded-full blur-xl opacity-60 animate-float" />
+      <div className="absolute -bottom-2 -left-2 w-8 h-8 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-purple/20 rounded-full blur-lg opacity-40 animate-float-delayed" />
+      <div className="absolute top-1/2 -right-1 w-6 h-6 bg-gradient-to-br from-pixoo-magenta/20 to-pixoo-pink/20 rounded-full blur-md opacity-50 animate-float-slow" />
 
-      {/* Filters Row */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Category Filter */}
-        <Select value={selectedCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder={t("category")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allCategories")}</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="p-4 bg-gradient-to-br from-background/95 via-pixoo-purple/5 to-pixoo-pink/5 backdrop-blur-sm rounded-xl border border-pixoo-purple/20 shadow-xl shadow-pixoo-purple/10 hover:shadow-2xl hover:shadow-pixoo-purple/20 transition-all duration-500">
+        {/* Search Bar */}
+        <div className="mb-4">
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={t("searchPlaceholder")}
+          />
+        </div>
 
-        {/* Model Filter */}
-        <Select value={selectedModel} onValueChange={onModelChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder={t("model")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allModels")}</SelectItem>
-            {models.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
-                {model.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Filters Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Category Filter */}
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+              <div className="p-1.5 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+                <Filter className="h-3.5 w-3.5 text-pixoo-purple" />
+              </div>
+            </div>
+            <FilterSelect
+              options={categoryOptions}
+              value={selectedCategory}
+              onChange={onCategoryChange}
+              placeholder={t("category")}
+              className="pl-12"
+            />
+          </div>
 
-        {/* Sort Filter */}
-        <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <TrendingUp className="h-4 w-4 mr-2" />
-            <SelectValue placeholder={t("sortBy")} />
-          </SelectTrigger>
-          <SelectContent>
-            {sortOptions.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                {option.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {/* Model Filter */}
+          <FilterSelect
+            options={modelOptions}
+            value={selectedModel}
+            onChange={onModelChange}
+            placeholder={t("model")}
+          />
+
+          {/* Sort Filter */}
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+              <div className="p-1.5 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
+                <TrendingUp className="h-3.5 w-3.5 text-pixoo-purple" />
+              </div>
+            </div>
+            <FilterSelect
+              options={sortSelectOptions}
+              value={sortBy}
+              onChange={onSortChange}
+              placeholder={t("sortBy")}
+              className="pl-12"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
