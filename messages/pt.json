@@ -581,6 +581,12 @@
     "title": "Política de Privacidade",
     "lastUpdated": "Última atualização: {date, date, medium}"
   },
+  "cookieConsent": {
+    "message": "Utilizamos cookies para melhorar sua experiência e analisar o uso do site. Ao continuar navegando, você concorda com nossa",
+    "privacyPolicy": "Política de Privacidade",
+    "accept": "Aceitar",
+    "decline": "Recusar"
+  },
   "landingPage": {
     "navbar": {
       "features": "Funcionalidades",

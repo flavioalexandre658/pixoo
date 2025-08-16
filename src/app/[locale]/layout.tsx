@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
 import { SupportedLocale } from "@/interfaces/shared.interface";
+import { CookieConsent } from "@/components/ui/cookie-consent";
 
 type Props = {
   children: React.ReactNode;
@@ -105,6 +106,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     <NextIntlClientProvider messages={messages} locale={locale}>
       {children}
       <Toaster />
+      <CookieConsent />
     </NextIntlClientProvider>
   );
 }

@@ -581,6 +581,12 @@
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: {date, date, medium}"
   },
+  "cookieConsent": {
+    "message": "We use cookies to improve your experience and analyze site usage. By continuing to browse, you agree to our",
+    "privacyPolicy": "Privacy Policy",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
   "landingPage": {
     "navbar": {
       "features": "Features",
