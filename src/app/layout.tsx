@@ -20,13 +20,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pixoo - AI Image Generator",
   description: "Generate stunning images with AI using Flux models",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
 };
 
 export default async function RootLayout({
