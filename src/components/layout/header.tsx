@@ -60,8 +60,20 @@ export function Header({ className }: HeaderProps) {
     <header
       className={cn(
         "fixed top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 relative overflow-hidden",
+        "supports-[height:100dvh]:h-14 supports-[height:100svh]:h-14", // Usar dynamic viewport units
+        "transform-gpu will-change-transform", // Otimização de performance
+        "env-safe-area-inset-top", // Respeitar safe areas
         className
       )}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        transform: "translateZ(0)", // Force hardware acceleration
+        backfaceVisibility: "hidden", // Prevent flickering
+      }}
     >
       {/* Background gradients */}
       <div className="absolute inset-0 bg-gradient-to-r from-pixoo-purple/5 via-pixoo-pink/5 to-pixoo-magenta/10 -z-10" />
