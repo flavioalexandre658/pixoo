@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
@@ -18,51 +19,55 @@ const Logo: React.FC<LogoProps> = ({
 }) => {
   if (customLogo) {
     return (
-      <div
-        className={cn("flex items-center", showText ? "gap-2" : "", className)}
-      >
-        <img
-          src={customLogo}
-          alt="Pixoo Logo"
-          width={width}
-          height={height}
-          className="object-contain flex-shrink-0 select-none"
-          style={{
-            imageRendering: "crisp-edges",
-            filter: "none",
-            backfaceVisibility: "hidden",
-            transform: "translateZ(0)",
-          }}
-          draggable={false}
-        />
-        {showText && (
-          <span className="bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent font-bold text-lg">
-            Pixoo
-          </span>
-        )}
-      </div>
+      <Link href="/" className="cursor-pointer">
+        <div
+          className={cn("flex items-center hover:opacity-80 transition-opacity", showText ? "gap-2" : "", className)}
+        >
+          <img
+            src={customLogo}
+            alt="Pixoo Logo"
+            width={width}
+            height={height}
+            className="object-contain flex-shrink-0 select-none"
+            style={{
+              imageRendering: "crisp-edges",
+              filter: "none",
+              backfaceVisibility: "hidden",
+              transform: "translateZ(0)",
+            }}
+            draggable={false}
+          />
+          {showText && (
+            <span className="bg-gradient-to-r from-pixoo-purple to-pixoo-magenta bg-clip-text text-transparent font-bold text-lg">
+              Pixoo
+            </span>
+          )}
+        </div>
+      </Link>
     );
   }
 
   return (
-    <div
-      className={cn("flex items-center", showText ? "gap-2" : "", className)}
-    >
+    <Link href="/" className="cursor-pointer">
       <div
-        className="bg-pixoo-dark text-white rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 select-none"
-        style={{
-          width,
-          height,
-          backfaceVisibility: "hidden",
-          transform: "translateZ(0)",
-        }}
+        className={cn("flex items-center hover:opacity-80 transition-opacity", showText ? "gap-2" : "", className)}
       >
-        P
+        <div
+          className="bg-pixoo-dark text-white rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 select-none"
+          style={{
+            width,
+            height,
+            backfaceVisibility: "hidden",
+            transform: "translateZ(0)",
+          }}
+        >
+          P
+        </div>
+        {showText && (
+          <span className="font-bold text-xl text-foreground">Pixoo</span>
+        )}
       </div>
-      {showText && (
-        <span className="font-bold text-xl text-foreground">Pixoo</span>
-      )}
-    </div>
+    </Link>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { GithubIcon, TwitterIcon } from "lucide-react";
+import { InstagramIcon, FacebookIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import Logo from "@/components/branding/logo";
@@ -12,15 +12,20 @@ const Footer = () => {
   const t = useTranslations("footer");
 
   const footerLinks = [
-    { title: t("links.features"), href: "#features" },
-    { title: t("links.pricing"), href: "#pricing" },
-    { title: t("links.faq"), href: "#faq" },
-    { title: t("links.testimonials"), href: "#testimonials" },
+    { title: t("links.features"), href: "/#features" },
+    { title: t("links.pricing"), href: "/#pricing" },
+    { title: t("links.faq"), href: "/#faq" },
+    { title: t("links.testimonials"), href: "/#testimonials" },
+  ];
+
+  const legalLinks = [
+    { title: "Privacy Policy", href: "/privacy-policy" },
+    { title: "Terms of Use", href: "/terms-of-use" },
   ];
 
   const socialLinks = [
-    { name: "Twitter", icon: TwitterIcon, href: "https://twitter.com/pixoo" },
-    { name: "GitHub", icon: GithubIcon, href: "https://github.com/pixoo" },
+    { name: "Instagram", icon: InstagramIcon, href: "https://instagram.com/pixoo_ai" },
+    { name: "Facebook", icon: FacebookIcon, href: "https://facebook.com/pixooai" },
   ];
 
   return (
@@ -33,8 +38,8 @@ const Footer = () => {
       <div className="relative z-10 max-w-screen-xl mx-auto px-6 xl:px-0">
         <div className="py-20 grid grid-cols-1 md:grid-cols-12 gap-y-12 md:gap-x-8">
           {/* Logo, tagline, and social links */}
-          <div className="md:col-span-12 lg:col-span-5">
-            <Logo customLogo="./images/icon.svg" className="text-white" />
+          <div className="md:col-span-12 lg:col-span-4">
+            <Logo customLogo="../images/icon.svg" className="text-white" />
             <p className="mt-6 text-white/80 max-w-sm text-lg leading-relaxed">
               {t("tagline")}
             </p>
@@ -53,8 +58,8 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Links */}
-          <div className="md:col-span-4 lg:col-span-2 lg:mx-auto">
+          {/* Platform Links */}
+          <div className="md:col-span-4 lg:col-span-2">
             <h6 className="font-semibold text-lg text-white mb-2">
               {t("platform")}
             </h6>
@@ -72,8 +77,27 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Legal Links */}
+          <div className="md:col-span-4 lg:col-span-2">
+            <h6 className="font-semibold text-lg text-white mb-2">
+              Legal
+            </h6>
+            <ul className="mt-6 space-y-4">
+              {legalLinks.map(({ title, href }) => (
+                <li key={title}>
+                  <Link
+                    href={href}
+                    className="text-white/70 hover:text-white hover:text-pixoo-pink transition-colors duration-300 text-base"
+                  >
+                    {title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Newsletter */}
-          <div className="md:col-span-8 lg:col-span-5">
+          <div className="md:col-span-12 lg:col-span-4">
             <h6 className="font-semibold text-lg text-white mb-2">
               {t("newsletter.title")}
             </h6>

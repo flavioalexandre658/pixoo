@@ -113,7 +113,7 @@ export const createCheckoutSession = authActionClient
           },
         ],
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/create-image?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/create-image`,
         customer_email: userEmail, // Email do usuário logado
         metadata: {
           userId,

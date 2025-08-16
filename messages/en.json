@@ -681,5 +681,13 @@
     "logoCloud": {
       "title": "Trusted by Creators Worldwide"
     }
+  },
+  "publicImages": {
+    "title": "Community Gallery",
+    "subtitle": "Discover amazing creations made by our community of artists",
+    "noImagesAvailable": "No public images available at the moment.",
+    "errorFetchingImages": "Error fetching public images:",
+    "anonymousUser": "Anonymous User",
+    "createdBy": "by"
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAction } from "next-safe-action/hooks";
 import { Crown, Zap, Star, Check, Loader2, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -60,6 +61,7 @@ export function PlansList({
   const t = useTranslations("subscriptionRequired");
   const { data: session } = useSession();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const router = useRouter();
 
   // Determinar moeda baseada no locale
   const currency = locale === "pt" ? "BRL" : "USD";
@@ -139,6 +141,13 @@ export function PlansList({
       plan.name
     );
     console.log("🔍 onPlanSelect existe?", !!onPlanSelect);
+
+    // Se for plano free, sempre redirecionar para sign-up
+    if (plan.code === "free" || plan.priceInCents === 0) {
+      console.log("📝 Redirecionando para sign-up (plano free)");
+      router.push("/sign-up");
+      return;
+    }
 
     if (onPlanSelect) {
       console.log("📞 Chamando onPlanSelect...");

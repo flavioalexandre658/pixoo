@@ -29,13 +29,13 @@ export default async function RootLayout({
 }>) {
   return (
     <html>
-      <header>
+      <head>
         <GA GA_ID={process.env.NEXT_PUBLIC_GA_ID || ""} />
         <GTM GTM_ID={process.env.NEXT_PUBLIC_GTM_ID || ""} />
         <MetaPixel
           META_PIXEL_ID={process.env.NEXT_PUBLIC_META_PIXEL_ID || ""}
         />
-      </header>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

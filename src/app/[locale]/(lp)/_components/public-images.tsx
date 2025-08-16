@@ -28,7 +28,7 @@ interface PublicImage {
 const PublicImages = () => {
   const [images, setImages] = useState<PublicImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const t = useTranslations();
+  const t = useTranslations("publicImages");
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -38,14 +38,14 @@ const PublicImages = () => {
           setImages(response.data.data || []);
         }
       } catch (error) {
-        console.error("Erro ao buscar imagens públicas:", error);
+        console.error(t("errorFetchingImages"), error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchImages();
-  }, []);
+  }, [t]);
 
   // Filtrar apenas imagens válidas
   const validImages = images.filter((img) => img.imageUrl);
@@ -66,10 +66,10 @@ const PublicImages = () => {
       <div className="relative z-10 h-full w-full">
         <div className="text-center mb-16">
           <h2 className="mb-6 px-6 text-4xl font-bold tracking-tight md:text-5xl bg-gradient-to-br from-foreground via-foreground to-pixoo-magenta bg-clip-text text-transparent">
-            Galeria da Comunidade
+            {t("title")}
           </h2>
           <p className="mb-12 px-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Descubra criações incríveis feitas por nossa comunidade de artistas
+            {t("subtitle")}
           </p>
         </div>
 
@@ -77,10 +77,10 @@ const PublicImages = () => {
           <div className="relative">
             <div className="absolute inset-y-0 left-0 z-10 w-[15%] bg-gradient-to-r from-background to-transparent" />
             <div className="absolute inset-y-0 right-0 z-10 w-[15%] bg-gradient-to-l from-background to-transparent" />
-            <Marquee className="[--duration:60s]">
+            <Marquee className="[--duration:120s]">
               <ImageList images={validImages.slice(0, 20)} />
             </Marquee>
-            <Marquee reverse className="mt-6 [--duration:60s]">
+            <Marquee reverse className="mt-6 [--duration:120s]">
               <ImageList images={validImages.slice(20, 40)} />
             </Marquee>
           </div>
@@ -90,7 +90,7 @@ const PublicImages = () => {
               <Sparkles className="w-8 h-8 text-pixoo-magenta" />
             </div>
             <p className="text-lg">
-              Nenhuma imagem pública disponível no momento.
+              {t("noImagesAvailable")}
             </p>
           </div>
         )}
@@ -105,6 +105,7 @@ const ImageList = ({ images }: { images: PublicImage[] }) =>
 const ImageCard = ({ image }: { image: PublicImage }) => {
   const [hasImageError, setHasImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const t = useTranslations("publicImages");
 
   const handleImageError = () => {
     setHasImageError(true);
@@ -176,7 +177,7 @@ const ImageCard = ({ image }: { image: PublicImage }) => {
                     {image.user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <p className="text-white/80 text-xs">por {image.user.name}</p>
+                <p className="text-white/80 text-xs">{t("createdBy")} {image.user.name}</p>
               </div>
             )}
           </div>
