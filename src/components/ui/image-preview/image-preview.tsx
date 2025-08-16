@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Download, Eye, Trash2, Sparkles, Zap } from "lucide-react";
+import { Download, Eye, Trash2, Sparkles, Zap, ZoomIn, ZoomOut, Crop } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 
@@ -34,6 +34,8 @@ function ImagePreviewComponent({
   const t = useTranslations("imagePreview");
   const [imageError, setImageError] = useState(false);
   const [useProxy, setUseProxy] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [cropped, setCropped] = useState(false);
 
   // Função para obter a URL da imagem (direta ou via proxy)
   const getImageUrl = (originalUrl: string) => {
@@ -96,11 +98,58 @@ function ImagePreviewComponent({
           {/* Gradiente de fundo */}
           <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 rounded-xl" />
 
-          {/* Header com título e botões */}
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h3 className="text-lg font-semibold bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
-              {t("generatedImage")}
-            </h3>
+          {/* Header com título e controles */}
+          <div className="relative flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h3 className="text-lg font-semibold bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
+                {t("generatedImage")}
+              </h3>
+
+              {/* Controles de zoom */}
+              <div className="flex gap-1.5 items-center h-11 px-2 rounded-lg bg-gradient-to-r from-pixoo-purple/5 to-pixoo-pink/5 border border-pixoo-purple/20 backdrop-blur-sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
+                  className="h-7 w-7 p-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                >
+                  <ZoomOut className="h-3.5 w-3.5 text-pixoo-purple" />
+                </Button>
+
+                <div className="flex-1 min-w-0 px-2">
+                  <span className="text-xs font-medium bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent block text-center">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setZoom(Math.min(2, zoom + 0.25))}
+                  className="h-7 w-7 p-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                >
+                  <ZoomIn className="h-3.5 w-3.5 text-pixoo-purple" />
+                </Button>
+
+                <Button
+                  variant={cropped ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCropped(!cropped)}
+                  title={cropped ? "Ver imagem completa" : "Ver imagem cortada"}
+                  className={
+                    cropped
+                      ? "h-7 w-7 p-0 bg-gradient-to-r from-pixoo-purple to-pixoo-magenta hover:from-pixoo-purple/90 hover:to-pixoo-magenta/90 border-0 shadow-lg shadow-pixoo-purple/30 transition-all duration-300"
+                      : "h-7 w-7 p-0 border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-pink/10 transition-all duration-300 hover:shadow-lg hover:shadow-pixoo-purple/20"
+                  }
+                >
+                  <Crop
+                    className={`h-3.5 w-3.5 ${
+                      cropped ? "text-white" : "text-pixoo-purple"
+                    }`}
+                  />
+                </Button>
+              </div>
+            </div>
 
             {/* Botões de ação */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -194,25 +243,33 @@ function ImagePreviewComponent({
                 {/* Overlay gradiente sutil */}
                 <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
 
-                <Image
-                  key={`${generatedImage}-${useProxy}`}
-                  src={getImageUrl(generatedImage)}
-                  alt={t("generatedImageAlt")}
-                  fill
-                  style={{ objectFit: "cover" }}
-                  className="transition-all duration-500 group-hover:scale-105"
-                  unoptimized={true}
-                  onLoad={() => {
-                    setImageError(false);
+                <div 
+                  className="w-full h-full flex items-center justify-center"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transition: 'transform 0.3s ease-in-out'
                   }}
-                  onError={() => {
-                    if (!useProxy) {
-                      setUseProxy(true);
-                    } else {
-                      setImageError(true);
-                    }
-                  }}
-                />
+                >
+                  <Image
+                    key={`${generatedImage}-${useProxy}`}
+                    src={getImageUrl(generatedImage)}
+                    alt={t("generatedImageAlt")}
+                    fill
+                    style={{ objectFit: cropped ? "cover" : "contain" }}
+                    className="transition-all duration-500 group-hover:scale-105"
+                    unoptimized={true}
+                    onLoad={() => {
+                      setImageError(false);
+                    }}
+                    onError={() => {
+                      if (!useProxy) {
+                        setUseProxy(true);
+                      } else {
+                        setImageError(true);
+                      }
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>

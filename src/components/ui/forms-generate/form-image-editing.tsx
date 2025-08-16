@@ -1165,7 +1165,7 @@ export function FormImageEditing({
                           src={uploadedImage}
                           alt="Uploaded image"
                           fill
-                          className="object-cover"
+                          className="object-contain"
                         />
                       </div>
                       <Button
