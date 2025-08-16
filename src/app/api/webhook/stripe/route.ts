@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { db } from "../../../../db";
 import { subscriptions, plans } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
-import { earnCredits } from "@/actions/credits/earn/earn-credits.action";
+import { trackConversionMetaServer } from "@/utils/tracking/server-integrations";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not set");
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       const subscription = await stripe.subscriptions.retrieve(
         session.subscription as string,
         {
-          expand: ['latest_invoice', 'items.data.price']
+          expand: ["latest_invoice", "items.data.price"],
         }
       );
 
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         status: subscription.status,
         current_period_start: (subscription as any).current_period_start,
         current_period_end: (subscription as any).current_period_end,
-        customer: subscription.customer
+        customer: subscription.customer,
       });
 
       // Buscar metadata na invoice se não estiver na subscription
@@ -142,12 +142,13 @@ export async function POST(req: NextRequest) {
         currentPeriodStart,
         canceledAt,
         trialStart,
-        trialEnd
+        trialEnd,
       });
 
-      const renewsAt = currentPeriodEnd && !isNaN(currentPeriodEnd)
-        ? new Date(currentPeriodEnd * 1000)
-        : new Date();
+      const renewsAt =
+        currentPeriodEnd && !isNaN(currentPeriodEnd)
+          ? new Date(currentPeriodEnd * 1000)
+          : new Date();
 
       const values = {
         id: subscription.id,
@@ -156,20 +157,18 @@ export async function POST(req: NextRequest) {
         status: subscription.status,
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: subscription.customer as string,
-        currentPeriodStart: currentPeriodStart && !isNaN(currentPeriodStart)
-          ? new Date(currentPeriodStart * 1000)
-          : new Date(),
+        currentPeriodStart:
+          currentPeriodStart && !isNaN(currentPeriodStart)
+            ? new Date(currentPeriodStart * 1000)
+            : new Date(),
         currentPeriodEnd: renewsAt,
         cancelAtPeriodEnd: (subscription as any).cancel_at_period_end || false,
-        canceledAt: canceledAt && !isNaN(canceledAt)
-          ? new Date(canceledAt * 1000)
-          : null,
-        trialStart: trialStart && !isNaN(trialStart)
-          ? new Date(trialStart * 1000)
-          : null,
-        trialEnd: trialEnd && !isNaN(trialEnd)
-          ? new Date(trialEnd * 1000)
-          : null,
+        canceledAt:
+          canceledAt && !isNaN(canceledAt) ? new Date(canceledAt * 1000) : null,
+        trialStart:
+          trialStart && !isNaN(trialStart) ? new Date(trialStart * 1000) : null,
+        trialEnd:
+          trialEnd && !isNaN(trialEnd) ? new Date(trialEnd * 1000) : null,
       };
 
       // Verificar se já existe uma assinatura para este usuário
@@ -213,20 +212,24 @@ export async function POST(req: NextRequest) {
         const { db } = await import("@/db");
         const { userCredits, creditTransactions } = await import("@/db/schema");
         const { eq } = await import("drizzle-orm");
-        
+
         // Obter ou criar créditos do usuário
         let userCredit = await db.query.userCredits.findFirst({
           where: eq(userCredits.userId, userId),
         });
 
         if (!userCredit) {
-          userCredit = await db.insert(userCredits).values({
-            id: crypto.randomUUID(),
-            userId,
-            balance: 0,
-            totalEarned: 0,
-            totalSpent: 0,
-          }).returning().then((res) => res[0]);
+          userCredit = await db
+            .insert(userCredits)
+            .values({
+              id: crypto.randomUUID(),
+              userId,
+              balance: 0,
+              totalEarned: 0,
+              totalSpent: 0,
+            })
+            .returning()
+            .then((res) => res[0]);
         }
 
         const newBalance = (userCredit?.balance ?? 0) + plan.credits;
@@ -255,6 +258,41 @@ export async function POST(req: NextRequest) {
         console.log(
           `💰 [Stripe Webhook] ${plan.credits} créditos adicionados para usuário ${userId}`
         );
+      }
+
+      // Tracking de conversão
+      try {
+        const userData = {
+          uuid: userId,
+          email: session.customer_details?.email,
+          name: session.customer_details?.name,
+          phone: session.customer_details?.phone,
+        };
+
+        const productData = {
+          id: planId,
+          name: plan?.name || "Subscription",
+          price: (session.amount_total || 0) / 100, // Converter de centavos
+        };
+
+        // Meta Pixel
+        if (
+          process.env.NEXT_PUBLIC_META_PIXEL_ID &&
+          process.env.META_ACCESS_TOKEN
+        ) {
+          await trackConversionMetaServer(
+            process.env.META_ACCESS_TOKEN,
+            process.env.NEXT_PUBLIC_META_PIXEL_ID,
+            userData,
+            productData,
+            "Purchase"
+          );
+        }
+
+        console.log("✅ Tracking de conversão executado com sucesso");
+      } catch (error) {
+        console.error("❌ Erro no tracking de conversão:", error);
+        // Não falhar o webhook por causa do tracking
       }
 
       console.log(
@@ -298,19 +336,21 @@ export async function POST(req: NextRequest) {
 
         const currentPeriodEnd = (subscription as any).current_period_end;
         const currentPeriodStart = (subscription as any).current_period_start;
-        
-        const renewsAt = currentPeriodEnd && !isNaN(currentPeriodEnd)
-          ? new Date(currentPeriodEnd * 1000)
-          : new Date();
+
+        const renewsAt =
+          currentPeriodEnd && !isNaN(currentPeriodEnd)
+            ? new Date(currentPeriodEnd * 1000)
+            : new Date();
 
         // Atualizar dados da assinatura
         await db
           .update(subscriptions)
           .set({
             status: subscription.status,
-            currentPeriodStart: currentPeriodStart && !isNaN(currentPeriodStart)
-              ? new Date(currentPeriodStart * 1000)
-              : new Date(),
+            currentPeriodStart:
+              currentPeriodStart && !isNaN(currentPeriodStart)
+                ? new Date(currentPeriodStart * 1000)
+                : new Date(),
             currentPeriodEnd: renewsAt,
             cancelAtPeriodEnd:
               (subscription as any).cancel_at_period_end || false,
@@ -323,26 +363,33 @@ export async function POST(req: NextRequest) {
           const plan = dbSubscription.plan;
           if (plan && plan.credits > 0) {
             // Lógica direta no banco para renovação de créditos
-            const { userCredits, creditTransactions } = await import("@/db/schema");
+            const { userCredits, creditTransactions } = await import(
+              "@/db/schema"
+            );
             const { eq } = await import("drizzle-orm");
-            
+
             // Obter créditos do usuário
             let userCredit = await db.query.userCredits.findFirst({
               where: eq(userCredits.userId, dbSubscription.userId),
             });
 
             if (!userCredit) {
-              userCredit = await db.insert(userCredits).values({
-                id: crypto.randomUUID(),
-                userId: dbSubscription.userId,
-                balance: 0,
-                totalEarned: 0,
-                totalSpent: 0,
-              }).returning().then((res) => res[0]);
+              userCredit = await db
+                .insert(userCredits)
+                .values({
+                  id: crypto.randomUUID(),
+                  userId: dbSubscription.userId,
+                  balance: 0,
+                  totalEarned: 0,
+                  totalSpent: 0,
+                })
+                .returning()
+                .then((res) => res[0]);
             }
 
             const newBalance = (userCredit?.balance ?? 0) + plan.credits;
-            const newTotalEarned = (userCredit?.totalEarned ?? 0) + plan.credits;
+            const newTotalEarned =
+              (userCredit?.totalEarned ?? 0) + plan.credits;
 
             await db
               .update(userCredits)
@@ -397,24 +444,28 @@ export async function POST(req: NextRequest) {
       const currentPeriodEnd = (subscription as any).current_period_end;
       const currentPeriodStart = (subscription as any).current_period_start;
       const canceledAt = (subscription as any).canceled_at;
-      
-      const renewsAt = currentPeriodEnd && !isNaN(currentPeriodEnd)
-        ? new Date(currentPeriodEnd * 1000)
-        : new Date();
+
+      const renewsAt =
+        currentPeriodEnd && !isNaN(currentPeriodEnd)
+          ? new Date(currentPeriodEnd * 1000)
+          : new Date();
 
       // Atualizar status da assinatura
       await db
         .update(subscriptions)
         .set({
           status: subscription.status,
-          currentPeriodStart: currentPeriodStart && !isNaN(currentPeriodStart)
-            ? new Date(currentPeriodStart * 1000)
-            : new Date(),
+          currentPeriodStart:
+            currentPeriodStart && !isNaN(currentPeriodStart)
+              ? new Date(currentPeriodStart * 1000)
+              : new Date(),
           currentPeriodEnd: renewsAt,
-          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end || false,
-          canceledAt: canceledAt && !isNaN(canceledAt)
-            ? new Date(canceledAt * 1000)
-            : null,
+          cancelAtPeriodEnd:
+            (subscription as any).cancel_at_period_end || false,
+          canceledAt:
+            canceledAt && !isNaN(canceledAt)
+              ? new Date(canceledAt * 1000)
+              : null,
           updatedAt: new Date(),
         })
         .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
