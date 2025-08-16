@@ -695,5 +695,13 @@
     "errorFetchingImages": "Error fetching public images:",
     "anonymousUser": "Anonymous User",
     "createdBy": "by"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "subtitle": "Oops! The page you're looking for doesn't exist.",
+    "description": "The page may have been moved or deleted, or you may have typed the address incorrectly.",
+    "goHome": "Go Back Home",
+    "exploreGallery": "Explore Gallery",
+    "contactSupport": "If you believe this is a mistake, please contact us."
   }
 }

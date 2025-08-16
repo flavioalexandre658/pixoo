@@ -695,5 +695,13 @@
     "errorFetchingImages": "Error al buscar imágenes públicas:",
     "anonymousUser": "Usuario anónimo",
     "createdBy": "por"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "subtitle": "¡Ups! La página que estás buscando no existe.",
+    "description": "Es posible que la página haya sido movida o eliminada, o que hayas escrito la dirección incorrectamente.",
+    "goHome": "Volver al inicio",
+    "exploreGallery": "Explorar galería",
+    "contactSupport": "Si crees que esto es un error, contáctanos."
   }
 }
