@@ -3,7 +3,12 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { authActionClient } from "@/lib/safe-action";
-import { userCredits, creditTransactions, subscriptions } from "@/db/schema";
+import {
+  userCredits,
+  creditTransactions,
+  subscriptions,
+  modelCosts,
+} from "@/db/schema";
 import { z } from "zod";
 
 const spendFreeCreditsSchema = z.object({
@@ -19,6 +24,23 @@ export const spendFreeCredits = authActionClient
     const { modelId, description, imageId } = parsedInput;
 
     try {
+      // Buscar custo do modelo
+      const modelCost = await db.query.modelCosts.findFirst({
+        where: and(
+          eq(modelCosts.modelId, modelId),
+          eq(modelCosts.isActive, "true")
+        ),
+      });
+
+      if (!modelCost) {
+        return {
+          success: false,
+          errors: {
+            _form: [`Modelo ${modelId} não encontrado`],
+          },
+        };
+      }
+
       // Verificar se o usuário tem plano ativo
       const activeSubscription = await db.query.subscriptions.findFirst({
         where: and(
@@ -54,24 +76,27 @@ export const spendFreeCredits = authActionClient
       }
 
       // Verificar se tem créditos gratuitos suficientes
-      if (userCredit.freeCreditsBalance < 1) {
+      if (userCredit.freeCreditsBalance < modelCost.credits) {
         return {
           success: false,
           errors: {
-            _form: ["Créditos gratuitos insuficientes"],
+            _form: [
+              `Créditos gratuitos insuficientes. Necessário: ${modelCost.credits}, Disponível: ${userCredit.freeCreditsBalance}`,
+            ],
           },
         };
       }
 
-      // Gastar 1 crédito gratuito
-      const newFreeCreditsBalance = userCredit.freeCreditsBalance - 1;
+      // Gastar créditos gratuitos baseado no custo do modelo
+      const newFreeCreditsBalance =
+        userCredit.freeCreditsBalance - modelCost.credits;
       const now = new Date();
 
       await db
         .update(userCredits)
         .set({
           freeCreditsBalance: newFreeCreditsBalance,
-          totalSpent: userCredit.totalSpent + 1,
+          totalSpent: userCredit.totalSpent + modelCost.credits,
           updatedAt: now,
         })
         .where(eq(userCredits.userId, userId));
@@ -81,12 +106,16 @@ export const spendFreeCredits = authActionClient
         id: crypto.randomUUID(),
         userId,
         type: "spent",
-        amount: -1,
-        description: description || `Geração de imagem gratuita - ${modelId}`,
+        amount: -modelCost.credits,
+        description:
+          description ||
+          `Geração de imagem gratuita - ${modelCost.modelName} (${modelCost.credits} créditos)`,
         relatedImageId: imageId,
         balanceAfter: userCredit.balance, // Balance normal não muda
         metadata: JSON.stringify({
           modelId,
+          modelName: modelCost.modelName,
+          creditsUsed: modelCost.credits,
           freeCreditsUsed: true,
           freeCreditsBalanceAfter: newFreeCreditsBalance,
         }),
@@ -97,7 +126,8 @@ export const spendFreeCredits = authActionClient
         success: true,
         data: {
           freeCreditsBalance: newFreeCreditsBalance,
-          message: "Crédito gratuito usado com sucesso",
+          creditsUsed: modelCost.credits,
+          message: `${modelCost.credits} crédito(s) gratuito(s) usado(s) com sucesso`,
         },
       };
     } catch (error) {
@@ -126,6 +156,23 @@ export async function spendFreeCreditsInternal({
   imageId?: string;
 }) {
   try {
+    // Buscar custo do modelo
+    const modelCost = await db.query.modelCosts.findFirst({
+      where: and(
+        eq(modelCosts.modelId, modelId),
+        eq(modelCosts.isActive, "true")
+      ),
+    });
+
+    if (!modelCost) {
+      return {
+        success: false,
+        errors: {
+          _form: [`Modelo ${modelId} não encontrado`],
+        },
+      };
+    }
+
     // Verificar se o usuário tem plano ativo
     const activeSubscription = await db.query.subscriptions.findFirst({
       where: and(
@@ -159,24 +206,27 @@ export async function spendFreeCreditsInternal({
     }
 
     // Verificar se tem créditos gratuitos suficientes
-    if (userCredit.freeCreditsBalance < 1) {
+    if (userCredit.freeCreditsBalance < modelCost.credits) {
       return {
         success: false,
         errors: {
-          _form: ["Créditos gratuitos insuficientes"],
+          _form: [
+            `Créditos gratuitos insuficientes. Necessário: ${modelCost.credits}, Disponível: ${userCredit.freeCreditsBalance}`,
+          ],
         },
       };
     }
 
-    // Gastar 1 crédito gratuito
-    const newFreeCreditsBalance = userCredit.freeCreditsBalance - 1;
+    // Gastar créditos gratuitos baseado no custo do modelo
+    const newFreeCreditsBalance =
+      userCredit.freeCreditsBalance - modelCost.credits;
     const now = new Date();
 
     await db
       .update(userCredits)
       .set({
         freeCreditsBalance: newFreeCreditsBalance,
-        totalSpent: userCredit.totalSpent + 1,
+        totalSpent: userCredit.totalSpent + modelCost.credits,
         updatedAt: now,
       })
       .where(eq(userCredits.userId, userId));
@@ -186,12 +236,16 @@ export async function spendFreeCreditsInternal({
       id: crypto.randomUUID(),
       userId,
       type: "spent",
-      amount: -1,
-      description: description || `Geração de imagem gratuita - ${modelId}`,
+      amount: -modelCost.credits,
+      description:
+        description ||
+        `Geração de imagem gratuita - ${modelCost.modelName} (${modelCost.credits} créditos)`,
       relatedImageId: imageId,
       balanceAfter: userCredit.balance, // Balance normal não muda
       metadata: JSON.stringify({
         modelId,
+        modelName: modelCost.modelName,
+        creditsUsed: modelCost.credits,
         freeCreditsUsed: true,
         freeCreditsBalanceAfter: newFreeCreditsBalance,
       }),
@@ -202,7 +256,8 @@ export async function spendFreeCreditsInternal({
       success: true,
       data: {
         freeCreditsBalance: newFreeCreditsBalance,
-        message: "Crédito gratuito usado com sucesso",
+        creditsUsed: modelCost.credits,
+        message: `${modelCost.credits} crédito(s) gratuito(s) usado(s) com sucesso`,
       },
     };
   } catch (error) {
