@@ -245,3 +245,51 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--pixoo-purple) / 0.3);
 }
+
+/* Mobile viewport fixes for virtual keyboard */
+@media screen and (max-width: 768px) {
+  /* Prevent virtual keyboard from affecting fixed elements */
+  .mobile-header-fix {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+    -webkit-transform: translateZ(0) !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+
+  /* Ensure main content has proper top padding on mobile */
+  .mobile-content-spacing {
+    padding-top: 3.5rem !important; /* 56px - altura do header */
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Force hardware acceleration for better performance */
+  body {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Ensure desktop layout remains unchanged */
+@media screen and (min-width: 769px) {
+  .mobile-header-fix {
+    position: relative;
+  }
+
+  .mobile-content-spacing {
+    padding-top: 0;
+  }
+}
