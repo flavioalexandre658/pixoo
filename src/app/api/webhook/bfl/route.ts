@@ -6,6 +6,7 @@ import {
   confirmCreditsWebhook,
   cancelReservationWebhook,
 } from "../../../../actions/credits";
+import { spendFreeCredits } from "../../../../actions/credits/spend/spend-free-credits.action";
 import { getImageByTaskIdInternal } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 import {
   uploadImageToS3,
@@ -29,7 +30,7 @@ interface WebhookPayload {
   progress?: number;
 }
 
-// Store temporário para resultados (em produção, usar banco de dados)
+// Armazenar resultados temporariamente
 const webhookResults = new Map<string, WebhookPayload>();
 
 export async function POST(request: NextRequest) {
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
         : payload.status === "processing"
         ? "Processing"
         : "Error";
+
     if (mappedStatus === "Ready") {
       webhookResults.set(payload.task_id, payload);
 
@@ -258,6 +260,35 @@ export async function POST(request: NextRequest) {
             );
             // Não falhar o webhook por erro de créditos
           }
+        } else {
+          // Se não há reservationId, significa que está usando créditos gratuitos
+          if (imageRecord?.model) {
+            try {
+              const spendResult = await spendFreeCredits({
+                modelId: imageRecord?.model,
+                description: `Geração de imagem concluída via webhook - ${imageRecord?.model}`,
+                imageId: imageRecord?.id,
+              });
+
+              if (spendResult.serverError || !spendResult.data?.success) {
+                console.error(
+                  "Erro ao gastar créditos gratuitos via webhook:",
+                  spendResult.data?.errors || spendResult.serverError
+                );
+              } else {
+                console.log(
+                  `✅ Free credits spent via webhook for task: ${payload.task_id}`
+                );
+              }
+            } catch (creditError) {
+              console.error(
+                `❌ Error spending free credits via webhook for task ${payload.task_id}:`,
+                creditError
+              );
+            }
+          } else {
+            console.log("Modelo nao encontrado para cobrar FreeCredits");
+          }
         }
       } catch (dbError) {
         console.error(
@@ -300,37 +331,6 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Após o upload da imagem e atualização do status
-        if (image.reservationId) {
-          // Se há reservationId, confirmar créditos pagos
-          const confirmResult = await confirmCreditsWebhook({
-            reservationId: image.reservationId,
-            imageId: image.id,
-            modelId: image.model,
-            description: `Geração de imagem concluída via webhook - ${image.model}`,
-          });
-
-          if (confirmResult.serverError || !confirmResult.data?.success) {
-            console.error(
-              "Erro ao confirmar créditos via webhook:",
-              confirmResult.data?.errors || confirmResult.serverError
-            );
-          }
-        } else {
-          // Se não há reservationId, significa que está usando créditos gratuitos
-          const spendResult = await spendFreeCredits({
-            modelId: image.model,
-            description: `Geração de imagem concluída via webhook - ${image.model}`,
-            imageId: image.id,
-          });
-
-          if (spendResult.serverError || !spendResult.data?.success) {
-            console.error(
-              "Erro ao gastar créditos gratuitos via webhook:",
-              spendResult.data?.errors || spendResult.serverError
-            );
-          }
-        }
         // Atualizar status para erro
         await db
           .update(generatedImages)
