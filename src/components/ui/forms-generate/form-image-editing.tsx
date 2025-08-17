@@ -31,20 +31,16 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useCredits } from "@/hooks/use-credits";
+
 import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
 import Image from "next/image";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
 import { proxyImage } from "@/actions/proxy-image/proxy-image.action";
+import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
+
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/contexts/subscription-context";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
@@ -82,7 +78,6 @@ interface FormImageEditingProps {
 
 export function FormImageEditing({
   models,
-  onImageGenerated,
   onGenerationStart,
   onStartPolling,
   onGenerationComplete,
@@ -111,15 +106,37 @@ export function FormImageEditing({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
+  const [freeCredits, setFreeCredits] = useState<{
+    freeCreditsBalance: number;
+    hasActiveSubscription: boolean;
+    canUseFreeCredits: boolean;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const { subscription } = useSubscription();
   const params = useParams();
   const locale = params.locale as string;
   const router = useRouter();
+
+  // Função para buscar créditos gratuitos
+  const fetchFreeCredits = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const result = await executeGetUserFreeCredits({});
+      if (result?.data?.success) {
+        setFreeCredits(result.data.data || null);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar créditos gratuitos:", error);
+    }
+  };
+
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
   const { executeAsync: executeProxyImage } = useAction(proxyImage);
+  const { executeAsync: executeGetUserFreeCredits } =
+    useAction(getUserFreeCredits);
 
   // Reset startedGeneration when generation is complete
   useEffect(() => {
@@ -128,6 +145,11 @@ export function FormImageEditing({
       onGenerationComplete?.();
     }
   }, [isGenerating, startedGeneration, onGenerationComplete]);
+
+  // Buscar créditos gratuitos quando a sessão estiver disponível
+  useEffect(() => {
+    fetchFreeCredits();
+  }, [session?.user?.id]);
 
   const form = useForm<FormImageEditingForm>({
     resolver: zodResolver(formImageEditingSchema),
@@ -470,8 +492,19 @@ export function FormImageEditing({
       return;
     }
 
-    // Verificar se o usuário tem assinatura ativa
-    if (!subscription) {
+    // MUDANÇA TEMPORÁRIA: Permitir otimização com freeCredits
+    // Código original (comentado para futuras reversões):
+    // // Verificar se o usuário tem assinatura ativa
+    // if (!subscription) {
+    //   setShowSubscriptionModal(true);
+    //   return;
+    // }
+
+    // Nova lógica: Verificar se tem assinatura OU créditos gratuitos
+    if (
+      !subscription &&
+      (!freeCredits || freeCredits.freeCreditsBalance <= 0)
+    ) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -583,18 +616,37 @@ export function FormImageEditing({
       return false;
     }
 
-    // Verificar se precisa de assinatura baseado no modelo
-    if (!subscription) {
-      // Para flux-schnell, sempre exigir assinatura no image editing
-      // (diferente do text-to-image que permite créditos gratuitos)
-      setShowPlansModal(true);
-      return false;
-    }
+    // MUDANÇA TEMPORÁRIA: Permitir qualquer modelo com freeCredits
+    // Código original (comentado para futuras reversões):
+    // // Verificar se precisa de assinatura baseado no modelo
+    // if (!subscription) {
+    //   // Para flux-schnell, sempre exigir assinatura no image editing
+    //   // (diferente do text-to-image que permite créditos gratuitos)
+    //   setShowPlansModal(true);
+    //   return false;
+    // }
+    //
+    // // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
+    // if (data.model !== "flux-schnell" && !subscription) {
+    //   setShowSubscriptionModal(true);
+    //   return false;
+    // }
 
-    // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
-    if (data.model !== "flux-schnell" && !subscription) {
-      setShowSubscriptionModal(true);
-      return false;
+    // Nova lógica: Verificar créditos específicos para cada modelo
+    if (!subscription) {
+      // Se não tem assinatura, verificar se tem créditos gratuitos suficientes
+      if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+        setShowPlansModal(true);
+        return false;
+      }
+    } else {
+      // Se tem assinatura, verificar créditos normais para modelos que custam créditos
+      if (selectedModel.credits > 0) {
+        if (!hasEnoughCredits(selectedModel.credits)) {
+          setShowPlansModal(true);
+          return false;
+        }
+      }
     }
 
     // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
@@ -608,17 +660,46 @@ export function FormImageEditing({
 
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
-    // Para flux-schnell com assinatura ativa, não reservar créditos (é ilimitado)
-    if (
-      selectedModel.credits > 0 &&
-      !(data.model === "flux-schnell" && subscription)
-    ) {
+
+    // MUDANÇA TEMPORÁRIA: Permitir qualquer modelo com freeCredits
+    // Código original (comentado para futuras reversões):
+    // // Para flux-schnell com assinatura ativa, não reservar créditos (é ilimitado)
+    // if (
+    //   selectedModel.credits > 0 &&
+    //   !(data.model === "flux-schnell" && subscription)
+    // ) {
+    //   reservation = await reserveCredits(selectedModel.modelId);
+    //   if (!reservation) {
+    //     toast.error(
+    //       t("insufficientCreditsModel", { credits: selectedModel.credits })
+    //     );
+    //     setStartedGeneration(false);
+    //     return false;
+    //   }
+    //   setCurrentReservation(reservation);
+    // }
+
+    // Se for flux-schnell, verificar se precisa de créditos gratuitos
+    if (data.model === "flux-schnell") {
+      // Se não tem assinatura ativa, verificar créditos gratuitos
+      if (!subscription) {
+        if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+          toast.error(t("insufficientFreeCredits"));
+          setStartedGeneration(false);
+          return false;
+        }
+      }
+      // Para flux-schnell, não fazemos reserva, gastamos diretamente após sucesso (ou é ilimitado com assinatura)
+    } else if (selectedModel.credits > 0) {
+      // Para outros modelos, usar sistema de reserva normal
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
         toast.error(
           t("insufficientCreditsModel", { credits: selectedModel.credits })
         );
-        setStartedGeneration(false);
+        onGenerationComplete?.();
+
+        setShowSubscriptionModal(true);
         return false;
       }
       setCurrentReservation(reservation);

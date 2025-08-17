@@ -12,7 +12,8 @@ import { useCreditsContext } from "@/contexts/credits-context";
 
 export function useCredits() {
   const { data: session } = useSession();
-  const { credits, isLoading, error, fetchCredits, updateCredits } = useCreditsContext();
+  const { credits, isLoading, error, fetchCredits, updateCredits } =
+    useCreditsContext();
   const { executeAsync: executeReserveCreditsAction } =
     useAction(reserveCreditsAction);
   const { executeAsync: executeConfirmCreditsAction } =
@@ -27,9 +28,6 @@ export function useCredits() {
   const { executeAsync: executeSpendCreditsAction } =
     useAction(spendCreditsAction);
 
-
-
-
   // Verificar se tem créditos suficientes
   const hasEnoughCredits = (requiredCredits: number): boolean => {
     return credits ? credits.balance >= requiredCredits : false;
@@ -40,7 +38,7 @@ export function useCredits() {
     modelId: string
   ): Promise<{ reservationId: string; cost: number } | null> => {
     if (!session?.user?.id) {
-      toast.error("Usuário não autenticado");
+      toast.error("User not authenticated");
       return null;
     }
 
@@ -53,14 +51,13 @@ export function useCredits() {
       if (result?.data?.success) {
         return result.data?.data || null;
       } else {
-        const errorMessage =
-          result?.data?.errors?._form?.[0] || "Erro ao reservar créditos";
+        const errorMessage = "Error reserving credits";
         toast.error(errorMessage);
         return null;
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Erro ao reservar créditos";
+        err instanceof Error ? err.message : "Error reserving credits";
       toast.error(errorMessage);
       return null;
     }
@@ -249,8 +246,6 @@ export function useCredits() {
       return false;
     }
   };
-
-
 
   return {
     credits,

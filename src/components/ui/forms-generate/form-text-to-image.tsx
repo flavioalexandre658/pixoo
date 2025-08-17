@@ -28,13 +28,6 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { DimensionSelector, Dimension } from "./dimension-selector";
 import { useCredits } from "@/hooks/use-credits";
 import { ModelCost } from "@/db/schema";
@@ -90,13 +83,8 @@ export function FormTextToImage({
   imagePreviewRef,
 }: FormTextToImageProps) {
   const t = useTranslations("textToImageForm");
-  const {
-    credits,
-    hasEnoughCredits,
-    reserveCredits,
-    fetchCredits,
-    cancelReservation,
-  } = useCredits();
+  const { hasEnoughCredits, reserveCredits, fetchCredits, cancelReservation } =
+    useCredits();
   const [currentReservation, setCurrentReservation] = useState<{
     reservationId: string;
     cost: number;
@@ -201,8 +189,19 @@ export function FormTextToImage({
       return;
     }
 
-    // Verificar se o usuário tem assinatura ativa
-    if (!subscription) {
+    // MUDANÇA TEMPORÁRIA: Permitir otimização com freeCredits
+    // Código original (comentado para futuras reversões):
+    // // Verificar se o usuário tem assinatura ativa
+    // if (!subscription) {
+    //   setShowSubscriptionModal(true);
+    //   return;
+    // }
+
+    // Nova lógica: Verificar se tem assinatura OU créditos gratuitos
+    if (
+      !subscription &&
+      (!freeCredits || freeCredits.freeCreditsBalance <= 0)
+    ) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -268,25 +267,44 @@ export function FormTextToImage({
       return false;
     }
 
-    // Verificar se o usuário tem assinatura ativa ou créditos gratuitos para flux-schnell
+    // MUDANÇA TEMPORÁRIA: Permitir qualquer modelo com freeCredits
+    // Código original (comentado para futuras reversões):
+    // // Verificar se o usuário tem assinatura ativa ou créditos gratuitos para flux-schnell
+    // if (!subscription) {
+    //   // Se for flux-schnell, verificar se tem créditos gratuitos
+    //   if (data.model === "flux-schnell") {
+    //     if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+    //       setShowPlansModal(true);
+    //       return false;
+    //     }
+    //   } else {
+    //     // Para outros modelos, sempre exigir assinatura
+    //     setShowSubscriptionModal(true);
+    //     return false;
+    //   }
+    // }
+    //
+    // // Para outros modelos que não são flux-schnell, sempre exigir assinatura
+    // if (data.model !== "flux-schnell" && !subscription) {
+    //   setShowSubscriptionModal(true);
+    //   return false;
+    // }
+
+    // Nova lógica: Verificar créditos específicos para cada modelo
     if (!subscription) {
-      // Se for flux-schnell, verificar se tem créditos gratuitos
-      if (data.model === "flux-schnell") {
-        if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+      // Se não tem assinatura, verificar se tem créditos gratuitos suficientes
+      if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+        setShowPlansModal(true);
+        return false;
+      }
+    } else {
+      // Se tem assinatura, verificar créditos normais para modelos que custam créditos
+      if (selectedModel.credits > 0) {
+        if (!hasEnoughCredits(selectedModel.credits)) {
           setShowPlansModal(true);
           return false;
         }
-      } else {
-        // Para outros modelos, sempre exigir assinatura
-        setShowSubscriptionModal(true);
-        return false;
       }
-    }
-
-    // Para outros modelos que não são flux-schnell, sempre exigir assinatura
-    if (data.model !== "flux-schnell" && !subscription) {
-      setShowSubscriptionModal(true);
-      return false;
     }
 
     // Desabilita o botão IMEDIATAMENTE para evitar spam de cliques
@@ -318,7 +336,9 @@ export function FormTextToImage({
         toast.error(
           t("insufficientCreditsModel", { credits: selectedModel.credits })
         );
-        setStartedGeneration(false);
+        onGenerationComplete?.(0);
+
+        setShowSubscriptionModal(true);
         return false;
       }
       setCurrentReservation(reservation);
