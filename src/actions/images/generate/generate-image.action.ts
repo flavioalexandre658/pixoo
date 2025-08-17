@@ -27,10 +27,13 @@ async function makeCurlRequest(
 ): Promise<{ status: number; data: any; statusText: string }> {
   return new Promise((resolve, reject) => {
     // Criar arquivo temporário para o corpo da requisição
-    const tempFile = join(tmpdir(), `curl-body-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.json`);
-    
+    const tempFile = join(
+      tmpdir(),
+      `curl-body-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.json`
+    );
+
     try {
-      writeFileSync(tempFile, body, 'utf8');
+      writeFileSync(tempFile, body, "utf8");
     } catch (error) {
       reject(new Error(`Erro ao criar arquivo temporário: ${error}`));
       return;
@@ -122,7 +125,7 @@ async function generateImageWithTogether(
   try {
     // Verificar se a API key está configurada
     if (!process.env.TOGETHER_API_KEY) {
-      console.error('TOGETHER_API_KEY não está configurada');
+      console.error("TOGETHER_API_KEY não está configurada");
       return {
         success: false,
         error: "Chave da API Together.ai não configurada",
@@ -133,12 +136,12 @@ async function generateImageWithTogether(
       apiKey: process.env.TOGETHER_API_KEY,
     });
 
-    console.log('Gerando imagem com Together.ai:', {
-      model: 'black-forest-labs/FLUX.1-schnell-Free',
+    console.log("Gerando imagem com Together.ai:", {
+      model: "black-forest-labs/FLUX.1-schnell-Free",
       prompt,
       steps,
       n,
-      apiKeyConfigured: !!process.env.TOGETHER_API_KEY
+      apiKeyConfigured: !!process.env.TOGETHER_API_KEY,
     });
 
     const response = await together.images.create({
@@ -149,22 +152,22 @@ async function generateImageWithTogether(
     });
 
     const responseData = response.data[0];
-        console.log("Resposta da Together.ai recebida:", {
-          success: !!responseData,
-          hasUrl: !!(responseData as any)?.url,
-          hasB64: !!(responseData as any)?.b64_json,
-          responseKeys: Object.keys(responseData || {})
-        });
+    console.log("Resposta da Together.ai recebida:", {
+      success: !!responseData,
+      hasUrl: !!(responseData as any)?.url,
+      hasB64: !!(responseData as any)?.b64_json,
+      responseKeys: Object.keys(responseData || {}),
+    });
 
     if (response.data && response.data.length > 0) {
       const imageData = response.data[0];
-      
+
       // Verificar se é base64 ou URL
       let imageUrl: string;
-      if ('b64_json' in imageData && imageData.b64_json) {
+      if ("b64_json" in imageData && imageData.b64_json) {
         // Converter base64 para data URL
         imageUrl = `data:image/png;base64,${imageData.b64_json}`;
-      } else if ('url' in imageData && imageData.url) {
+      } else if ("url" in imageData && imageData.url) {
         // Usar URL diretamente
         imageUrl = imageData.url;
       } else {
@@ -173,7 +176,7 @@ async function generateImageWithTogether(
           error: "Formato de resposta inválido da API Together.ai",
         };
       }
-      
+
       return {
         success: true,
         imageUrl,
@@ -185,18 +188,19 @@ async function generateImageWithTogether(
       error: "Nenhuma imagem foi gerada pela Together.ai",
     };
   } catch (error) {
-    console.error('Erro ao gerar imagem com Together.ai:', error);
-    
+    console.error("Erro ao gerar imagem com Together.ai:", error);
+
     // Extrair mensagem de erro mais específica
     let errorMessage = "Erro desconhecido";
     if (error instanceof Error) {
       errorMessage = error.message;
       // Se for um erro da API, tentar extrair a mensagem específica
-      if (error.message.includes('400') && error.message.includes('steps')) {
-        errorMessage = "Steps deve estar entre 1 e 4 para o modelo FLUX.1-schnell-Free";
+      if (error.message.includes("400") && error.message.includes("steps")) {
+        errorMessage =
+          "Steps deve estar entre 1 e 4 para o modelo FLUX.1-schnell-Free";
       }
     }
-    
+
     return {
       success: false,
       error: errorMessage,
@@ -275,15 +279,15 @@ export const generateImage = authActionClient
       const activeSubscription = await db.query.subscriptions.findFirst({
         where: and(
           eq(subscriptions.userId, userId),
-          eq(subscriptions.status, 'active')
+          eq(subscriptions.status, "active")
         ),
       });
 
-      // Verificar créditos baseado no modelo
+      // Verificar créditos baseado no modelo e assinatura
       let reservationId: string | null = null;
       let usesFreeCredits = false;
       const hasActiveSubscription = !!activeSubscription;
-      
+
       if (model === "flux-schnell") {
         // Se tem assinatura ativa, flux-schnell é ilimitado (não cobra créditos)
         if (hasActiveSubscription) {
@@ -291,45 +295,72 @@ export const generateImage = authActionClient
         } else {
           // Para usuários sem assinatura, verificar créditos gratuitos
           const freeCreditsResult = await getUserFreeCredits({});
-          
-          if (freeCreditsResult.serverError || !freeCreditsResult.data?.success) {
+
+          if (
+            freeCreditsResult.serverError ||
+            !freeCreditsResult.data?.success
+          ) {
             return {
               error: "Erro ao verificar créditos gratuitos",
             };
           }
-          
+
           const freeCreditsData = freeCreditsResult.data.data;
           if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
             return {
               error: "Créditos gratuitos insuficientes para usar este modelo",
             };
           }
-          
+
           usesFreeCredits = true;
         }
       } else {
-        // Para outros modelos, usar sistema de reserva normal
-        const reserveResult = await reserveCredits({
-          modelId: model,
-          description: `Reserva para geração de imagem - ${model}`,
-        });
+        // Para outros modelos, verificar se tem assinatura primeiro
+        if (!hasActiveSubscription) {
+          // Usuário sem assinatura: tentar usar créditos gratuitos
+          const freeCreditsResult = await getUserFreeCredits({});
 
-        if (reserveResult.serverError || !reserveResult.data?.success) {
-          return {
-            error:
-              reserveResult.data?.errors?._form?.[0] ||
-              reserveResult.serverError ||
-              "Erro ao reservar créditos",
-          };
+          if (
+            freeCreditsResult.serverError ||
+            !freeCreditsResult.data?.success
+          ) {
+            return {
+              error: "Erro ao verificar créditos gratuitos",
+            };
+          }
+
+          const freeCreditsData = freeCreditsResult.data.data;
+          if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
+            return {
+              error: "Créditos gratuitos insuficientes para usar este modelo",
+            };
+          }
+
+          usesFreeCredits = true;
+        } else {
+          // Usuário com assinatura: usar sistema de reserva normal
+          const reserveResult = await reserveCredits({
+            modelId: model,
+            description: `Reserva para geração de imagem - ${model}`,
+          });
+
+          if (reserveResult.serverError || !reserveResult.data?.success) {
+            return {
+              error:
+                reserveResult.data?.errors?._form?.[0] ||
+                reserveResult.serverError ||
+                "Erro ao reservar créditos",
+            };
+          }
+
+          reservationId = reserveResult.data?.data?.reservationId || null;
         }
-
-        reservationId = reserveResult.data?.data?.reservationId || null;
       }
 
       // Se for flux-schnell, usar Together.ai
       if (model === "flux-schnell") {
-        console.log('Usando Together.ai para flux-schnell');
-        
+        console.log("Usando Together.ai para flux-schnell");
+
         const togetherResult = await generateImageWithTogether(
           prompt,
           Math.min(steps || 4, 4), // Together.ai aceita apenas steps entre 1 e 4
@@ -340,7 +371,7 @@ export const generateImage = authActionClient
           // Salvar no banco de dados com URL original da Together.ai (sem upload S3)
           const taskId = randomUUID();
           const imageId = randomUUID();
-          
+
           // Confirmar créditos baseado no tipo
           if (usesFreeCredits) {
             // Para flux-schnell sem assinatura, gastar créditos gratuitos
@@ -372,13 +403,16 @@ export const generateImage = authActionClient
             }
           }
 
-          console.log('Salvando imagem no banco com URL original da Together.ai:', {
-            imageId,
-            taskId,
-            userId,
-            imageUrl: togetherResult.imageUrl
-          });
-          
+          console.log(
+            "Salvando imagem no banco com URL original da Together.ai:",
+            {
+              imageId,
+              taskId,
+              userId,
+              imageUrl: togetherResult.imageUrl,
+            }
+          );
+
           try {
             await db.insert(generatedImages).values({
               id: imageId,
@@ -417,10 +451,11 @@ export const generateImage = authActionClient
               userId: "",
             });
           }
-          
+
           return {
             success: false,
-            error: togetherResult.error || "Falha ao gerar imagem via Together.ai",
+            error:
+              togetherResult.error || "Falha ao gerar imagem via Together.ai",
           };
         }
       }
@@ -487,8 +522,10 @@ export const generateImage = authActionClient
       // Adicionar imagem de entrada baseado no modelo
       if (inputImage) {
         // Remover o prefixo data:image/... se presente, pois a API BFL espera apenas o base64 puro
-        const base64Data = inputImage.includes(',') ? inputImage.split(',')[1] : inputImage;
-        
+        const base64Data = inputImage.includes(",")
+          ? inputImage.split(",")[1]
+          : inputImage;
+
         if (model === "flux-kontext-pro") {
           // Para flux-kontext-pro, usar input_image
           requestBody.input_image = base64Data;
@@ -653,11 +690,11 @@ export const generateImage = authActionClient
           });
         } catch (dbError) {
           console.error("Erro ao salvar no banco:", dbError);
-          // Se falhar ao salvar no banco e há reserva, cancelar a reserva (não reembolsar pois não foi cobrado)
+          // Se falhar ao salvar no banco e há reserva, cancelar a reserva
           if (!usesFreeCredits && reservationId) {
             const cancelResult = await cancelReservation({
               reservationId: reservationId,
-              reason: `Erro ao salvar dados da imagem - ${model}`,
+              reason: "Falha ao salvar no banco de dados",
               userId: "",
             });
 
@@ -668,10 +705,8 @@ export const generateImage = authActionClient
               );
             }
           }
-          return {
-            success: false,
-            error: "Erro interno ao salvar dados",
-          };
+
+          throw new Error("Falha ao salvar dados da geração no banco");
         }
 
         return {
