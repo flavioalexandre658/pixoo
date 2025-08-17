@@ -1,10 +1,10 @@
-'use server';
+"use server";
 
-import { eq, and, lt } from 'drizzle-orm';
-import { db } from '@/db';
-import { authActionClient } from '@/lib/safe-action';
-import { userCredits, creditTransactions, subscriptions } from '@/db/schema';
-import { z } from 'zod';
+import { eq, and, lt } from "drizzle-orm";
+import { db } from "@/db";
+import { authActionClient } from "@/lib/safe-action";
+import { userCredits, creditTransactions, subscriptions } from "@/db/schema";
+import { z } from "zod";
 
 const renewDailyFreeCreditsSchema = z.object({});
 
@@ -18,7 +18,7 @@ export const renewDailyFreeCredits = authActionClient
       const activeSubscription = await db.query.subscriptions.findFirst({
         where: and(
           eq(subscriptions.userId, userId),
-          eq(subscriptions.status, 'active')
+          eq(subscriptions.status, "active")
         ),
       });
 
@@ -27,7 +27,7 @@ export const renewDailyFreeCredits = authActionClient
         return {
           success: false,
           errors: {
-            _form: ['Usuários com plano ativo não recebem créditos gratuitos'],
+            _form: ["Usuários com plano ativo não recebem créditos gratuitos"],
           },
         };
       }
@@ -39,32 +39,36 @@ export const renewDailyFreeCredits = authActionClient
 
       // Se não existe registro, criar um
       if (!userCredit) {
-        userCredit = await db.insert(userCredits).values({
-          id: crypto.randomUUID(),
-          userId,
-          balance: 0,
-          totalEarned: 0,
-          totalSpent: 0,
-          freeCreditsBalance: 5,
-          lastFreeCreditsRenewal: new Date(),
-        }).returning().then((res) => res[0]);
+        userCredit = await db
+          .insert(userCredits)
+          .values({
+            id: crypto.randomUUID(),
+            userId,
+            balance: 0,
+            totalEarned: 0,
+            totalSpent: 0,
+            freeCreditsBalance: 10, // Alterado de 5 para 10
+            lastFreeCreditsRenewal: new Date(),
+          })
+          .returning()
+          .then((res) => res[0]);
 
         // Registrar transação inicial
         await db.insert(creditTransactions).values({
           id: crypto.randomUUID(),
           userId,
-          type: 'bonus',
-          amount: 5,
-          description: 'Créditos gratuitos iniciais - flux-schnell',
-          balanceAfter: 5,
+          type: "bonus",
+          amount: 10, // Alterado de 5 para 10
+          description: "Créditos gratuitos iniciais - flux-schnell",
+          balanceAfter: 10, // Alterado de 5 para 10
           createdAt: new Date(),
         });
 
         return {
           success: true,
           data: {
-            freeCreditsBalance: 5,
-            message: 'Créditos gratuitos iniciais concedidos',
+            freeCreditsBalance: 10, // Alterado de 5 para 10
+            message: "Créditos gratuitos iniciais concedidos",
           },
         };
       }
@@ -72,21 +76,24 @@ export const renewDailyFreeCredits = authActionClient
       // Verificar se já passou 24 horas desde a última renovação
       const now = new Date();
       const lastRenewal = new Date(userCredit.lastFreeCreditsRenewal);
-      const hoursSinceLastRenewal = (now.getTime() - lastRenewal.getTime()) / (1000 * 60 * 60);
+      const hoursSinceLastRenewal =
+        (now.getTime() - lastRenewal.getTime()) / (1000 * 60 * 60);
 
       if (hoursSinceLastRenewal < 24) {
         const hoursRemaining = Math.ceil(24 - hoursSinceLastRenewal);
         return {
           success: false,
           errors: {
-            _form: [`Créditos gratuitos serão renovados em ${hoursRemaining} horas`],
+            _form: [
+              `Créditos gratuitos serão renovados em ${hoursRemaining} horas`,
+            ],
           },
         };
       }
 
-      // Renovar créditos gratuitos para 5
-      const newFreeCreditsBalance = 5;
-      
+      // Renovar créditos gratuitos para 10
+      const newFreeCreditsBalance = 10; // Alterado de 5 para 10
+
       await db
         .update(userCredits)
         .set({
@@ -100,10 +107,12 @@ export const renewDailyFreeCredits = authActionClient
       await db.insert(creditTransactions).values({
         id: crypto.randomUUID(),
         userId,
-        type: 'bonus',
+        type: "bonus",
         amount: newFreeCreditsBalance - userCredit.freeCreditsBalance,
-        description: 'Renovação diária de créditos gratuitos - flux-schnell',
-        balanceAfter: userCredit.balance + (newFreeCreditsBalance - userCredit.freeCreditsBalance),
+        description: "Renovação diária de créditos gratuitos - flux-schnell",
+        balanceAfter:
+          userCredit.balance +
+          (newFreeCreditsBalance - userCredit.freeCreditsBalance),
         createdAt: now,
       });
 
@@ -111,15 +120,17 @@ export const renewDailyFreeCredits = authActionClient
         success: true,
         data: {
           freeCreditsBalance: newFreeCreditsBalance,
-          message: 'Créditos gratuitos renovados com sucesso',
+          message: "Créditos gratuitos renovados com sucesso",
         },
       };
     } catch (error) {
-      console.error('Erro ao renovar créditos gratuitos:', error);
+      console.error("Erro ao renovar créditos gratuitos:", error);
       return {
         success: false,
         errors: {
-          _form: [error instanceof Error ? error.message : 'Erro interno do servidor'],
+          _form: [
+            error instanceof Error ? error.message : "Erro interno do servidor",
+          ],
         },
       };
     }

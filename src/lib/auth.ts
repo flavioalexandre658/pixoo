@@ -33,7 +33,7 @@ export const auth = betterAuth({
               balance: 0,
               totalEarned: 0,
               totalSpent: 0,
-              freeCreditsBalance: 5,
+              freeCreditsBalance: 10,
               lastFreeCreditsRenewal: new Date(),
             });
 
@@ -41,20 +41,25 @@ export const auth = betterAuth({
             await db.insert(schemas.creditTransactions).values({
               id: crypto.randomUUID(),
               userId: user.id,
-              type: 'bonus',
-              amount: 5,
-              description: 'Créditos gratuitos de boas-vindas - flux-schnell',
+              type: "bonus",
+              amount: 10,
+              description: "Créditos gratuitos de boas-vindas - Pixoo Init",
               balanceAfter: 0, // Balance normal permanece 0
-              metadata: JSON.stringify({ 
-                freeCreditsBalance: 5,
-                initialCredits: true 
+              metadata: JSON.stringify({
+                freeCreditsBalance: 10,
+                initialCredits: true,
               }),
               createdAt: new Date(),
             });
 
-            console.log(`✅ Créditos gratuitos iniciais criados para usuário ${user.id}`);
+            console.log(
+              `✅ Créditos gratuitos iniciais criados para usuário ${user.id}`
+            );
           } catch (error) {
-            console.error(`❌ Erro ao criar créditos iniciais para usuário ${user.id}:`, error);
+            console.error(
+              `❌ Erro ao criar créditos iniciais para usuário ${user.id}:`,
+              error
+            );
             // Não lançar erro para não quebrar o fluxo de criação do usuário
           }
         },
