@@ -6,7 +6,7 @@ import {
   confirmCreditsWebhook,
   cancelReservationWebhook,
 } from "../../../../actions/credits";
-import { spendFreeCredits } from "../../../../actions/credits/spend/spend-free-credits.action";
+import { spendFreeCreditsInternal } from "../../../../actions/credits/spend/spend-free-credits.action";
 import { getImageByTaskIdInternal } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 import {
   uploadImageToS3,
@@ -262,18 +262,19 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // Se não há reservationId, significa que está usando créditos gratuitos
-          if (imageRecord?.model) {
+          if (imageRecord?.model && imageRecord?.userId) {
             try {
-              const spendResult = await spendFreeCredits({
-                modelId: imageRecord?.model,
-                description: `Geração de imagem concluída via webhook - ${imageRecord?.model}`,
-                imageId: imageRecord?.id,
+              const spendResult = await spendFreeCreditsInternal({
+                userId: imageRecord.userId,
+                modelId: imageRecord.model,
+                description: `Geração de imagem concluída via webhook - ${imageRecord.model}`,
+                imageId: imageRecord.id,
               });
 
-              if (spendResult.serverError || !spendResult.data?.success) {
+              if (!spendResult.success) {
                 console.error(
                   "Erro ao gastar créditos gratuitos via webhook:",
-                  spendResult.data?.errors || spendResult.serverError
+                  spendResult.errors
                 );
               } else {
                 console.log(
@@ -287,7 +288,9 @@ export async function POST(request: NextRequest) {
               );
             }
           } else {
-            console.log("Modelo nao encontrado para cobrar FreeCredits");
+            console.log(
+              "Modelo ou userId não encontrado para cobrar FreeCredits"
+            );
           }
         }
       } catch (dbError) {

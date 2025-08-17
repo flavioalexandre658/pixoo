@@ -112,3 +112,108 @@ export const spendFreeCredits = authActionClient
       };
     }
   });
+
+// Função interna para uso em webhooks (sem autenticação)
+export async function spendFreeCreditsInternal({
+  userId,
+  modelId,
+  description,
+  imageId,
+}: {
+  userId: string;
+  modelId: string;
+  description?: string;
+  imageId?: string;
+}) {
+  try {
+    // Verificar se o usuário tem plano ativo
+    const activeSubscription = await db.query.subscriptions.findFirst({
+      where: and(
+        eq(subscriptions.userId, userId),
+        eq(subscriptions.status, "active")
+      ),
+    });
+
+    // Se tem plano ativo, não pode usar créditos gratuitos
+    if (activeSubscription) {
+      return {
+        success: false,
+        errors: {
+          _form: ["Usuários com plano ativo não podem usar créditos gratuitos"],
+        },
+      };
+    }
+
+    // Obter dados atuais do usuário
+    const userCredit = await db.query.userCredits.findFirst({
+      where: eq(userCredits.userId, userId),
+    });
+
+    if (!userCredit) {
+      return {
+        success: false,
+        errors: {
+          _form: ["Registro de créditos não encontrado"],
+        },
+      };
+    }
+
+    // Verificar se tem créditos gratuitos suficientes
+    if (userCredit.freeCreditsBalance < 1) {
+      return {
+        success: false,
+        errors: {
+          _form: ["Créditos gratuitos insuficientes"],
+        },
+      };
+    }
+
+    // Gastar 1 crédito gratuito
+    const newFreeCreditsBalance = userCredit.freeCreditsBalance - 1;
+    const now = new Date();
+
+    await db
+      .update(userCredits)
+      .set({
+        freeCreditsBalance: newFreeCreditsBalance,
+        totalSpent: userCredit.totalSpent + 1,
+        updatedAt: now,
+      })
+      .where(eq(userCredits.userId, userId));
+
+    // Registrar transação
+    await db.insert(creditTransactions).values({
+      id: crypto.randomUUID(),
+      userId,
+      type: "spent",
+      amount: -1,
+      description: description || `Geração de imagem gratuita - ${modelId}`,
+      relatedImageId: imageId,
+      balanceAfter: userCredit.balance, // Balance normal não muda
+      metadata: JSON.stringify({
+        modelId,
+        freeCreditsUsed: true,
+        freeCreditsBalanceAfter: newFreeCreditsBalance,
+      }),
+      createdAt: now,
+    });
+
+    return {
+      success: true,
+      data: {
+        freeCreditsBalance: newFreeCreditsBalance,
+        message: "Crédito gratuito usado com sucesso",
+      },
+    };
+  } catch (error) {
+    console.error("Erro ao gastar créditos gratuitos:", error);
+    return {
+      success: false,
+      errors: {
+        _form: [
+          error instanceof Error ? error.message : "Erro interno do servidor",
+        ],
+      },
+    };
+  }
+}
