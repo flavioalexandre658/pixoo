@@ -1,13 +1,13 @@
-'use server';
+"use server";
 
-import { eq, and } from 'drizzle-orm';
-import { db } from '@/db';
-import { authActionClient } from '@/lib/safe-action';
-import { userCredits, creditTransactions, subscriptions } from '@/db/schema';
-import { z } from 'zod';
+import { eq, and } from "drizzle-orm";
+import { db } from "@/db";
+import { authActionClient } from "@/lib/safe-action";
+import { userCredits, creditTransactions, subscriptions } from "@/db/schema";
+import { z } from "zod";
 
 const spendFreeCreditsSchema = z.object({
-  modelId: z.string().min(1, 'Model ID é obrigatório'),
+  modelId: z.string().min(1, "Model ID é obrigatório"),
   description: z.string().optional(),
   imageId: z.string().optional(),
 });
@@ -19,21 +19,11 @@ export const spendFreeCredits = authActionClient
     const { modelId, description, imageId } = parsedInput;
 
     try {
-      // Verificar se o modelo é flux-schnell (único modelo permitido para créditos gratuitos)
-      if (modelId !== 'flux-schnell') {
-        return {
-          success: false,
-          errors: {
-            _form: ['Créditos gratuitos só podem ser usados no modelo flux-schnell'],
-          },
-        };
-      }
-
       // Verificar se o usuário tem plano ativo
       const activeSubscription = await db.query.subscriptions.findFirst({
         where: and(
           eq(subscriptions.userId, userId),
-          eq(subscriptions.status, 'active')
+          eq(subscriptions.status, "active")
         ),
       });
 
@@ -42,7 +32,9 @@ export const spendFreeCredits = authActionClient
         return {
           success: false,
           errors: {
-            _form: ['Usuários com plano ativo não podem usar créditos gratuitos'],
+            _form: [
+              "Usuários com plano ativo não podem usar créditos gratuitos",
+            ],
           },
         };
       }
@@ -56,7 +48,7 @@ export const spendFreeCredits = authActionClient
         return {
           success: false,
           errors: {
-            _form: ['Registro de créditos não encontrado'],
+            _form: ["Registro de créditos não encontrado"],
           },
         };
       }
@@ -66,7 +58,7 @@ export const spendFreeCredits = authActionClient
         return {
           success: false,
           errors: {
-            _form: ['Créditos gratuitos insuficientes'],
+            _form: ["Créditos gratuitos insuficientes"],
           },
         };
       }
@@ -74,7 +66,7 @@ export const spendFreeCredits = authActionClient
       // Gastar 1 crédito gratuito
       const newFreeCreditsBalance = userCredit.freeCreditsBalance - 1;
       const now = new Date();
-      
+
       await db
         .update(userCredits)
         .set({
@@ -88,15 +80,15 @@ export const spendFreeCredits = authActionClient
       await db.insert(creditTransactions).values({
         id: crypto.randomUUID(),
         userId,
-        type: 'spent',
+        type: "spent",
         amount: -1,
         description: description || `Geração de imagem gratuita - ${modelId}`,
         relatedImageId: imageId,
         balanceAfter: userCredit.balance, // Balance normal não muda
-        metadata: JSON.stringify({ 
-          modelId, 
+        metadata: JSON.stringify({
+          modelId,
           freeCreditsUsed: true,
-          freeCreditsBalanceAfter: newFreeCreditsBalance 
+          freeCreditsBalanceAfter: newFreeCreditsBalance,
         }),
         createdAt: now,
       });
@@ -105,15 +97,17 @@ export const spendFreeCredits = authActionClient
         success: true,
         data: {
           freeCreditsBalance: newFreeCreditsBalance,
-          message: 'Crédito gratuito usado com sucesso',
+          message: "Crédito gratuito usado com sucesso",
         },
       };
     } catch (error) {
-      console.error('Erro ao gastar créditos gratuitos:', error);
+      console.error("Erro ao gastar créditos gratuitos:", error);
       return {
         success: false,
         errors: {
-          _form: [error instanceof Error ? error.message : 'Erro interno do servidor'],
+          _form: [
+            error instanceof Error ? error.message : "Erro interno do servidor",
+          ],
         },
       };
     }

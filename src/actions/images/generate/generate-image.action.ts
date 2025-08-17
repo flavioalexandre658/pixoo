@@ -391,8 +391,7 @@ export const generateImage = authActionClient
             const confirmResult = await confirmCredits({
               reservationId: reservationId,
               modelId: model,
-              imageId: imageId,
-              description: `Geração de imagem concluída via Together.ai - ${model}`,
+              description: `Geração de imagem concluída - ${model}`,
             });
 
             if (confirmResult.serverError || !confirmResult.data?.success) {
@@ -644,10 +643,23 @@ export const generateImage = authActionClient
       const createResponse = await makeRequestWithRetry();
 
       const createData = createResponse.data;
-      // Se a resposta já contém o resultado (para modelos rápidos como flux-schnell)
+      // Se a resposta já contém o resultado (para modelos rápidos)
       if (createData.result && createData.result.sample) {
-        // Confirmar créditos se houve reserva
-        if (reservationId) {
+        if (usesFreeCredits) {
+          // Para usuários sem assinatura, gastar créditos gratuitos
+          const spendResult = await spendFreeCredits({
+            modelId: model,
+            description: `Geração de imagem concluída - ${model}`,
+          });
+
+          if (spendResult.serverError || !spendResult.data?.success) {
+            console.error(
+              "Erro ao gastar créditos gratuitos:",
+              spendResult.data?.errors || spendResult.serverError
+            );
+          }
+        } else if (reservationId) {
+          // Para usuários com assinatura, confirmar reserva
           const confirmResult = await confirmCredits({
             reservationId: reservationId,
             modelId: model,

@@ -7,7 +7,11 @@ import {
   cancelReservationWebhook,
 } from "../../../../actions/credits";
 import { getImageByTaskIdInternal } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
-import { uploadImageToS3, downloadImageFromUrl, generateS3FileName } from "@/lib/s3";
+import {
+  uploadImageToS3,
+  downloadImageFromUrl,
+  generateS3FileName,
+} from "@/lib/s3";
 
 // Interface para o payload do webhook da BFL
 interface WebhookPayload {
@@ -47,24 +51,26 @@ export async function POST(request: NextRequest) {
       hasResult: !!payload.result,
       resultSample: payload.result?.sample,
       resultSampleLength: payload.result?.sample?.length,
-      resultSampleValid: payload.result?.sample ? /^https?:\/\/.+/.test(payload.result.sample) : false,
+      resultSampleValid: payload.result?.sample
+        ? /^https?:\/\/.+/.test(payload.result.sample)
+        : false,
       error: payload.error,
       progress: payload.progress,
-      fullPayload: JSON.stringify(payload, null, 2)
+      fullPayload: JSON.stringify(payload, null, 2),
     });
 
     // Log adicional para debug de URLs problemáticas
     if (payload.result?.sample) {
-      console.log('🔍 Análise detalhada da URL da BFL:', {
+      console.log("🔍 Análise detalhada da URL da BFL:", {
         taskId: payload.task_id,
         url: payload.result.sample,
         urlType: typeof payload.result.sample,
         urlLength: payload.result.sample.length,
-        startsWithHttp: payload.result.sample.startsWith('http'),
-        startsWithHttps: payload.result.sample.startsWith('https'),
-        containsDelivery: payload.result.sample.includes('delivery'),
-        containsBfl: payload.result.sample.includes('bfl'),
-        urlParts: payload.result.sample.split('/').slice(0, 5), // Primeiras 5 partes da URL
+        startsWithHttp: payload.result.sample.startsWith("http"),
+        startsWithHttps: payload.result.sample.startsWith("https"),
+        containsDelivery: payload.result.sample.includes("delivery"),
+        containsBfl: payload.result.sample.includes("bfl"),
+        urlParts: payload.result.sample.split("/").slice(0, 5), // Primeiras 5 partes da URL
       });
     }
 
@@ -80,42 +86,48 @@ export async function POST(request: NextRequest) {
         : "Error";
     if (mappedStatus === "Ready") {
       webhookResults.set(payload.task_id, payload);
-      
+
       try {
         // Implementar retry para resolver problema de timing
         let res = null;
         let retryCount = 0;
         const maxRetries = 5;
         const retryDelay = 1000; // 1 segundo
-        
+
         while (retryCount < maxRetries) {
           try {
             res = await getImageByTaskIdInternal(payload.task_id);
-            
+
             if (res.success) {
-              console.log(`✅ Imagem encontrada na tentativa ${retryCount + 1}:`, {
-                taskId: payload.task_id,
-                attempt: retryCount + 1
-              });
+              console.log(
+                `✅ Imagem encontrada na tentativa ${retryCount + 1}:`,
+                {
+                  taskId: payload.task_id,
+                  attempt: retryCount + 1,
+                }
+              );
               break;
             } else {
               retryCount++;
               if (retryCount < maxRetries) {
-                console.log(`⏳ Tentativa ${retryCount}/${maxRetries} - Aguardando ${retryDelay}ms antes de tentar novamente...`, {
-                  taskId: payload.task_id
-                });
-                await new Promise(resolve => setTimeout(resolve, retryDelay));
+                console.log(
+                  `⏳ Tentativa ${retryCount}/${maxRetries} - Aguardando ${retryDelay}ms antes de tentar novamente...`,
+                  {
+                    taskId: payload.task_id,
+                  }
+                );
+                await new Promise((resolve) => setTimeout(resolve, retryDelay));
               }
             }
           } catch (error) {
             retryCount++;
             console.error(`❌ Erro na tentativa ${retryCount}:`, error);
             if (retryCount < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              await new Promise((resolve) => setTimeout(resolve, retryDelay));
             }
           }
         }
-        
+
         if (!res || !res.success) {
           console.error(
             `❌ Image record not found after ${maxRetries} attempts for task: ${payload.task_id}`,
@@ -131,17 +143,17 @@ export async function POST(request: NextRequest) {
 
         let s3ImageUrl = payload.result?.sample || null;
         let uploadSuccess = false;
-        
+
         // Validar e fazer upload da imagem para o S3
         if (payload.result?.sample && imageRecord) {
           try {
             // Validar a URL da BFL primeiro
             const bflUrl = payload.result.sample;
 
-            console.log('🔄 Iniciando upload da imagem para S3:', {
+            console.log("🔄 Iniciando upload da imagem para S3:", {
               taskId: payload.task_id,
               originalUrl: bflUrl,
-              userId: imageRecord.userId
+              userId: imageRecord.userId,
             });
 
             // Baixar a imagem da URL da BFL com retry e timeout configurados
@@ -150,35 +162,38 @@ export async function POST(request: NextRequest) {
               3, // 3 tentativas (aumentado de 1)
               60000 // 60 segundos de timeout (aumentado de 45s)
             );
-            
+
             // Gerar nome único para o arquivo no S3
             const s3FileName = generateS3FileName(
               payload.task_id,
               imageRecord.userId,
-              'jpg'
+              "jpg"
             );
-            
+
             // Fazer upload para o S3
             s3ImageUrl = await uploadImageToS3(
               imageBuffer,
               s3FileName,
-              'image/jpeg'
+              "image/jpeg"
             );
-            
+
             uploadSuccess = true;
-            
-            console.log('✅ Upload para S3 concluído:', {
+
+            console.log("✅ Upload para S3 concluído:", {
               taskId: payload.task_id,
               s3Url: s3ImageUrl,
               fileName: s3FileName,
-              uploadSuccess
+              uploadSuccess,
             });
           } catch (s3Error) {
-            console.error('❌ Erro no upload para S3, usando URL original:', {
+            console.error("❌ Erro no upload para S3, usando URL original:", {
               taskId: payload.task_id,
-              error: s3Error instanceof Error ? s3Error.message : 'Erro desconhecido',
+              error:
+                s3Error instanceof Error
+                  ? s3Error.message
+                  : "Erro desconhecido",
               originalUrl: payload.result.sample,
-              uploadSuccess: false
+              uploadSuccess: false,
             });
             // Em caso de erro no S3, manter a URL original da BFL
             s3ImageUrl = payload.result.sample;
@@ -196,7 +211,9 @@ export async function POST(request: NextRequest) {
         }
 
         if (payload.result?.duration) {
-          updateData.generationTimeMs = Math.round(payload.result.duration * 1000);
+          updateData.generationTimeMs = Math.round(
+            payload.result.duration * 1000
+          );
         }
 
         console.log(`✅ Atualizando imagem para status ready:`, {
@@ -204,7 +221,7 @@ export async function POST(request: NextRequest) {
           imageUrl: updateData.imageUrl,
           completedAt: updateData.completedAt,
           uploadedToS3: uploadSuccess,
-          usingS3Url: s3ImageUrl !== payload.result?.sample
+          usingS3Url: s3ImageUrl !== payload.result?.sample,
         });
 
         // Atualizar registro da imagem
@@ -283,6 +300,37 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Após o upload da imagem e atualização do status
+        if (image.reservationId) {
+          // Se há reservationId, confirmar créditos pagos
+          const confirmResult = await confirmCreditsWebhook({
+            reservationId: image.reservationId,
+            imageId: image.id,
+            modelId: image.model,
+            description: `Geração de imagem concluída via webhook - ${image.model}`,
+          });
+
+          if (confirmResult.serverError || !confirmResult.data?.success) {
+            console.error(
+              "Erro ao confirmar créditos via webhook:",
+              confirmResult.data?.errors || confirmResult.serverError
+            );
+          }
+        } else {
+          // Se não há reservationId, significa que está usando créditos gratuitos
+          const spendResult = await spendFreeCredits({
+            modelId: image.model,
+            description: `Geração de imagem concluída via webhook - ${image.model}`,
+            imageId: image.id,
+          });
+
+          if (spendResult.serverError || !spendResult.data?.success) {
+            console.error(
+              "Erro ao gastar créditos gratuitos via webhook:",
+              spendResult.data?.errors || spendResult.serverError
+            );
+          }
+        }
         // Atualizar status para erro
         await db
           .update(generatedImages)
