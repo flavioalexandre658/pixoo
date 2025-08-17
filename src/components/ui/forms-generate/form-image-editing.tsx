@@ -132,6 +132,12 @@ export function FormImageEditing({
     }
   };
 
+  // Função para disparar evento de atualização de créditos
+  const triggerCreditsUpdate = () => {
+    // Disparar evento customizado para atualizar todos os componentes de créditos
+    window.dispatchEvent(new CustomEvent("creditsUpdated"));
+  };
+
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
   const { executeAsync: executeProxyImage } = useAction(proxyImage);
@@ -142,6 +148,7 @@ export function FormImageEditing({
   useEffect(() => {
     if (!isGenerating && startedGeneration) {
       setStartedGeneration(false);
+      triggerCreditsUpdate();
       onGenerationComplete?.();
     }
   }, [isGenerating, startedGeneration, onGenerationComplete]);
@@ -747,6 +754,7 @@ export function FormImageEditing({
 
         const errorData = response.data?.error || response.serverError;
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+        triggerCreditsUpdate();
         throw new Error(errorData || t("failedToEditImage"));
       }
 
@@ -781,6 +789,8 @@ export function FormImageEditing({
         }
 
         fetchCredits();
+        fetchFreeCredits(); // Atualizar créditos gratuitos também
+        triggerCreditsUpdate();
         toast.success(t("imageEditedSuccess"));
       } else {
         setStartedGeneration(false);
@@ -795,6 +805,7 @@ export function FormImageEditing({
         }
 
         onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+        triggerCreditsUpdate();
         throw new Error(t("invalidServerResponse"));
       }
     } catch (error: any) {
@@ -810,6 +821,7 @@ export function FormImageEditing({
       }
 
       onGenerationComplete?.(); // Resetar estado isGenerating no componente pai
+      triggerCreditsUpdate();
       console.error("Editing error:", error);
       if (error.message.includes("credits")) {
         toast.error(t("insufficientCredits"));
