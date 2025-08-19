@@ -58,7 +58,8 @@ export function PlansList({
   excludeFreePlan = false,
   onCheckoutSuccess,
 }: PlansListProps) {
-  const t = useTranslations("subscriptionRequired");
+  const t = useTranslations("plans");
+  const tSubscription = useTranslations("subscriptionRequired");
   const { data: session } = useSession();
   const [plans, setPlans] = useState<Plan[]>([]);
   const router = useRouter();
@@ -77,7 +78,7 @@ export function PlansList({
       },
       onError: (error) => {
         console.error("Erro ao buscar planos:", error);
-        toast.error("Erro ao carregar planos");
+        toast.error(t("loadingError"));
       },
     }
   );
@@ -99,13 +100,12 @@ export function PlansList({
         }
         window.location.href = result.data.data.url;
       } else {
-        toast.error("URL de checkout não recebida");
+        toast.error(t("checkoutError"));
       }
     },
     onError: (error) => {
       console.error("❌ Erro ao criar checkout:", error);
-      const errorMessage =
-        error.error?.serverError || "Erro ao processar pagamento";
+      const errorMessage = error.error?.serverError || t("checkoutError");
       toast.error(errorMessage);
     },
   });
@@ -121,7 +121,7 @@ export function PlansList({
 
     if (!session?.user?.id) {
       console.log("❌ Usuário não autenticado");
-      toast.error("Você precisa estar logado para fazer checkout");
+      toast.error(t("loginRequired"));
       return;
     }
 
@@ -213,10 +213,10 @@ export function PlansList({
             <Zap className="w-8 h-8 text-pixoo-purple" />
           </div>
           <p className="text-muted-foreground text-lg">
-            Nenhum plano disponível no momento.
+            {t("noPlansAvailable")}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Tente novamente em alguns instantes.
+            {t("tryAgainLater")}
           </p>
         </div>
       </div>
@@ -253,11 +253,11 @@ export function PlansList({
                 className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-50`}
               />
 
-              {/* Popular Badge - Agora com posicionamento correto */}
+              {/* Popular Badge */}
               {plan.isPopular && (
                 <Badge className="absolute top-[4] left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pixoo-pink to-pixoo-magenta text-white shadow-lg z-10 px-3 py-1">
                   <Sparkles className="h-3 w-3 mr-1" />
-                  {t("popular")}
+                  {tSubscription("popular")}
                 </Badge>
               )}
 
@@ -293,8 +293,10 @@ export function PlansList({
                     <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-pixoo-purple/10 border border-pixoo-purple/20">
                       <Zap className="w-4 h-4 text-pixoo-purple mr-1" />
                       <span className="text-sm font-medium text-pixoo-purple">
-                        {plan.credits} créditos{" "}
-                        {plan.interval === "monthly" ? "mensais" : "anuais"}
+                        {plan.credits}{" "}
+                        {plan.interval === "monthly"
+                          ? t("monthlyCredits")
+                          : t("yearlyCredits")}
                       </span>
                     </div>
                   )}
@@ -336,19 +338,19 @@ export function PlansList({
                     {isCreatingCheckoutAction ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Processando...
+                        {t("processing")}
                       </>
                     ) : (
                       <>
                         {plan.priceInCents === 0 ? (
                           <>
                             <Zap className="h-4 w-4 mr-2" />
-                            Começar Grátis
+                            {t("startFree")}
                           </>
                         ) : (
                           <>
                             <Crown className="h-4 w-4 mr-2" />
-                            {buttonText || "Selecionar Plano"}
+                            {buttonText || t("selectPlan")}
                           </>
                         )}
                       </>

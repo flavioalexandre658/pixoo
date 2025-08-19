@@ -69,7 +69,8 @@
     "settings": "Configurações",
     "logout": "Sair",
     "language": "Idioma",
-    "changeLanguage": "Alterar idioma"
+    "changeLanguage": "Alterar idioma",
+    "buyCredits": "Comprar Créditos"
   },
   "textToImage": {
     "title": "Criar Imagem",
@@ -360,10 +361,22 @@
     "signUp": "Criar Conta"
   },
   "subscriptionRequired": {
-    "title": "Upgrade Necessário",
-    "description": "Para usar este modelo ou recurso, você precisa de um plano ativo. Escolha o plano ideal para você!",
+    "title": "Escolha seu Plano",
+    "description": "Selecione um pacote de créditos ou assine um plano para continuar criando imagens incríveis.",
     "popular": "Mais Popular",
     "viewAllPlans": "Ver Todos os Planos",
+    "tabs": {
+      "packages": "Pacotes de Créditos",
+      "plans": "Planos Mensais"
+    },
+    "packagesSection": {
+      "title": "Pacotes de Créditos",
+      "description": "Compre créditos avulsos para usar quando precisar"
+    },
+    "plansSection": {
+      "title": "Planos Mensais",
+      "description": "Assine um plano e tenha acesso ilimitado"
+    },
     "plans": {
       "basic": {
         "name": "Pixoo Basic",
@@ -406,6 +419,39 @@
     "renewedEvery24Hours": "• Renovados automaticamente a cada 24 horas",
     "renewalAvailableNow": "• Renovação disponível agora",
     "nextRenewalInHours": "• Próxima renovação em {hours}h"
+  },
+  "creditPackages": {
+    "loading": "Carregando pacotes...",
+    "loadingError": "Erro ao carregar pacotes de créditos",
+    "noPackagesAvailable": "Nenhum pacote de créditos disponível.",
+    "buyNow": "Comprar Agora",
+    "processing": "Processando...",
+    "checkoutError": "Erro ao criar sessão de checkout",
+    "paymentError": "Erro ao processar pagamento",
+    "popular": "Mais Popular",
+    "credits": "créditos",
+    "startFree": "Começar Grátis",
+    "selectPlan": "Selecionar Plano",
+    "monthly": "mês",
+    "yearly": "ano",
+    "monthlyCredits": "créditos mensais",
+    "yearlyCredits": "créditos anuais"
+  },
+  "plans": {
+    "loading": "Carregando planos...",
+    "loadingError": "Erro ao carregar planos",
+    "noPlansAvailable": "Nenhum plano disponível no momento.",
+    "tryAgainLater": "Tente novamente em alguns instantes.",
+    "popular": "Mais Popular",
+    "startFree": "Começar Grátis",
+    "selectPlan": "Selecionar Plano",
+    "processing": "Processando...",
+    "monthly": "mês",
+    "yearly": "ano",
+    "monthlyCredits": "créditos mensais",
+    "yearlyCredits": "créditos anuais",
+    "checkoutError": "Erro ao processar pagamento",
+    "loginRequired": "Você precisa estar logado para fazer checkout"
   },
   "pricing": {
     "title": "Escolha o plano ideal para você",
@@ -450,7 +496,7 @@
     "tagline": "Crie imagens incríveis com IA usando os modelos mais avançados. Transforme suas ideias em arte visual.",
     "platform": "Plataforma",
     "links": {
-      "features": "Recursos",
+      "features": "Funcionalidades",
       "pricing": "Preços",
       "faq": "FAQ",
       "testimonials": "Depoimentos"

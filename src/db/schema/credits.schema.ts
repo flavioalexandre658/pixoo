@@ -79,3 +79,45 @@ export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
 
 export type ModelCost = typeof modelCosts.$inferSelect;
 export type NewModelCost = typeof modelCosts.$inferInsert;
+
+
+// Tabela para pacotes de créditos disponíveis
+export const creditPackages = pgTable("credit_packages", {
+  id: text("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(), // ex: "standard", "premium", "mega"
+  name: varchar("name", { length: 100 }).notNull(), // ex: "Pacote Padrão"
+  description: text("description"), // Descrição do pacote
+  credits: integer("credits").notNull(), // Quantidade de créditos que o usuário recebe
+  priceInCents: integer("price_in_cents").notNull(), // Preço em centavos
+  currency: varchar("currency", { length: 3 }).notNull(), // BRL, USD
+  isActive: varchar("is_active", { length: 10 }).notNull().default("true"),
+  isPopular: varchar("is_popular", { length: 10 }).notNull().default("false"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabela para histórico de compras de pacotes de créditos
+export const creditPackagePurchases = pgTable("credit_package_purchases", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  packageId: text("package_id")
+    .notNull()
+    .references(() => creditPackages.id),
+  stripeSessionId: text("stripe_session_id").notNull().unique(), // ID da sessão do Stripe
+  stripePaymentIntentId: text("stripe_payment_intent_id"), // ID do payment intent
+  credits: integer("credits").notNull(), // Créditos adquiridos
+  priceInCents: integer("price_in_cents").notNull(), // Preço pago
+  currency: varchar("currency", { length: 3 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, completed, failed
+  processedAt: timestamp("processed_at"), // Quando os créditos foram adicionados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type CreditPackage = typeof creditPackages.$inferSelect;
+export type NewCreditPackage = typeof creditPackages.$inferInsert;
+
+export type CreditPackagePurchase = typeof creditPackagePurchases.$inferSelect;
+export type NewCreditPackagePurchase = typeof creditPackagePurchases.$inferInsert;
