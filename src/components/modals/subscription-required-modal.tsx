@@ -19,27 +19,30 @@ interface SubscriptionRequiredModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: "packages" | "plans";
+  locale?: string;
 }
 
 export function SubscriptionRequiredModal({
   isOpen,
   onClose,
   defaultTab = "packages",
+  locale = "pt",
 }: SubscriptionRequiredModalProps) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const t = useTranslations("subscriptionRequired");
 
-  // Detectar moeda e locale baseado na localização ou preferência do usuário
+  // Detectar moeda baseado na localização ou preferência do usuário
   const currency: "USD" | "BRL" = "BRL"; // Você pode implementar lógica para detectar automaticamente
-  const locale = "pt"; // Locale para o PlansList
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-none max-h-none m-0 rounded-none md:w-[95vw] md:h-[95vh] md:max-w-[1000px] md:max-h-[90vh] md:m-auto md:rounded-lg overflow-y-auto">
+      <DialogContent className="w-full h-full max-w-none max-h-none m-0 rounded-none md:w-[95vw] md:h-[95vh] md:max-w-[1400px] md:max-h-[90vh] md:m-auto md:rounded-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogDescription>
+            {t("description")}
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs
@@ -54,9 +57,7 @@ export function SubscriptionRequiredModal({
           <TabsContent value="packages" className="mt-6">
             <div className="space-y-4">
               <div className="text-center">
-                <h3 className="text-lg font-semibold">
-                  {t("packagesSection.title")}
-                </h3>
+                <h3 className="text-lg font-semibold">{t("packagesSection.title")}</h3>
                 <p className="text-muted-foreground">
                   {t("packagesSection.description")}
                 </p>
