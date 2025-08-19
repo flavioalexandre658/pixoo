@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Renovar créditos para 10
-        const newBalance = user.balance + 10;
+        const newBalance = user.balance + 5;
 
         await db
           .update(userCredits)

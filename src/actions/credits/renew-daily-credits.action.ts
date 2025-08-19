@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { randomUUID } from "crypto";
 
-const DAILY_FREE_CREDITS = 10;
+const DAILY_FREE_CREDITS = 5;
 const RENEWAL_INTERVAL_HOURS = 24;
 
 export async function renewDailyCredits() {

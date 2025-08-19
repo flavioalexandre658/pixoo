@@ -56,16 +56,16 @@ export const renewDailyFreeCredits = authActionClient
           id: crypto.randomUUID(),
           userId,
           type: "bonus",
-          amount: 10,
+          amount: 5,
           description: "Créditos gratuitos iniciais - flux-schnell",
-          balanceAfter: 10,
+          balanceAfter: 5,
           createdAt: new Date(),
         });
 
         return {
           success: true,
           data: {
-            balance: 10,
+            balance: 5,
             message: "Créditos gratuitos iniciais concedidos",
           },
         };
@@ -104,7 +104,7 @@ export const renewDailyFreeCredits = authActionClient
       }
 
       // Renovar créditos gratuitos para 10
-      const creditsToAdd = 10;
+      const creditsToAdd = 5;
       const newBalance = userCredit.balance + creditsToAdd;
 
       await db
