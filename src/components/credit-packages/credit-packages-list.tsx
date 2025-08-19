@@ -83,13 +83,13 @@ export function CreditPackagesList({
   const { execute: executeCreateCheckout, isExecuting: isCreatingCheckout } =
     useAction(createCreditPackageCheckout, {
       onSuccess: (result) => {
-        if (result.data?.success && result.data.data?.sessionId) {
+        if (result.data?.success && result.data.data?.url) {
           // Chamar callback de sucesso antes do redirecionamento
           if (onCheckoutSuccess) {
             onCheckoutSuccess();
           }
           // Redirecionar para o Stripe Checkout
-          window.location.href = `https://checkout.stripe.com/pay/${result.data.data.sessionId}`;
+          window.location.href = result.data.data.url;
         } else {
           toast.error(t("checkoutError"));
         }
@@ -191,11 +191,10 @@ export function CreditPackagesList({
         return (
           <div key={pkg.id} className="relative pt-4">
             <Card
-              className={`relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden ${
-                isPopular
+              className={`relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden ${isPopular
                   ? "border-pixoo-pink shadow-lg shadow-pixoo-pink/20 scale-105 ring-2 ring-pixoo-pink/20"
                   : `${config.borderColor} hover:border-pixoo-purple/40`
-              }`}
+                }`}
             >
               {/* Gradient Background */}
               <div
@@ -248,11 +247,10 @@ export function CreditPackagesList({
                   <Button
                     onClick={() => handlePackageAction(pkg)}
                     disabled={isCreatingCheckout}
-                    className={`w-full h-12 font-semibold transition-all duration-300 ${
-                      isPopular
+                    className={`w-full h-12 font-semibold transition-all duration-300 ${isPopular
                         ? "bg-gradient-to-r from-pixoo-pink to-pixoo-magenta hover:from-pixoo-pink/90 hover:to-pixoo-magenta/90 text-white shadow-lg hover:shadow-xl"
                         : "bg-gradient-to-r from-pixoo-purple to-pixoo-dark hover:from-pixoo-purple/90 hover:to-pixoo-dark/90 text-white shadow-md hover:shadow-lg"
-                    }`}
+                      }`}
                     size="lg"
                   >
                     {isCreatingCheckout ? (

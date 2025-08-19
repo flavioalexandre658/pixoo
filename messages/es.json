@@ -407,6 +407,39 @@
     "renewalAvailableNow": "• Renovación disponible ahora",
     "nextRenewalInHours": "• Próxima renovación en {hours}h"
   },
+  "creditPackages": {
+    "loading": "Cargando paquetes...",
+    "loadingError": "Error al cargar los paquetes de créditos",
+    "noPackagesAvailable": "No hay paquetes de créditos disponibles.",
+    "buyNow": "Comprar ahora",
+    "processing": "Procesando...",
+    "checkoutError": "Error al crear la sesión de pago",
+    "paymentError": "Error al procesar el pago",
+    "popular": "Más popular",
+    "credits": "créditos",
+    "startFree": "Empezar gratis",
+    "selectPlan": "Seleccionar plan",
+    "monthly": "mes",
+    "yearly": "año",
+    "monthlyCredits": "créditos mensuales",
+    "yearlyCredits": "créditos anuales"
+  },
+  "plans": {
+    "loading": "Cargando planes...",
+    "loadingError": "Error al cargar los planes",
+    "noPlansAvailable": "No hay planes disponibles en este momento.",
+    "tryAgainLater": "Inténtalo de nuevo en unos instantes.",
+    "popular": "Más popular",
+    "startFree": "Empezar gratis",
+    "selectPlan": "Seleccionar plan",
+    "processing": "Procesando...",
+    "monthly": "mes",
+    "yearly": "año",
+    "monthlyCredits": "créditos mensuales",
+    "yearlyCredits": "créditos anuales",
+    "checkoutError": "Error al procesar el pago",
+    "loginRequired": "Debes iniciar sesión para finalizar la compra"
+  },
   "pricing": {
     "title": "Elige el plan ideal para ti",
     "subtitle": "Desbloquea todo el potencial de la generación de imágenes con IA. Planes flexibles para todo tipo de creadores.",
@@ -429,7 +462,7 @@
       "questions": {
         "cancel": {
           "question": "¿Puedo cancelar mi suscripción en cualquier momento?",
-          "answer": "Sí, puedes cancelar tu suscripción cuando quieras. Mantendrás el acceso a las funciones hasta el final del período pagado."
+          "answer": "Sí, puedes cancelar tu suscripción cuando quieras. Mantendrás acceso a las funciones hasta el final del período pagado."
         },
         "credits": {
           "question": "¿Los créditos no utilizados caducan?",
