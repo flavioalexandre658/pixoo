@@ -6,6 +6,7 @@ import {
   decimal,
   varchar,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { users } from "./auth.schema";
 import { generatedImages } from "./images.schema";
 
@@ -20,7 +21,9 @@ export const userCredits = pgTable("user_credits", {
   totalEarned: integer("total_earned").notNull().default(0), // Total de créditos ganhos
   totalSpent: integer("total_spent").notNull().default(0), // Total de créditos gastos
   freeCreditsBalance: integer("free_credits_balance").notNull().default(5), // Saldo de créditos gratuitos diários
-  lastFreeCreditsRenewal: timestamp("last_free_credits_renewal").defaultNow().notNull(), // Data da última renovação de créditos gratuitos
+  lastFreeCreditsRenewal: timestamp("last_free_credits_renewal")
+    .defaultNow()
+    .notNull(), // Data da última renovação de créditos gratuitos
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -80,7 +83,6 @@ export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
 export type ModelCost = typeof modelCosts.$inferSelect;
 export type NewModelCost = typeof modelCosts.$inferInsert;
 
-
 // Tabela para pacotes de créditos disponíveis
 export const creditPackages = pgTable("credit_packages", {
   id: text("id").primaryKey(),
@@ -116,8 +118,31 @@ export const creditPackagePurchases = pgTable("credit_package_purchases", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Adicionar as relações no final do arquivo, antes dos tipos
+export const creditPackagePurchasesRelations = relations(
+  creditPackagePurchases,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [creditPackagePurchases.userId],
+      references: [users.id],
+    }),
+    package: one(creditPackages, {
+      fields: [creditPackagePurchases.packageId],
+      references: [creditPackages.id],
+    }),
+  })
+);
+
+export const creditPackagesRelations = relations(
+  creditPackages,
+  ({ many }) => ({
+    purchases: many(creditPackagePurchases),
+  })
+);
+
 export type CreditPackage = typeof creditPackages.$inferSelect;
 export type NewCreditPackage = typeof creditPackages.$inferInsert;
 
 export type CreditPackagePurchase = typeof creditPackagePurchases.$inferSelect;
-export type NewCreditPackagePurchase = typeof creditPackagePurchases.$inferInsert;
+export type NewCreditPackagePurchase =
+  typeof creditPackagePurchases.$inferInsert;

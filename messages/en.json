@@ -69,7 +69,8 @@
     "settings": "Settings",
     "logout": "Log out",
     "language": "Language",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "buyCredits": "Buy credits"
   },
   "textToImage": {
     "title": "Create Image",
@@ -360,14 +361,26 @@
     "signUp": "Create Account"
   },
   "subscriptionRequired": {
-    "title": "Upgrade Required",
-    "description": "To use this model or feature, you need an active plan. Choose the plan that fits you best!",
+    "title": "Choose Your Plan",
+    "description": "Select a credit package or subscribe to a plan to keep creating amazing images.",
     "popular": "Most Popular",
     "viewAllPlans": "View All Plans",
+    "tabs": {
+      "packages": "Credit Packages",
+      "plans": "Monthly Plans"
+    },
+    "packagesSection": {
+      "title": "Credit Packages",
+      "description": "Buy credits to use whenever you need"
+    },
+    "plansSection": {
+      "title": "Monthly Plans",
+      "description": "Subscribe to a plan and get unlimited access"
+    },
     "plans": {
       "basic": {
         "name": "Pixoo Basic",
-        "price": "R$ 19,90/month",
+        "price": "$19.90/month",
         "description": "Ideal for personal use",
         "features": [
           "500 monthly credits",
@@ -377,12 +390,12 @@
       },
       "pro": {
         "name": "Pixoo Pro",
-        "price": "R$ 39,90/month",
+        "price": "$39.90/month",
         "description": "For professionals and creators",
         "features": [
           "2000 monthly credits",
           "Access to all models",
-          "AI prompt optimization",
+          "AI-powered prompt optimization",
           "Priority support"
         ]
       }
@@ -401,7 +414,7 @@
     "renewalAvailable": "Renewal available",
     "nextRenewalIn": "Next renewal in {hours}h",
     "loginToSeeCredits": "Log in to see your credits",
-    "importantInfo": "ℹ️ Important info:",
+    "importantInfo": "ℹ️ Important information:",
     "validOnlyForFluxSchnell": "• Valid only for the flux-schnell model",
     "renewedEvery24Hours": "• Automatically renewed every 24 hours",
     "renewalAvailableNow": "• Renewal available now",

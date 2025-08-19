@@ -69,7 +69,8 @@
     "settings": "Configuración",
     "logout": "Cerrar sesión",
     "language": "Idioma",
-    "changeLanguage": "Cambiar idioma"
+    "changeLanguage": "Cambiar idioma",
+    "buyCredits": "Comprar Créditos"
   },
   "textToImage": {
     "title": "Crear Imagen",
@@ -360,42 +361,54 @@
     "signUp": "Crear cuenta"
   },
   "subscriptionRequired": {
-    "title": "Se requiere upgrade",
-    "description": "Para usar este modelo o función, necesitas un plan activo. ¡Elige el plan ideal para ti!",
-    "popular": "Más popular",
-    "viewAllPlans": "Ver todos los planes",
+    "title": "Elige tu Plan",
+    "description": "Selecciona un paquete de créditos o suscríbete a un plan para seguir creando imágenes increíbles.",
+    "popular": "Más Popular",
+    "viewAllPlans": "Ver Todos los Planes",
+    "tabs": {
+      "packages": "Paquetes de Créditos",
+      "plans": "Planes Mensuales"
+    },
+    "packagesSection": {
+      "title": "Paquetes de Créditos",
+      "description": "Compra créditos para usar cuando los necesites"
+    },
+    "plansSection": {
+      "title": "Planes Mensuales",
+      "description": "Suscríbete a un plan y obtén acceso ilimitado"
+    },
     "plans": {
       "basic": {
         "name": "Pixoo Basic",
-        "price": "R$ 19,90/mes",
+        "price": "$19.90/mes",
         "description": "Ideal para uso personal",
         "features": [
           "500 créditos mensuales",
           "Acceso a modelos básicos",
-          "Soporte por correo"
+          "Soporte por correo electrónico"
         ]
       },
       "pro": {
         "name": "Pixoo Pro",
-        "price": "R$ 39,90/mes",
+        "price": "$39.90/mes",
         "description": "Para profesionales y creadores",
         "features": [
           "2000 créditos mensuales",
           "Acceso a todos los modelos",
-          "Optimización de prompt con IA",
+          "Optimización de prompts con IA",
           "Soporte prioritario"
         ]
       }
     }
   },
   "credits": {
-    "yourCredits": "Tus créditos",
-    "freeCredits": "Créditos gratis",
+    "yourCredits": "Tus Créditos",
+    "freeCredits": "Créditos Gratuitos",
     "creditsAvailable": "Créditos disponibles",
     "add": "Añadir",
-    "totalEarned": "Total ganado",
-    "totalSpent": "Total gastado",
-    "recentTransactions": "Transacciones recientes",
+    "totalEarned": "Total Ganado",
+    "totalSpent": "Total Gastado",
+    "recentTransactions": "Transacciones Recientes",
     "currentBalance": "Saldo actual: {balance} créditos",
     "onlyForPixooFree": "Solo para Pixoo Free",
     "renewalAvailable": "Renovación disponible",
@@ -403,7 +416,7 @@
     "loginToSeeCredits": "Inicia sesión para ver tus créditos",
     "importantInfo": "ℹ️ Información importante:",
     "validOnlyForFluxSchnell": "• Válidos solo para el modelo flux-schnell",
-    "renewedEvery24Hours": "• Se renuevan automáticamente cada 24 horas",
+    "renewedEvery24Hours": "• Renovados automáticamente cada 24 horas",
     "renewalAvailableNow": "• Renovación disponible ahora",
     "nextRenewalInHours": "• Próxima renovación en {hours}h"
   },
