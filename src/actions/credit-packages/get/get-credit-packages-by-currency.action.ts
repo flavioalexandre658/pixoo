@@ -44,7 +44,7 @@ export const getCreditPackagesByCurrency = actionClient
           currency === "BRL"
             ? `R$ ${(pkg.priceInCents / 100).toFixed(2).replace(".", ",")}`
             : `$${(pkg.priceInCents / 100).toFixed(2)}`,
-        lookupKey: `creditpackage_${pkg.code}_${currency.toLowerCase()}`, // Lookup key para buscar preços no Stripe
+        lookupKey: `${pkg.code}_${currency.toLowerCase()}`, // Lookup key para buscar preços no Stripe
       }));
 
       console.log(

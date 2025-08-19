@@ -58,7 +58,7 @@ export const createCreditPackageCheckout = authActionClient
       }
 
       // Gerar lookup_key do preço do Stripe: creditpackage_code_currency
-      const lookupKey = `creditpackage_${packageCode}_${currency.toLowerCase()}`;
+      const lookupKey = `${packageCode}`;
 
       console.log(`💳 Dados do checkout:`, {
         packageId: creditPackage.id,
