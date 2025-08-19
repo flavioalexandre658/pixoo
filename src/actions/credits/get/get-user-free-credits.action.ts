@@ -1,10 +1,10 @@
-'use server';
+"use server";
 
-import { eq, and } from 'drizzle-orm';
-import { db } from '@/db';
-import { authActionClient } from '@/lib/safe-action';
-import { userCredits, subscriptions } from '@/db/schema';
-import { z } from 'zod';
+import { eq, and } from "drizzle-orm";
+import { db } from "@/db";
+import { authActionClient } from "@/lib/safe-action";
+import { userCredits, subscriptions, creditTransactions } from "@/db/schema";
+import { z } from "zod";
 
 const getUserFreeCreditsSchema = z.object({});
 
@@ -18,18 +18,18 @@ export const getUserFreeCredits = authActionClient
       const activeSubscription = await db.query.subscriptions.findFirst({
         where: and(
           eq(subscriptions.userId, userId),
-          eq(subscriptions.status, 'active')
+          eq(subscriptions.status, "active")
         ),
       });
 
-      // Se tem plano ativo, não tem créditos gratuitos
+      // Se tem plano ativo, não tem créditos diários
       if (activeSubscription) {
         return {
           success: true,
           data: {
-            freeCreditsBalance: 0,
+            balance: 0,
             hasActiveSubscription: true,
-            canUseFreeCredits: false,
+            canUseDailyCredits: false,
             hoursUntilRenewal: 0,
             lastRenewal: null,
           },
@@ -46,9 +46,9 @@ export const getUserFreeCredits = authActionClient
         return {
           success: true,
           data: {
-            freeCreditsBalance: 0,
+            balance: 0,
             hasActiveSubscription: false,
-            canUseFreeCredits: true,
+            canUseDailyCredits: true,
             hoursUntilRenewal: 0,
             lastRenewal: null,
             needsInitialCredits: true,
@@ -56,30 +56,51 @@ export const getUserFreeCredits = authActionClient
         };
       }
 
+      // Buscar última renovação de créditos diários
+      const lastDailyRenewal = await db.query.creditTransactions.findFirst({
+        where: and(
+          eq(creditTransactions.userId, userId),
+          eq(creditTransactions.description, "Créditos diários renovados")
+        ),
+        orderBy: (creditTransactions, { desc }) => [
+          desc(creditTransactions.createdAt),
+        ],
+      });
+
       // Calcular horas até próxima renovação
-      const now = new Date();
-      const lastRenewal = new Date(userCredit.lastFreeCreditsRenewal);
-      const hoursSinceLastRenewal = (now.getTime() - lastRenewal.getTime()) / (1000 * 60 * 60);
-      const hoursUntilRenewal = Math.max(0, 24 - hoursSinceLastRenewal);
-      const canRenew = hoursSinceLastRenewal >= 24;
+      let hoursUntilRenewal = 0;
+      let canRenew = true;
+      let lastRenewal = null;
+
+      if (lastDailyRenewal) {
+        const now = new Date();
+        const lastRenewalDate = new Date(lastDailyRenewal.createdAt);
+        const hoursSinceLastRenewal =
+          (now.getTime() - lastRenewalDate.getTime()) / (1000 * 60 * 60);
+        hoursUntilRenewal = Math.max(0, 24 - hoursSinceLastRenewal);
+        canRenew = hoursSinceLastRenewal >= 24;
+        lastRenewal = lastRenewalDate;
+      }
 
       return {
         success: true,
         data: {
-          freeCreditsBalance: userCredit.freeCreditsBalance,
+          balance: userCredit.balance,
           hasActiveSubscription: false,
-          canUseFreeCredits: true,
+          canUseDailyCredits: true,
           hoursUntilRenewal: Math.ceil(hoursUntilRenewal),
-          lastRenewal: userCredit.lastFreeCreditsRenewal,
+          lastRenewal,
           canRenew,
         },
       };
     } catch (error) {
-      console.error('Erro ao obter créditos gratuitos:', error);
+      console.error("Erro ao obter créditos:", error);
       return {
         success: false,
         errors: {
-          _form: [error instanceof Error ? error.message : 'Erro interno do servidor'],
+          _form: [
+            error instanceof Error ? error.message : "Erro interno do servidor",
+          ],
         },
       };
     }

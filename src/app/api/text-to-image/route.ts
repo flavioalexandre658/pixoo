@@ -9,7 +9,7 @@ import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
 import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
 import { spendFreeCredits } from "@/actions/credits/spend/spend-free-credits.action";
-import { renewDailyFreeCredits } from "@/actions/credits/renew/renew-daily-free-credits.action";
+import { renewDailyCredits } from "@/actions/credits/renew-daily-credits.action";
 import { eq, and } from "drizzle-orm";
 import { validateBFLDimensions } from "@/lib/utils";
 import { subscriptions } from "@/db/schema";
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     const activeSubscription = await db.query.subscriptions.findFirst({
       where: and(
         eq(subscriptions.userId, session.user.id),
-        eq(subscriptions.status, 'active')
+        eq(subscriptions.status, "active")
       ),
     });
 
@@ -119,32 +119,40 @@ export async function POST(request: NextRequest) {
     let usedFreeCredits = false;
 
     // Se é flux-schnell e não tem plano ativo, tentar usar créditos gratuitos
-    if (model === 'flux-schnell' && !activeSubscription) {
+    if (model === "flux-schnell" && !activeSubscription) {
       try {
         // Verificar créditos gratuitos disponíveis
         const freeCreditsResult = await getUserFreeCredits({});
-        
+
         if (freeCreditsResult?.data?.success) {
           const freeCreditsData = freeCreditsResult.data.data;
-          
+
+          // Na seção onde renewDailyFreeCredits era chamado (linha ~127):
           // Se pode renovar, renovar automaticamente
           if (freeCreditsData?.canRenew) {
-            await renewDailyFreeCredits({});
+            await renewDailyCredits();
           }
-          
+
           // Tentar usar créditos gratuitos
-          if ((freeCreditsData?.freeCreditsBalance && freeCreditsData.freeCreditsBalance > 0) || freeCreditsData?.canRenew) {
+          if (
+            (freeCreditsData?.balance && freeCreditsData.balance > 0) ||
+            freeCreditsData?.canRenew
+          ) {
             const spendResult = await spendFreeCredits({
               modelId: model,
               description: `Geração de imagem gratuita - ${model}`,
             });
-            
+
             if (spendResult?.data?.success) {
               usedFreeCredits = true;
               console.log(`✅ Crédito gratuito usado para ${model}`);
             } else {
-              const errorMessage = spendResult?.data?.errors?._form?.[0] || "Erro desconhecido";
-              console.error(`❌ Falha ao usar crédito gratuito para ${model}:`, errorMessage);
+              const errorMessage =
+                spendResult?.data?.errors?._form?.[0] || "Erro desconhecido";
+              console.error(
+                `❌ Falha ao usar crédito gratuito para ${model}:`,
+                errorMessage
+              );
             }
           }
         }
@@ -156,20 +164,22 @@ export async function POST(request: NextRequest) {
     // Se não usou créditos gratuitos e o modelo tem custo, reservar créditos normais
     if (!usedFreeCredits && modelCost.credits > 0) {
       // Se é flux-schnell e não tem plano ativo, bloquear uso de créditos pagos
-      if (model === 'flux-schnell' && !activeSubscription) {
+      if (model === "flux-schnell" && !activeSubscription) {
         return NextResponse.json(
           {
-            error: "Créditos gratuitos esgotados. Aguarde a renovação diária ou assine um plano para continuar.",
+            error:
+              "Créditos gratuitos esgotados. Aguarde a renovação diária ou assine um plano para continuar.",
           },
           { status: 402 }
         );
       }
 
       // Se não tem plano ativo e não é flux-schnell, bloquear
-      if (!activeSubscription && model !== 'flux-schnell') {
+      if (!activeSubscription && model !== "flux-schnell") {
         return NextResponse.json(
           {
-            error: "Este modelo requer um plano ativo. Assine um plano para usar modelos premium.",
+            error:
+              "Este modelo requer um plano ativo. Assine um plano para usar modelos premium.",
           },
           { status: 402 }
         );

@@ -30,11 +30,9 @@ export const auth = betterAuth({
             await db.insert(schemas.userCredits).values({
               id: crypto.randomUUID(),
               userId: user.id,
-              balance: 0,
-              totalEarned: 0,
+              balance: 10, // Usar balance em vez de freeCreditsBalance
+              totalEarned: 10,
               totalSpent: 0,
-              freeCreditsBalance: 10,
-              lastFreeCreditsRenewal: new Date(),
             });
 
             // Registrar transação inicial
@@ -44,9 +42,9 @@ export const auth = betterAuth({
               type: "bonus",
               amount: 10,
               description: "Créditos gratuitos de boas-vindas - Pixoo Init",
-              balanceAfter: 0, // Balance normal permanece 0
+              balanceAfter: 10, // Balance após adição
               metadata: JSON.stringify({
-                freeCreditsBalance: 10,
+                balance: 10, // Usar balance no metadata
                 initialCredits: true,
               }),
               createdAt: new Date(),

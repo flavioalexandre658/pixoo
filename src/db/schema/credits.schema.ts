@@ -17,13 +17,9 @@ export const userCredits = pgTable("user_credits", {
     .notNull()
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
-  balance: integer("balance").notNull().default(0), // Saldo atual de créditos
+  balance: integer("balance").notNull().default(0), // Saldo atual de créditos (unificado)
   totalEarned: integer("total_earned").notNull().default(0), // Total de créditos ganhos
   totalSpent: integer("total_spent").notNull().default(0), // Total de créditos gastos
-  freeCreditsBalance: integer("free_credits_balance").notNull().default(5), // Saldo de créditos gratuitos diários
-  lastFreeCreditsRenewal: timestamp("last_free_credits_renewal")
-    .defaultNow()
-    .notNull(), // Data da última renovação de créditos gratuitos
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

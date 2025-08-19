@@ -18,9 +18,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
 interface FreeCreditsData {
-  freeCreditsBalance: number;
+  balance: number;
   hasActiveSubscription: boolean;
-  canUseFreeCredits: boolean;
+  canUseDailyCredits: boolean; // Alterado de canUseFreeCredits para canUseDailyCredits
   hoursUntilRenewal: number;
   lastRenewal: Date | null;
   canRenew?: boolean;
@@ -54,7 +54,7 @@ export function CreditsDisplay({
     setLoadingFreeCredits(true);
     try {
       const result = await getUserFreeCredits({});
-      if (result?.data?.success && result.data.data) {
+      if (result?.data?.success && result?.data?.data) {
         setFreeCredits(result.data.data);
       }
     } catch (error) {
@@ -161,7 +161,7 @@ export function CreditsDisplay({
                     variant="secondary"
                     className="font-mono bg-gradient-to-r from-pixoo-pink/10 to-pixoo-purple/10 border-pixoo-pink/20 hover:from-pixoo-pink/20 hover:to-pixoo-purple/20 transition-all duration-300 hover:scale-105"
                   >
-                    {freeCredits.freeCreditsBalance}
+                    {freeCredits.balance}
                   </Badge>
                   {showAddButton && (
                     <Button
@@ -205,7 +205,7 @@ export function CreditsDisplay({
               ) : freeCredits ? (
                 <>
                   <p className="font-medium bg-gradient-to-r from-pixoo-pink to-pixoo-magenta bg-clip-text text-transparent">
-                    {t("freeCredits")}: {freeCredits.freeCreditsBalance}
+                    {t("freeCredits")}: {freeCredits.balance}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {t("onlyForPixooFree")}
@@ -330,7 +330,7 @@ export function CreditsDisplay({
               </div>
               <div className="flex-1">
                 <p className="text-2xl font-bold bg-gradient-to-r from-pixoo-pink to-pixoo-magenta bg-clip-text text-transparent">
-                  {freeCredits.freeCreditsBalance}
+                  {freeCredits.balance}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t("creditsAvailable")}

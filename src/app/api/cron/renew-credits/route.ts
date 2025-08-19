@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { eq, and, lt, isNull } from "drizzle-orm";
+import { eq, and, lt, isNull, desc } from "drizzle-orm";
 import { userCredits, creditTransactions, subscriptions } from "@/db/schema";
 
 export async function GET(request: NextRequest) {
@@ -17,12 +17,11 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Buscar usuários sem assinatura ativa que precisam de renovação
-    const usersNeedingRenewal = await db
+    // Buscar usuários sem assinatura ativa
+    const usersWithoutSubscription = await db
       .select({
         userId: userCredits.userId,
-        freeCreditsBalance: userCredits.freeCreditsBalance,
-        lastFreeCreditsRenewal: userCredits.lastFreeCreditsRenewal,
+        balance: userCredits.balance,
       })
       .from(userCredits)
       .leftJoin(
@@ -33,25 +32,39 @@ export async function GET(request: NextRequest) {
         )
       )
       .where(
-        and(
-          // Usuários sem assinatura ativa
-          isNull(subscriptions.id),
-          // Última renovação foi há mais de 24 horas
-          lt(userCredits.lastFreeCreditsRenewal, twentyFourHoursAgo)
-        )
+        // Usuários sem assinatura ativa
+        isNull(subscriptions.id)
       );
 
     let renewedCount = 0;
     const errors: string[] = [];
 
-    for (const user of usersNeedingRenewal) {
+    for (const user of usersWithoutSubscription) {
       try {
+        // Verificar última renovação deste usuário
+        const lastRenewal = await db.query.creditTransactions.findFirst({
+          where: and(
+            eq(creditTransactions.userId, user.userId),
+            eq(
+              creditTransactions.description,
+              "Renovação automática de créditos gratuitos - flux-schnell"
+            )
+          ),
+          orderBy: [desc(creditTransactions.createdAt)],
+        });
+
+        // Se teve renovação nas últimas 24 horas, pular
+        if (lastRenewal && lastRenewal.createdAt > twentyFourHoursAgo) {
+          continue;
+        }
+
         // Renovar créditos para 10
+        const newBalance = user.balance + 10;
+
         await db
           .update(userCredits)
           .set({
-            freeCreditsBalance: 10,
-            lastFreeCreditsRenewal: now,
+            balance: newBalance,
             updatedAt: now,
           })
           .where(eq(userCredits.userId, user.userId));
@@ -64,7 +77,7 @@ export async function GET(request: NextRequest) {
           amount: 10,
           description:
             "Renovação automática de créditos gratuitos - flux-schnell",
-          balanceAfter: 10,
+          balanceAfter: newBalance,
           createdAt: now,
         });
 

@@ -49,14 +49,12 @@ export const spendFreeCredits = authActionClient
         ),
       });
 
-      // Se tem plano ativo, não pode usar créditos gratuitos
+      // Se tem plano ativo, não pode usar créditos gratuitos (agora unificados)
       if (activeSubscription) {
         return {
           success: false,
           errors: {
-            _form: [
-              "Usuários com plano ativo não podem usar créditos gratuitos",
-            ],
+            _form: ["Usuários com plano ativo não podem usar créditos diários"],
           },
         };
       }
@@ -75,27 +73,26 @@ export const spendFreeCredits = authActionClient
         };
       }
 
-      // Verificar se tem créditos gratuitos suficientes
-      if (userCredit.freeCreditsBalance < modelCost.credits) {
+      // Verificar se tem créditos suficientes no balance unificado
+      if (userCredit.balance < modelCost.credits) {
         return {
           success: false,
           errors: {
             _form: [
-              `Créditos gratuitos insuficientes. Necessário: ${modelCost.credits}, Disponível: ${userCredit.freeCreditsBalance}`,
+              `Créditos insuficientes. Necessário: ${modelCost.credits}, Disponível: ${userCredit.balance}`,
             ],
           },
         };
       }
 
-      // Gastar créditos gratuitos baseado no custo do modelo
-      const newFreeCreditsBalance =
-        userCredit.freeCreditsBalance - modelCost.credits;
+      // Gastar créditos do balance unificado
+      const newBalance = userCredit.balance - modelCost.credits;
       const now = new Date();
 
       await db
         .update(userCredits)
         .set({
-          freeCreditsBalance: newFreeCreditsBalance,
+          balance: newBalance,
           totalSpent: userCredit.totalSpent + modelCost.credits,
           updatedAt: now,
         })
@@ -109,15 +106,14 @@ export const spendFreeCredits = authActionClient
         amount: -modelCost.credits,
         description:
           description ||
-          `Geração de imagem gratuita - ${modelCost.modelName} (${modelCost.credits} créditos)`,
+          `Geração de imagem - ${modelCost.modelName} (${modelCost.credits} créditos)`,
         relatedImageId: imageId,
-        balanceAfter: userCredit.balance, // Balance normal não muda
+        balanceAfter: newBalance,
         metadata: JSON.stringify({
           modelId,
           modelName: modelCost.modelName,
           creditsUsed: modelCost.credits,
-          freeCreditsUsed: true,
-          freeCreditsBalanceAfter: newFreeCreditsBalance,
+          dailyCreditsUsed: true,
         }),
         createdAt: now,
       });
@@ -125,13 +121,13 @@ export const spendFreeCredits = authActionClient
       return {
         success: true,
         data: {
-          freeCreditsBalance: newFreeCreditsBalance,
+          balance: newBalance,
           creditsUsed: modelCost.credits,
-          message: `${modelCost.credits} crédito(s) gratuito(s) usado(s) com sucesso`,
+          message: `${modelCost.credits} crédito(s) usado(s) com sucesso`,
         },
       };
     } catch (error) {
-      console.error("Erro ao gastar créditos gratuitos:", error);
+      console.error("Erro ao gastar créditos:", error);
       return {
         success: false,
         errors: {
@@ -181,12 +177,12 @@ export async function spendFreeCreditsInternal({
       ),
     });
 
-    // Se tem plano ativo, não pode usar créditos gratuitos
+    // Se tem plano ativo, não pode usar créditos diários
     if (activeSubscription) {
       return {
         success: false,
         errors: {
-          _form: ["Usuários com plano ativo não podem usar créditos gratuitos"],
+          _form: ["Usuários com plano ativo não podem usar créditos diários"],
         },
       };
     }
@@ -205,27 +201,26 @@ export async function spendFreeCreditsInternal({
       };
     }
 
-    // Verificar se tem créditos gratuitos suficientes
-    if (userCredit.freeCreditsBalance < modelCost.credits) {
+    // Verificar se tem créditos suficientes no balance unificado
+    if (userCredit.balance < modelCost.credits) {
       return {
         success: false,
         errors: {
           _form: [
-            `Créditos gratuitos insuficientes. Necessário: ${modelCost.credits}, Disponível: ${userCredit.freeCreditsBalance}`,
+            `Créditos insuficientes. Necessário: ${modelCost.credits}, Disponível: ${userCredit.balance}`,
           ],
         },
       };
     }
 
-    // Gastar créditos gratuitos baseado no custo do modelo
-    const newFreeCreditsBalance =
-      userCredit.freeCreditsBalance - modelCost.credits;
+    // Gastar créditos do balance unificado
+    const newBalance = userCredit.balance - modelCost.credits;
     const now = new Date();
 
     await db
       .update(userCredits)
       .set({
-        freeCreditsBalance: newFreeCreditsBalance,
+        balance: newBalance,
         totalSpent: userCredit.totalSpent + modelCost.credits,
         updatedAt: now,
       })
@@ -239,15 +234,14 @@ export async function spendFreeCreditsInternal({
       amount: -modelCost.credits,
       description:
         description ||
-        `Geração de imagem gratuita - ${modelCost.modelName} (${modelCost.credits} créditos)`,
+        `Geração de imagem - ${modelCost.modelName} (${modelCost.credits} créditos)`,
       relatedImageId: imageId,
-      balanceAfter: userCredit.balance, // Balance normal não muda
+      balanceAfter: newBalance,
       metadata: JSON.stringify({
         modelId,
         modelName: modelCost.modelName,
         creditsUsed: modelCost.credits,
-        freeCreditsUsed: true,
-        freeCreditsBalanceAfter: newFreeCreditsBalance,
+        dailyCreditsUsed: true,
       }),
       createdAt: now,
     });
@@ -255,13 +249,13 @@ export async function spendFreeCreditsInternal({
     return {
       success: true,
       data: {
-        freeCreditsBalance: newFreeCreditsBalance,
+        balance: newBalance,
         creditsUsed: modelCost.credits,
-        message: `${modelCost.credits} crédito(s) gratuito(s) usado(s) com sucesso`,
+        message: `${modelCost.credits} crédito(s) usado(s) com sucesso`,
       },
     };
   } catch (error) {
-    console.error("Erro ao gastar créditos gratuitos:", error);
+    console.error("Erro ao gastar créditos:", error);
     return {
       success: false,
       errors: {

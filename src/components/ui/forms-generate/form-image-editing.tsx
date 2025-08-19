@@ -107,9 +107,13 @@ export function FormImageEditing({
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [freeCredits, setFreeCredits] = useState<{
-    freeCreditsBalance: number;
+    balance: number;
     hasActiveSubscription: boolean;
-    canUseFreeCredits: boolean;
+    canUseDailyCredits: boolean;
+    hoursUntilRenewal?: number;
+    lastRenewal?: Date | null;
+    canRenew?: boolean;
+    needsInitialCredits?: boolean;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
@@ -508,10 +512,7 @@ export function FormImageEditing({
     // }
 
     // Nova lógica: Verificar se tem assinatura OU créditos gratuitos
-    if (
-      !subscription &&
-      (!freeCredits || freeCredits.freeCreditsBalance <= 0)
-    ) {
+    if (!subscription && (!freeCredits || freeCredits.balance <= 0)) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -642,7 +643,7 @@ export function FormImageEditing({
     // Nova lógica: Verificar créditos específicos para cada modelo
     if (!subscription) {
       // Se não tem assinatura, verificar se tem créditos gratuitos suficientes
-      if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+      if (!freeCredits || freeCredits.balance <= 0) {
         setShowPlansModal(true);
         return false;
       }
@@ -690,7 +691,7 @@ export function FormImageEditing({
     if (data.model === "flux-schnell") {
       // Se não tem assinatura ativa, verificar créditos gratuitos
       if (!subscription) {
-        if (!freeCredits || freeCredits.freeCreditsBalance <= 0) {
+        if (!freeCredits || freeCredits.balance <= 0) {
           toast.error(t("insufficientFreeCredits"));
           setStartedGeneration(false);
           return false;

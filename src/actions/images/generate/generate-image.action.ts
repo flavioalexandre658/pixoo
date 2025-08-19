@@ -306,7 +306,7 @@ export const generateImage = authActionClient
           }
 
           const freeCreditsData = freeCreditsResult.data.data;
-          if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
+          if (!freeCreditsData || freeCreditsData.balance <= 0) {
             return {
               error: "Créditos gratuitos insuficientes para usar este modelo",
             };
@@ -330,7 +330,7 @@ export const generateImage = authActionClient
           }
 
           const freeCreditsData = freeCreditsResult.data.data;
-          if (!freeCreditsData || freeCreditsData.freeCreditsBalance <= 0) {
+          if (!freeCreditsData || freeCreditsData.balance <= 0) {
             return {
               error: "Créditos gratuitos insuficientes para usar este modelo",
             };

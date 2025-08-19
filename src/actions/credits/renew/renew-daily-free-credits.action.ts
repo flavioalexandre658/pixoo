@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { authActionClient } from "@/lib/safe-action";
 import { userCredits, creditTransactions, subscriptions } from "@/db/schema";
@@ -44,11 +44,9 @@ export const renewDailyFreeCredits = authActionClient
           .values({
             id: crypto.randomUUID(),
             userId,
-            balance: 0,
-            totalEarned: 0,
+            balance: 10,
+            totalEarned: 10,
             totalSpent: 0,
-            freeCreditsBalance: 10, // Alterado de 5 para 10
-            lastFreeCreditsRenewal: new Date(),
           })
           .returning()
           .then((res) => res[0]);
@@ -58,47 +56,62 @@ export const renewDailyFreeCredits = authActionClient
           id: crypto.randomUUID(),
           userId,
           type: "bonus",
-          amount: 10, // Alterado de 5 para 10
+          amount: 10,
           description: "Créditos gratuitos iniciais - flux-schnell",
-          balanceAfter: 10, // Alterado de 5 para 10
+          balanceAfter: 10,
           createdAt: new Date(),
         });
 
         return {
           success: true,
           data: {
-            freeCreditsBalance: 10, // Alterado de 5 para 10
+            balance: 10,
             message: "Créditos gratuitos iniciais concedidos",
           },
         };
       }
 
+      // Buscar última renovação de créditos diários
+      const lastDailyRenewal = await db.query.creditTransactions.findFirst({
+        where: and(
+          eq(creditTransactions.userId, userId),
+          eq(
+            creditTransactions.description,
+            "Renovação diária de créditos gratuitos - flux-schnell"
+          )
+        ),
+        orderBy: [desc(creditTransactions.createdAt)],
+      });
+
       // Verificar se já passou 24 horas desde a última renovação
       const now = new Date();
-      const lastRenewal = new Date(userCredit.lastFreeCreditsRenewal);
-      const hoursSinceLastRenewal =
-        (now.getTime() - lastRenewal.getTime()) / (1000 * 60 * 60);
+      if (lastDailyRenewal) {
+        const hoursSinceLastRenewal =
+          (now.getTime() - lastDailyRenewal.createdAt.getTime()) /
+          (1000 * 60 * 60);
 
-      if (hoursSinceLastRenewal < 24) {
-        const hoursRemaining = Math.ceil(24 - hoursSinceLastRenewal);
-        return {
-          success: false,
-          errors: {
-            _form: [
-              `Créditos gratuitos serão renovados em ${hoursRemaining} horas`,
-            ],
-          },
-        };
+        if (hoursSinceLastRenewal < 24) {
+          const hoursRemaining = Math.ceil(24 - hoursSinceLastRenewal);
+          return {
+            success: false,
+            errors: {
+              _form: [
+                `Créditos gratuitos serão renovados em ${hoursRemaining} horas`,
+              ],
+            },
+          };
+        }
       }
 
       // Renovar créditos gratuitos para 10
-      const newFreeCreditsBalance = 10; // Alterado de 5 para 10
+      const creditsToAdd = 10;
+      const newBalance = userCredit.balance + creditsToAdd;
 
       await db
         .update(userCredits)
         .set({
-          freeCreditsBalance: newFreeCreditsBalance,
-          lastFreeCreditsRenewal: now,
+          balance: newBalance,
+          totalEarned: userCredit.totalEarned + creditsToAdd,
           updatedAt: now,
         })
         .where(eq(userCredits.userId, userId));
@@ -108,18 +121,16 @@ export const renewDailyFreeCredits = authActionClient
         id: crypto.randomUUID(),
         userId,
         type: "bonus",
-        amount: newFreeCreditsBalance - userCredit.freeCreditsBalance,
+        amount: creditsToAdd,
         description: "Renovação diária de créditos gratuitos - flux-schnell",
-        balanceAfter:
-          userCredit.balance +
-          (newFreeCreditsBalance - userCredit.freeCreditsBalance),
+        balanceAfter: newBalance,
         createdAt: now,
       });
 
       return {
         success: true,
         data: {
-          freeCreditsBalance: newFreeCreditsBalance,
+          balance: newBalance,
           message: "Créditos gratuitos renovados com sucesso",
         },
       };

@@ -41,9 +41,7 @@ export const reserveCredits = authActionClient
         .where(eq(userCredits.userId, userId))
         .limit(1);
 
-      const currentBalance = userCredit?.balance
-        ? userCredit?.balance
-        : userCredit?.freeCreditsBalance ?? 0;
+      const currentBalance = userCredit?.balance ?? 0;
       if (currentBalance < modelCost.credits) {
         return {
           success: false,
