@@ -143,7 +143,8 @@ export const createCreditPackageCheckout = authActionClient
         })
         .where(eq(creditPackagePurchases.id, purchaseId));
 
-      console.log(`✅ Checkout de pacote criado: ${checkoutSession.id}`);
+      console.log(`✅ Checkout de pacote criado: ${checkoutSession.id} url: ${checkoutSession.url}`);
+
 
       return {
         success: true,
