@@ -137,7 +137,7 @@ export function FormTextToImage({
     resolver: zodResolver(formTextToImageSchema),
     defaultValues: {
       prompt: "",
-      model: "flux-schnell",
+      model: "flux-dev",
       imagePublic: false,
       promptUpsampling: false,
       width: 1024,
@@ -600,10 +600,15 @@ export function FormTextToImage({
                             <div className="flex items-center justify-between w-full">
                               <span>{model.modelName}</span>
                               <div className="flex items-center gap-2 ml-2">
-                                {model.credits > 0 && (
+                                {model.credits > 0 ? (
                                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                                     <Coins className="h-3 w-3 text-pixoo-purple" />
                                     {model.credits} {t("credits")}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Coins className="h-3 w-3 text-pixoo-purple" />
+                                    Free
                                   </span>
                                 )}
                               </div>
@@ -642,10 +647,15 @@ export function FormTextToImage({
                           <div className="flex items-center justify-between w-full">
                             <span>{model.modelName}</span>
                             <div className="flex items-center gap-2 ml-2">
-                              {model.credits > 0 && (
+                              {model.credits > 0 ? (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Coins className="h-3 w-3 text-pixoo-purple" />
                                   {model.credits} {t("credits")}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Coins className="h-3 w-3 text-pixoo-purple" />
+                                  Free
                                 </span>
                               )}
                             </div>
@@ -658,6 +668,13 @@ export function FormTextToImage({
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Coins className="h-3 w-3 text-pixoo-purple" />
                       {t("costCredits", { credits: selectedModel.credits })}
+                    </p>
+                  )}
+
+                  {selectedModel && selectedModel.credits <= 0 && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Coins className="h-3 w-3 text-pixoo-purple" />
+                      Free
                     </p>
                   )}
                 </div>
