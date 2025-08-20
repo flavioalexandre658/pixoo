@@ -20,7 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
-import { Settings, User, LogOut, CreditCard, Globe, Menu, Coins } from "lucide-react";
+import { LogOut, Globe, Menu, Coins } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { CreditsDisplay } from "@/components/ui/credits-display";

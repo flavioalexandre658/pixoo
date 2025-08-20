@@ -1,7 +1,6 @@
 import {
   pgTable,
   varchar,
-  decimal,
   integer,
   boolean,
   timestamp,

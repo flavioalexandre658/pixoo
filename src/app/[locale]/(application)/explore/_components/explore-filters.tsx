@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Filter, TrendingUp } from "lucide-react";
+import { Filter, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SearchBar } from "@/components/ui/image-history/search-bar";
 import { FilterSelect } from "@/components/ui/image-history/filter-select";

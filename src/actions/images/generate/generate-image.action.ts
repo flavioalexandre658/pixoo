@@ -8,7 +8,6 @@ import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
 import { cancelReservation } from "@/actions/credits";
 import { spendFreeCredits } from "@/actions/credits/spend/spend-free-credits.action";
-import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
 import { eq, and } from "drizzle-orm";
 import { subscriptions } from "@/db/schema";
 import { randomUUID } from "crypto";
@@ -292,70 +291,27 @@ export const generateImage = authActionClient
         // Se tem assinatura ativa, flux-schnell é ilimitado (não cobra créditos)
         if (hasActiveSubscription) {
           usesFreeCredits = false; // Não usa créditos gratuitos nem pagos
-        } else {
-          // Para usuários sem assinatura, verificar créditos gratuitos
-          const freeCreditsResult = await getUserFreeCredits({});
-
-          if (
-            freeCreditsResult.serverError ||
-            !freeCreditsResult.data?.success
-          ) {
-            return {
-              error: "Erro ao verificar créditos gratuitos",
-            };
-          }
-
-          const freeCreditsData = freeCreditsResult.data.data;
-          if (!freeCreditsData || freeCreditsData.balance <= 0) {
-            return {
-              error: "Créditos gratuitos insuficientes para usar este modelo",
-            };
-          }
-
-          usesFreeCredits = true;
         }
       } else {
-        // Para outros modelos, verificar se tem assinatura primeiro
-        if (!hasActiveSubscription) {
-          // Usuário sem assinatura: tentar usar créditos gratuitos
-          const freeCreditsResult = await getUserFreeCredits({});
 
-          if (
-            freeCreditsResult.serverError ||
-            !freeCreditsResult.data?.success
-          ) {
-            return {
-              error: "Erro ao verificar créditos gratuitos",
-            };
-          }
+        // Usuário com assinatura: usar sistema de reserva normal
+        const reserveResult = await reserveCredits({
+          modelId: model,
+          description: `Reserva para geração de imagem - ${model}`,
+        });
 
-          const freeCreditsData = freeCreditsResult.data.data;
-          if (!freeCreditsData || freeCreditsData.balance <= 0) {
-            return {
-              error: "Créditos gratuitos insuficientes para usar este modelo",
-            };
-          }
-
-          usesFreeCredits = true;
-        } else {
-          // Usuário com assinatura: usar sistema de reserva normal
-          const reserveResult = await reserveCredits({
-            modelId: model,
-            description: `Reserva para geração de imagem - ${model}`,
-          });
-
-          if (reserveResult.serverError || !reserveResult.data?.success) {
-            return {
-              error:
-                reserveResult.data?.errors?._form?.[0] ||
-                reserveResult.serverError ||
-                "Erro ao reservar créditos",
-            };
-          }
-
-          reservationId = reserveResult.data?.data?.reservationId || null;
+        if (reserveResult.serverError || !reserveResult.data?.success) {
+          return {
+            error:
+              reserveResult.data?.errors?._form?.[0] ||
+              reserveResult.serverError ||
+              "Erro ao reservar créditos",
+          };
         }
+
+        reservationId = reserveResult.data?.data?.reservationId || null;
       }
+
 
       // Se for flux-schnell, usar Together.ai
       if (model === "flux-schnell") {
@@ -602,8 +558,7 @@ export const generateImage = authActionClient
               }
 
               throw new Error(
-                `Falha ao criar requisição: ${createResponse.statusText} (${
-                  createResponse.status
+                `Falha ao criar requisição: ${createResponse.statusText} (${createResponse.status
                 }). Resposta: ${JSON.stringify(createResponse.data)}`
               );
             }

@@ -6,15 +6,27 @@ import { authActionClient } from "@/lib/safe-action";
 import { userCredits, subscriptions, creditTransactions } from "@/db/schema";
 import { z } from "zod";
 
-const getUserFreeCreditsSchema = z.object({});
+const getUserMonthlyCreditsSchema = z.object({});
 
-export const getUserFreeCredits = authActionClient
-  .inputSchema(getUserFreeCreditsSchema)
+// Defina o tipo esperado pelo front
+export type FreeCreditsData = {
+  balance: number;
+  hasActiveSubscription: boolean;
+  canUseMonthlyCredits: boolean;
+  canUseDailyCredits: boolean;   // 🔥 campos que estavam faltando
+  daysUntilRenewal: number;
+  hoursUntilRenewal: number;     // 🔥 idem
+  lastRenewal: Date | null;
+  needsInitialCredits?: boolean;
+  canRenew?: boolean;
+};
+
+export const getUserMonthlyCredits = authActionClient
+  .inputSchema(getUserMonthlyCreditsSchema)
   .action(async ({ ctx }) => {
     const { userId } = ctx as { userId: string };
 
     try {
-      // Verificar se o usuário tem plano ativo
       const activeSubscription = await db.query.subscriptions.findFirst({
         where: and(
           eq(subscriptions.userId, userId),
@@ -22,63 +34,65 @@ export const getUserFreeCredits = authActionClient
         ),
       });
 
-      // Se tem plano ativo, não tem créditos diários
       if (activeSubscription) {
         return {
           success: true,
           data: {
             balance: 0,
             hasActiveSubscription: true,
-            canUseDailyCredits: false,
-            hoursUntilRenewal: 0,
+            canUseMonthlyCredits: false,
+            canUseDailyCredits: false,   // sempre defina
+            daysUntilRenewal: 0,
+            hoursUntilRenewal: 0,       // idem
             lastRenewal: null,
-          },
+          } satisfies FreeCreditsData,
         };
       }
 
-      // Obter dados de créditos do usuário
       const userCredit = await db.query.userCredits.findFirst({
         where: eq(userCredits.userId, userId),
       });
 
       if (!userCredit) {
-        // Se não existe registro, o usuário pode receber créditos iniciais
         return {
           success: true,
           data: {
             balance: 0,
             hasActiveSubscription: false,
-            canUseDailyCredits: true,
+            canUseMonthlyCredits: true,
+            canUseDailyCredits: false,
+            daysUntilRenewal: 0,
             hoursUntilRenewal: 0,
             lastRenewal: null,
             needsInitialCredits: true,
-          },
+          } satisfies FreeCreditsData,
         };
       }
 
-      // Buscar última renovação de créditos diários
-      const lastDailyRenewal = await db.query.creditTransactions.findFirst({
+      const lastMonthlyRenewal = await db.query.creditTransactions.findFirst({
         where: and(
           eq(creditTransactions.userId, userId),
-          eq(creditTransactions.description, "Créditos diários renovados")
+          eq(creditTransactions.description, "Créditos mensais renovados")
         ),
         orderBy: (creditTransactions, { desc }) => [
           desc(creditTransactions.createdAt),
         ],
       });
 
-      // Calcular horas até próxima renovação
+      let daysUntilRenewal = 0;
       let hoursUntilRenewal = 0;
       let canRenew = true;
-      let lastRenewal = null;
+      let lastRenewal: Date | null = null;
 
-      if (lastDailyRenewal) {
+      if (lastMonthlyRenewal) {
         const now = new Date();
-        const lastRenewalDate = new Date(lastDailyRenewal.createdAt);
-        const hoursSinceLastRenewal =
-          (now.getTime() - lastRenewalDate.getTime()) / (1000 * 60 * 60);
-        hoursUntilRenewal = Math.max(0, 24 - hoursSinceLastRenewal);
-        canRenew = hoursSinceLastRenewal >= 24;
+        const lastRenewalDate = new Date(lastMonthlyRenewal.createdAt);
+        const diffMs = now.getTime() - lastRenewalDate.getTime();
+        const daysSinceLastRenewal = diffMs / (1000 * 60 * 60 * 24);
+
+        daysUntilRenewal = Math.max(0, 30 - daysSinceLastRenewal);
+        hoursUntilRenewal = Math.max(0, 30 * 24 - diffMs / (1000 * 60 * 60));
+        canRenew = daysSinceLastRenewal >= 30;
         lastRenewal = lastRenewalDate;
       }
 
@@ -87,11 +101,13 @@ export const getUserFreeCredits = authActionClient
         data: {
           balance: userCredit.balance,
           hasActiveSubscription: false,
-          canUseDailyCredits: true,
+          canUseMonthlyCredits: true,
+          canUseDailyCredits: false,
+          daysUntilRenewal: Math.ceil(daysUntilRenewal),
           hoursUntilRenewal: Math.ceil(hoursUntilRenewal),
           lastRenewal,
           canRenew,
-        },
+        } satisfies FreeCreditsData,
       };
     } catch (error) {
       console.error("Erro ao obter créditos:", error);

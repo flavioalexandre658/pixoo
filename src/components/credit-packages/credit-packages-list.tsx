@@ -6,8 +6,6 @@ import { useAction } from "next-safe-action/hooks";
 import {
   Crown,
   Zap,
-  Star,
-  Check,
   Loader2,
   Sparkles,
   Coins,
@@ -192,8 +190,8 @@ export function CreditPackagesList({
           <div key={pkg.id} className="relative pt-4">
             <Card
               className={`relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden ${isPopular
-                  ? "border-pixoo-pink shadow-lg shadow-pixoo-pink/20 scale-105 ring-2 ring-pixoo-pink/20"
-                  : `${config.borderColor} hover:border-pixoo-purple/40`
+                ? "border-pixoo-pink shadow-lg shadow-pixoo-pink/20 scale-105 ring-2 ring-pixoo-pink/20"
+                : `${config.borderColor} hover:border-pixoo-purple/40`
                 }`}
             >
               {/* Gradient Background */}
@@ -248,8 +246,8 @@ export function CreditPackagesList({
                     onClick={() => handlePackageAction(pkg)}
                     disabled={isCreatingCheckout}
                     className={`w-full h-12 font-semibold transition-all duration-300 ${isPopular
-                        ? "bg-gradient-to-r from-pixoo-pink to-pixoo-magenta hover:from-pixoo-pink/90 hover:to-pixoo-magenta/90 text-white shadow-lg hover:shadow-xl"
-                        : "bg-gradient-to-r from-pixoo-purple to-pixoo-dark hover:from-pixoo-purple/90 hover:to-pixoo-dark/90 text-white shadow-md hover:shadow-lg"
+                      ? "bg-gradient-to-r from-pixoo-pink to-pixoo-magenta hover:from-pixoo-pink/90 hover:to-pixoo-magenta/90 text-white shadow-lg hover:shadow-xl"
+                      : "bg-gradient-to-r from-pixoo-purple to-pixoo-dark hover:from-pixoo-purple/90 hover:to-pixoo-dark/90 text-white shadow-md hover:shadow-lg"
                       }`}
                     size="lg"
                   >

@@ -6,7 +6,6 @@ import {
   subscriptions,
   plans,
   creditPackagePurchases,
-  creditPackages,
   userCredits,
   creditTransactions,
 } from "../../../../db/schema";

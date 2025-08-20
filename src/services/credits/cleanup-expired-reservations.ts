@@ -32,18 +32,7 @@ export class ReservationCleanupService {
       }
 
       // Cancelar reservas expiradas
-      const result = await db
-        .update(creditReservations)
-        .set({
-          status: "cancelled",
-          updatedAt: now
-        })
-        .where(
-          and(
-            eq(creditReservations.status, "pending"),
-            lt(creditReservations.expiresAt, now)
-          )
-        );
+
 
       console.log(`✅ ${expiredReservations.length} reservas expiradas foram canceladas`);
       return expiredReservations.length;
@@ -82,18 +71,6 @@ export class ReservationCleanupService {
 
       // Por segurança, vamos apenas cancelar reservas muito antigas que ainda estão pendentes
       // Em vez de deletar, para manter auditoria
-      const result = await db
-        .update(creditReservations)
-        .set({
-          status: "cancelled",
-          updatedAt: new Date()
-        })
-        .where(
-          and(
-            lt(creditReservations.createdAt, cutoffDate),
-            eq(creditReservations.status, "pending")
-          )
-        );
 
       console.log(`✅ ${oldReservations.filter(r => r.status === 'pending').length} reservas antigas foram canceladas`);
       return oldReservations.filter(r => r.status === 'pending').length;

@@ -39,10 +39,8 @@ import Image from "next/image";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
 import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
 import { proxyImage } from "@/actions/proxy-image/proxy-image.action";
-import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
 
 import { useSession } from "@/lib/auth-client";
-import { useSubscription } from "@/contexts/subscription-context";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
 import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
 import { useParams, useRouter } from "next/navigation";
@@ -106,35 +104,13 @@ export function FormImageEditing({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [freeCredits, setFreeCredits] = useState<{
-    balance: number;
-    hasActiveSubscription: boolean;
-    canUseDailyCredits: boolean;
-    hoursUntilRenewal?: number;
-    lastRenewal?: Date | null;
-    canRenew?: boolean;
-    needsInitialCredits?: boolean;
-  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
-  const { subscription } = useSubscription();
+  //const { subscription } = useSubscription(); TODO: pode ser util para verificar se o usuario tem assinatura ativa
+
   const params = useParams();
   const locale = params.locale as string;
   const router = useRouter();
-
-  // Função para buscar créditos gratuitos
-  const fetchFreeCredits = async () => {
-    if (!session?.user?.id) return;
-
-    try {
-      const result = await executeGetUserFreeCredits({});
-      if (result?.data?.success) {
-        setFreeCredits(result.data.data || null);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar créditos gratuitos:", error);
-    }
-  };
 
   // Função para disparar evento de atualização de créditos
   const triggerCreditsUpdate = () => {
@@ -145,8 +121,6 @@ export function FormImageEditing({
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
   const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
   const { executeAsync: executeProxyImage } = useAction(proxyImage);
-  const { executeAsync: executeGetUserFreeCredits } =
-    useAction(getUserFreeCredits);
 
   // Reset startedGeneration when generation is complete
   useEffect(() => {
@@ -157,10 +131,6 @@ export function FormImageEditing({
     }
   }, [isGenerating, startedGeneration, onGenerationComplete]);
 
-  // Buscar créditos gratuitos quando a sessão estiver disponível
-  useEffect(() => {
-    fetchFreeCredits();
-  }, [session?.user?.id]);
 
   const form = useForm<FormImageEditingForm>({
     resolver: zodResolver(formImageEditingSchema),
@@ -437,8 +407,9 @@ export function FormImageEditing({
             dimensions.height
           );
           setDetectedAspectRatio(aspectRatio);
-        } catch (dimensionError) {
-          console.warn("Could not detect dimensions, using default");
+        } catch (dimensionsError) {
+
+          console.warn("Could not detect dimensions, using default", dimensionsError);
           setDetectedAspectRatio("1:1"); // Safe fallback
         }
 
@@ -503,19 +474,7 @@ export function FormImageEditing({
       return;
     }
 
-    // MUDANÇA TEMPORÁRIA: Permitir otimização com freeCredits
-    // Código original (comentado para futuras reversões):
-    // // Verificar se o usuário tem assinatura ativa
-    // if (!subscription) {
-    //   setShowSubscriptionModal(true);
-    //   return;
-    // }
-
-    // Nova lógica: Verificar se tem assinatura OU créditos gratuitos
-    if (!subscription && (!freeCredits || freeCredits.balance <= 0)) {
-      setShowSubscriptionModal(true);
-      return;
-    }
+    //TODO: adicionar alguma trava nessa consulta (ex: cobrar 1 credito por uso)
 
     const currentPrompt = form.getValues("prompt");
     const currentModel = form.getValues("model");
@@ -624,36 +583,10 @@ export function FormImageEditing({
       return false;
     }
 
-    // MUDANÇA TEMPORÁRIA: Permitir qualquer modelo com freeCredits
-    // Código original (comentado para futuras reversões):
-    // // Verificar se precisa de assinatura baseado no modelo
-    // if (!subscription) {
-    //   // Para flux-schnell, sempre exigir assinatura no image editing
-    //   // (diferente do text-to-image que permite créditos gratuitos)
-    //   setShowPlansModal(true);
-    //   return false;
-    // }
-    //
-    // // Verificar se o modelo não é flux-schnell e se o usuário tem assinatura
-    // if (data.model !== "flux-schnell" && !subscription) {
-    //   setShowSubscriptionModal(true);
-    //   return false;
-    // }
-
-    // Nova lógica: Verificar créditos específicos para cada modelo
-    if (!subscription) {
-      // Se não tem assinatura, verificar se tem créditos gratuitos suficientes
-      if (!freeCredits || freeCredits.balance <= 0) {
+    if (selectedModel.credits > 0) {
+      if (!hasEnoughCredits(selectedModel.credits)) {
         setShowPlansModal(true);
         return false;
-      }
-    } else {
-      // Se tem assinatura, verificar créditos normais para modelos que custam créditos
-      if (selectedModel.credits > 0) {
-        if (!hasEnoughCredits(selectedModel.credits)) {
-          setShowPlansModal(true);
-          return false;
-        }
       }
     }
 
@@ -669,36 +602,7 @@ export function FormImageEditing({
     // Reservar créditos antes da geração (se necessário)
     let reservation = null;
 
-    // MUDANÇA TEMPORÁRIA: Permitir qualquer modelo com freeCredits
-    // Código original (comentado para futuras reversões):
-    // // Para flux-schnell com assinatura ativa, não reservar créditos (é ilimitado)
-    // if (
-    //   selectedModel.credits > 0 &&
-    //   !(data.model === "flux-schnell" && subscription)
-    // ) {
-    //   reservation = await reserveCredits(selectedModel.modelId);
-    //   if (!reservation) {
-    //     toast.error(
-    //       t("insufficientCreditsModel", { credits: selectedModel.credits })
-    //     );
-    //     setStartedGeneration(false);
-    //     return false;
-    //   }
-    //   setCurrentReservation(reservation);
-    // }
-
-    // Se for flux-schnell, verificar se precisa de créditos gratuitos
-    if (data.model === "flux-schnell") {
-      // Se não tem assinatura ativa, verificar créditos gratuitos
-      if (!subscription) {
-        if (!freeCredits || freeCredits.balance <= 0) {
-          toast.error(t("insufficientFreeCredits"));
-          setStartedGeneration(false);
-          return false;
-        }
-      }
-      // Para flux-schnell, não fazemos reserva, gastamos diretamente após sucesso (ou é ilimitado com assinatura)
-    } else if (selectedModel.credits > 0) {
+    if (selectedModel.credits > 0) {
       // Para outros modelos, usar sistema de reserva normal
       reservation = await reserveCredits(selectedModel.modelId);
       if (!reservation) {
@@ -770,9 +674,9 @@ export function FormImageEditing({
           result.taskId,
           reservation
             ? {
-                reservationId: reservation.reservationId,
-                modelId: selectedModel.modelId,
-              }
+              reservationId: reservation.reservationId,
+              modelId: selectedModel.modelId,
+            }
             : undefined
         );
       } else if (result?.success) {
@@ -782,15 +686,13 @@ export function FormImageEditing({
         // quando a imagem for processada com sucesso. Isso evita race conditions.
         if (reservation) {
           console.log(
-            `✅ ${t("editingCompletedSuccessfully")} ${
-              reservation.reservationId
+            `✅ ${t("editingCompletedSuccessfully")} ${reservation.reservationId
             }`
           );
           setCurrentReservation(null);
         }
 
         fetchCredits();
-        fetchFreeCredits(); // Atualizar créditos gratuitos também
         triggerCreditsUpdate();
         toast.success(t("imageEditedSuccess"));
       } else {
@@ -1049,7 +951,7 @@ export function FormImageEditing({
 
                 toast.warning(
                   result?.data?.error ||
-                    "Erro ao carregar imagem, usando URL diretamente"
+                  "Erro ao carregar imagem, usando URL diretamente"
                 );
 
                 // Remover query parameter mesmo com fallback
@@ -1243,11 +1145,10 @@ export function FormImageEditing({
                   {t("inputImage")}
                 </Label>
                 <div
-                  className={`relative border-2 border-dashed rounded-xl p-6 transition-all duration-300 ${
-                    isDragging
-                      ? "border-pixoo-magenta/50 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10"
-                      : "border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-br hover:from-pixoo-purple/5 hover:to-pixoo-pink/5"
-                  }`}
+                  className={`relative border-2 border-dashed rounded-xl p-6 transition-all duration-300 ${isDragging
+                    ? "border-pixoo-magenta/50 bg-gradient-to-br from-pixoo-purple/10 to-pixoo-pink/10"
+                    : "border-pixoo-purple/30 hover:border-pixoo-magenta/50 hover:bg-gradient-to-br hover:from-pixoo-purple/5 hover:to-pixoo-pink/5"
+                    }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}

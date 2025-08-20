@@ -1,4 +1,3 @@
-import { getTranslations } from "next-intl/server";
 import { Fragment } from "react";
 
 import { PageContainer } from "@/components/ui/page-container/page-container";
