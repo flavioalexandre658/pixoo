@@ -41,7 +41,8 @@
     "next": "Next",
     "previous": "Previous",
     "submit": "Submit",
-    "close": "Close"
+    "close": "Close",
+    "optimize": "Optimize"
   },
   "navigation": {
     "home": "Home",
@@ -611,7 +612,7 @@
     "promptPlaceholder": "Describe the image you want to generate...",
     "optimizePromptWithAI": "Optimize prompt with AI",
     "promptTip": "💡 Prompts in English tend to produce better results",
-    "englishPromptsWork": "Prompts in English tend to produce better results",
+    "englishPromptsWork": "Use the optimize prompt function for best results.",
     "cost": "Cost:",
     "generating": "Generating...",
     "insufficientCreditsButton": "Insufficient credits",

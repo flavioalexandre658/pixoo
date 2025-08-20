@@ -41,7 +41,8 @@
     "next": "Siguiente",
     "previous": "Anterior",
     "submit": "Enviar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "optimize": "Optimizar"
   },
   "navigation": {
     "home": "Inicio",
@@ -565,7 +566,7 @@
     "promptPlaceholder": "Describe cómo quieres editar la imagen...",
     "optimizePromptWithAI": "Optimizar prompt con IA",
     "promptDescription": "Describe los cambios que quieres realizar en la imagen",
-    "englishPromptsWork": "Los prompts en inglés generan mejores resultados.",
+    "englishPromptsWork": "Utilice la función de solicitud de optimización para obtener mejores resultados.",
     "cost": "Costo:",
     "editing": "Editando...",
     "insufficientCreditsButton": "Créditos insuficientes",

@@ -27,9 +27,9 @@ import {
   Coins,
   Upload,
   X,
-  Image as ImageIcon,
-  Zap,
+  Image as ImageIcon
 } from "lucide-react";
+import { OptimizePromptButton } from "@/components/ui/optimize-prompt-button";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/use-credits";
 
@@ -1233,23 +1233,11 @@ export function FormImageEditing({
                     {...form.register("prompt")}
                   />
                   {form.watch("prompt")?.trim() && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-gradient-to-r hover:from-pixoo-purple/20 hover:to-pixoo-pink/20 transition-all duration-300"
+                    <OptimizePromptButton
                       onClick={handleOptimizePrompt}
-                      disabled={isOptimizingPrompt}
-                      title={t("optimizePromptWithAI")}
-                    >
-                      {isOptimizingPrompt ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-pixoo-purple/30 border-t-pixoo-magenta" />
-                      ) : (
-                        <div className="p-1 rounded-md bg-gradient-to-br from-pixoo-purple/20 to-pixoo-magenta/20">
-                          <Zap className="h-3 w-3 text-pixoo-purple" />
-                        </div>
-                      )}
-                    </Button>
+                      isOptimizing={isOptimizingPrompt}
+                      className="absolute top-2 right-2"
+                    />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
