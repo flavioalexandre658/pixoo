@@ -63,7 +63,7 @@ export function Header({ className }: HeaderProps) {
     <>
       <header
         className={cn(
-          "fixed top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 relative overflow-hidden",
+          "fixed top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 overflow-hidden",
           "mobile-header-fix", // Nova classe para fix do mobile
           className
         )}

@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import GA from "@/components/tracking/ga";
 import GTM from "@/components/tracking/gtm";
 import MetaPixel from "@/components/tracking/meta-pixel";
+import GoogleAdsPixel from "@/components/tracking/google-ads-pixel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,10 @@ export default async function RootLayout({
   return (
     <html>
       <head>
+        <GoogleAdsPixel
+          GOOGLE_ADS_ID={process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || ""}
+        />
+
         <GA GA_ID={process.env.NEXT_PUBLIC_GA_ID || ""} />
         <GTM GTM_ID={process.env.NEXT_PUBLIC_GTM_ID || ""} />
         <MetaPixel
