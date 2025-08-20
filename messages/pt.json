@@ -612,7 +612,7 @@
     "promptPlaceholder": "Descreva a imagem que você quer gerar...",
     "optimizePromptWithAI": "Otimizar prompt com IA",
     "promptTip": "💡 Prompts em inglês tendem a produzir melhores resultados",
-    "englishPromptsWork": "Prompts em inglês tendem a produzir melhores resultados",
+    "englishPromptsWork": "Use a função de otimizar prompt para obter melhores resultados.",
     "cost": "Custo:",
     "generating": "Gerando...",
     "insufficientCreditsButton": "Créditos insuficientes",
