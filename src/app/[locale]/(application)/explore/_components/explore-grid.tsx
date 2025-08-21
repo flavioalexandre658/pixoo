@@ -14,6 +14,8 @@ interface GridImage {
   likes: number;
   category: string;
   createdAt: Date;
+  visible: boolean;
+  isPublic: boolean;
   user?: {
     name: string;
     avatar?: string;
@@ -78,6 +80,8 @@ export function ExploreGrid({ images, lastElementRef }: ExploreGridProps) {
                 likes: image.likes,
                 category: image.category,
                 createdAt: image.createdAt,
+                visible: image.visible,
+                isPublic: image.isPublic,
                 user: image.user,
               }}
             />

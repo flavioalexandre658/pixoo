@@ -19,6 +19,8 @@ interface PublicImage {
   likes: number;
   category: string | null;
   createdAt: Date;
+  visible: boolean;
+  isPublic: boolean;
   user: {
     name: string;
     email: string;

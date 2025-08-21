@@ -138,7 +138,7 @@ export function FormTextToImage({
     defaultValues: {
       prompt: "",
       model: "flux-dev",
-      imagePublic: true,
+      imagePublic: false,
       promptUpsampling: false,
       width: 1024,
       height: 1024,

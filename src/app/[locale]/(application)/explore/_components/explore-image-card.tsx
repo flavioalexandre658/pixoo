@@ -19,6 +19,8 @@ interface ExploreImage {
   likes: number;
   category: string;
   createdAt: Date;
+  visible: boolean;
+  isPublic: boolean;
   user?: {
     name: string;
     avatar?: string;
