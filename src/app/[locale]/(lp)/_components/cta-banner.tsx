@@ -6,9 +6,16 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SupportedLocale } from "@/interfaces/shared.interface";
 
-export default function CTABanner() {
-  const t = useTranslations("landingPage.ctaBanner");
+interface CTABannerProps {
+  pageType?: string;
+  locale?: SupportedLocale;
+}
+
+export default function CTABanner({ pageType = "landingPage", locale }: CTABannerProps) {
+  const namespace = pageType === "aiImageGenerator" ? "aiImageGenerator.cta" : "landingPage.ctaBanner";
+  const t = useTranslations(namespace);
   const router = useRouter();
 
   const handleGetStarted = () => {
@@ -50,7 +57,7 @@ export default function CTABanner() {
                 <Button
                   size="lg"
                   onClick={handleGetStarted}
-                  className="group text-base sm:text-lg px-6 sm:px-8 lg:px-10 py-6 sm:py-7 lg:py-8 bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto"
+                  className="group cursor-pointer text-base sm:text-lg px-6 sm:px-8 lg:px-10 py-6 sm:py-7 lg:py-8 bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto"
                 >
                   {t("getStarted")}
                   <ArrowUpRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
@@ -60,7 +67,7 @@ export default function CTABanner() {
                   size="lg"
                   variant="outline"
                   onClick={handleExplore}
-                  className="group text-base sm:text-lg px-6 sm:px-8 lg:px-10 py-6 sm:py-7 lg:py-8 border-2 border-pixoo-magenta/30 bg-gradient-to-r from-pixoo-magenta/10 to-pixoo-pink/10 hover:from-pixoo-magenta/20 hover:to-pixoo-pink/20 text-foreground hover:text-pixoo-magenta transition-all duration-300 hover:scale-105 hover:border-pixoo-magenta/50 rounded-xl w-full sm:w-auto"
+                  className="group cursor-pointer text-base sm:text-lg px-6 sm:px-8 lg:px-10 py-6 sm:py-7 lg:py-8 border-2 border-pixoo-magenta/30 bg-gradient-to-r from-pixoo-magenta/10 to-pixoo-pink/10 hover:from-pixoo-magenta/20 hover:to-pixoo-pink/20 text-foreground hover:text-pixoo-magenta transition-all duration-300 hover:scale-105 hover:border-pixoo-magenta/50 rounded-xl w-full sm:w-auto"
                 >
                   {t("exploreGallery")}
                   <Sparkles className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:rotate-12 transition-transform duration-300" />

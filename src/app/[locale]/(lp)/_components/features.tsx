@@ -7,10 +7,17 @@ import {
   Palette,
   Download,
   Sparkles,
+  Brain,
+  Clock,
+  Monitor,
+  Users,
+  Shield,
+  Layers,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Card, CardHeader } from "@/components/ui/card";
+import { SupportedLocale } from "@/interfaces/shared.interface";
 
 const iconMap = {
   image: ImageIcon,
@@ -19,6 +26,12 @@ const iconMap = {
   palette: Palette,
   download: Download,
   sparkles: Sparkles,
+  brain: Brain,
+  clock: Clock,
+  monitor: Monitor,
+  users: Users,
+  shield: Shield,
+  layers: Layers,
 };
 
 const featureKeyToIconKey: Record<string, keyof typeof iconMap> = {
@@ -28,18 +41,26 @@ const featureKeyToIconKey: Record<string, keyof typeof iconMap> = {
   feature4: "palette",
   feature5: "download",
   feature6: "sparkles",
+  advancedModels: "brain",
+  fastGeneration: "clock",
+  highResolution: "monitor",
+  easyToUse: "users",
+  commercialLicense: "shield",
+  multipleStyles: "layers",
 };
 
-const Features = () => {
-  const t = useTranslations("landingPage.features");
-  const featureKeys = [
-    "feature1",
-    "feature2",
-    "feature3",
-    "feature4",
-    "feature5",
-    "feature6",
-  ] as const;
+interface FeaturesProps {
+  pageType?: string;
+  locale?: SupportedLocale;
+}
+
+const Features = ({ pageType = "landingPage", locale }: FeaturesProps) => {
+  const namespace = pageType === "aiImageGenerator" ? "aiImageGenerator.features" : "landingPage.features";
+  const t = useTranslations(namespace);
+
+  const featureKeys = pageType === "aiImageGenerator"
+    ? ["advancedModels", "fastGeneration", "highResolution", "easyToUse", "commercialLicense", "multipleStyles"] as const
+    : ["feature1", "feature2", "feature3", "feature4", "feature5", "feature6"] as const;
 
   const features = featureKeys.map((key) => ({
     icon: iconMap[featureKeyToIconKey[key]],
@@ -79,7 +100,7 @@ const Features = () => {
           {features.map((feature, index) => (
             <Card
               key={feature.title}
-              className="group relative flex flex-col border-2 border-border/50 rounded-2xl overflow-hidden shadow-none hover:shadow-2xl hover:shadow-pixoo-purple/10 transition-all duration-500 hover:scale-105 hover:border-pixoo-magenta/30 bg-gradient-to-br from-background to-background/50 backdrop-blur-sm"
+              className="group cursor-pointer relative flex flex-col border-2 border-border/50 rounded-2xl overflow-hidden shadow-none hover:shadow-2xl hover:shadow-pixoo-purple/10 transition-all duration-500 hover:scale-105 hover:border-pixoo-magenta/30 bg-gradient-to-br from-background to-background/50 backdrop-blur-sm"
             >
               {/* Card background gradient */}
               <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-transparent to-pixoo-pink/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

@@ -7,8 +7,15 @@ import {
   NotebookText,
   RefreshCcw,
   ShieldCheck,
+  Brain,
+  Zap,
+  Image,
+  Palette,
+  Clock,
+  FileText,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SupportedLocale } from "@/interfaces/shared.interface";
 
 const iconMap = {
   shieldCheck: ShieldCheck,
@@ -17,12 +24,65 @@ const iconMap = {
   hardDriveDownload: HardDriveDownload,
   creditCard: CreditCard,
   refreshCcw: RefreshCcw,
+  brain: Brain,
+  zap: Zap,
+  image: Image,
+  palette: Palette,
+  clock: Clock,
+  fileText: FileText,
 };
 
-const FAQ = () => {
-  const t = useTranslations("landingPage.faq");
+interface FAQProps {
+  pageType?: string;
+  locale?: SupportedLocale;
+}
 
-  const faqItems = [
+const FAQ = ({ pageType = "landingPage", locale }: FAQProps) => {
+  const namespace = pageType === "aiImageGenerator" ? "aiImageGenerator.faq" : "landingPage.faq";
+  const t = useTranslations(namespace);
+
+  const faqItems = pageType === "aiImageGenerator" ? [
+    {
+      question: t("questions.whatIsAiImageGenerator.question"),
+      answer: t("questions.whatIsAiImageGenerator.answer"),
+      icon: iconMap.brain,
+    },
+    {
+      question: t("questions.howToUse.question"),
+      answer: t("questions.howToUse.answer"),
+      icon: iconMap.notebookText,
+    },
+    {
+      question: t("questions.isFree.question"),
+      answer: t("questions.isFree.answer"),
+      icon: iconMap.creditCard,
+    },
+    {
+      question: t("questions.imageQuality.question"),
+      answer: t("questions.imageQuality.answer"),
+      icon: iconMap.image,
+    },
+    {
+      question: t("questions.commercialUse.question"),
+      answer: t("questions.commercialUse.answer"),
+      icon: iconMap.shieldCheck,
+    },
+    {
+      question: t("questions.bestPrompts.question"),
+      answer: t("questions.bestPrompts.answer"),
+      icon: iconMap.palette,
+    },
+    {
+      question: t("questions.supportedFormats.question"),
+      answer: t("questions.supportedFormats.answer"),
+      icon: iconMap.fileText,
+    },
+    {
+      question: t("questions.generationTime.question"),
+      answer: t("questions.generationTime.answer"),
+      icon: iconMap.clock,
+    },
+  ] : [
     {
       question: t("questions.whatIsPixoo.question"),
       answer: t("questions.whatIsPixoo.answer"),
@@ -62,6 +122,12 @@ const FAQ = () => {
     "from-pixoo-dark to-pixoo-purple",
     "from-pixoo-pink to-pixoo-dark",
     "from-pixoo-magenta to-pixoo-pink",
+    "from-pixoo-purple to-pixoo-pink",
+    "from-pixoo-pink to-pixoo-magenta",
+    "from-pixoo-magenta to-pixoo-purple",
+    "from-pixoo-dark to-pixoo-purple",
+    "from-pixoo-pink to-pixoo-dark",
+    "from-pixoo-magenta to-pixoo-pink",
   ];
 
   return (
@@ -87,7 +153,7 @@ const FAQ = () => {
           {faqItems.map(({ question, answer, icon: Icon }, index) => (
             <div
               key={question}
-              className="group relative p-8 hover:bg-gradient-to-br hover:from-pixoo-purple/5 hover:to-pixoo-pink/5 transition-all duration-500 border-r border-b border-border/30 last:border-r-0 md:even:border-r-0 md:last:border-b-0 md:[&:nth-last-child(2)]:border-b-0"
+              className="group cursor-pointer relative p-8 hover:bg-gradient-to-br hover:from-pixoo-purple/5 hover:to-pixoo-pink/5 transition-all duration-500 border-r border-b border-border/30 last:border-r-0 md:even:border-r-0 md:last:border-b-0 md:[&:nth-last-child(2)]:border-b-0"
             >
               <div
                 className={`h-12 w-12 xs:h-14 xs:w-14 flex items-center justify-center rounded-2xl bg-gradient-to-br ${gradients[index]} shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 mb-6`}

@@ -4,6 +4,29 @@
       "title": "Pixoo – Create and Edit Stunning Images with AI",
       "description": "Generate professional-quality visuals from text or edit them effortlessly with advanced AI tools. Create, transform, and customize images in seconds — right from your browser."
     },
+    "aiImageGenerator": {
+      "title": "Free Online AI Image Generator | Pixoo",
+      "description": "Free and online AI image generator. Create digital art, illustrations and photorealistic pictures with artificial intelligence (Flux, Stable Diffusion). High-resolution results in seconds. Try it free!",
+      "keywords": "ai image generator, free ai image generator, ai photo generator, ai image generator online, generate images with ai, text to image, ai image maker, midjourney alternative, dall-e alternative, flux models, stable diffusion, create images online, ai art generator, creative ai tools, graphic design ai, artificial illustration, ai photography, digital creation, ai prompts, generative models, Pixoo",
+      "openGraph": {
+        "title": "Free Online AI Image Generator — Pixoo",
+        "description": "Turn ideas into stunning images with our AI image generator. Advanced models, professional quality, results in seconds.",
+        "siteName": "Pixoo — AI Image Generator",
+        "imageAlt": "AI Image Generator Online — Create Art with Artificial Intelligence"
+      },
+      "twitter": {
+        "title": "Free Online AI Image Generator — Pixoo",
+        "description": "Create professional AI images fast. Start free and turn text into visuals in seconds.",
+        "creator": "@pixoo_ai"
+      },
+      "authors": {
+        "name": "Pixoo Team"
+      },
+      "creator": "Pixoo",
+      "publisher": "Pixoo",
+      "category": "Technology & Digital Art",
+      "classification": "AI Image Generator (Artificial Intelligence)"
+    },
     "seo": {
       "title": "Pixoo - AI Image Generator, Photo Editing, Digital Art & More",
       "description": "Create stunning images with AI, edit photos, and generate digital art with Pixoo’s advanced models. A complete tool for designers, artists, and content creators. Image generation, editing, prompts, and more.",
@@ -750,5 +773,101 @@
     "goHome": "Go Back Home",
     "exploreGallery": "Explore Gallery",
     "contactSupport": "If you believe this is a mistake, please contact us."
+  },
+  "aiImageGenerator": {
+    "hero": {
+      "title": "Free Online AI Image Generator",
+      "subtitle": "Turn ideas into photos and art with artificial intelligence",
+      "description": "Create images online with our free AI image generator. Powered by Flux, Stable Diffusion and more, it delivers fast generation, high-resolution results and real examples. Perfect as an AI photo generator and AI image maker for creators and businesses.",
+      "badge": "Free AI Image Generator",
+      "ctaPrimary": "Start Creating",
+      "ctaSecondary": "View Examples",
+      "startCreating": "Start Creating",
+      "viewExamples": "View Examples",
+      "freeCredits": "5 free credits daily",
+      "noSignup": "Quick signup at generate",
+      "professionalQuality": "Professional quality"
+    },
+    "features": {
+      "title": "Why Choose Our AI Image Generator?",
+      "subtitle": "Online, fast and creator-friendly",
+      "advancedModels": {
+        "title": "Advanced AI Models",
+        "description": "Access Flux Pro, Stable Diffusion and more for consistent, high-quality output from your AI image generator."
+      },
+      "fastGeneration": {
+        "title": "Ultra-Fast Generation",
+        "description": "Create AI images in seconds with an optimized pipeline for long prompts, image-to-image variation and upscaling."
+      },
+      "highResolution": {
+        "title": "High Resolution 4K",
+        "description": "Crisp outputs for social, ads and print — ideal for a professional AI photo generator."
+      },
+      "easyToUse": {
+        "title": "Easy to Use",
+        "description": "Clean interface in EN/PT/ES. Describe, choose a model and generate your AI image."
+      },
+      "commercialLicense": {
+        "title": "Commercial License",
+        "description": "Paid plans include commercial use. The free plan may have restrictions — check the Terms."
+      },
+      "multipleStyles": {
+        "title": "Multiple Styles",
+        "description": "Photorealism, digital art, anime, painting and mockups — all powered by artificial intelligence."
+      }
+    },
+    "faq": {
+      "title": "AI Image Generator — Frequently Asked Questions",
+      "subtitle": "Everything about creating images with artificial intelligence",
+      "questions": {
+        "whatIsAiImageGenerator": {
+          "question": "What is an AI image generator?",
+          "answer": "A tool that uses artificial intelligence to create images from text or an input image. We support advanced models like Flux and Stable Diffusion for high-quality results."
+        },
+        "howToUse": {
+          "question": "How do I use the AI image generator?",
+          "answer": "Write a detailed prompt, pick a model, set size/aspect ratio and click generate. Your image will be ready in seconds."
+        },
+        "isFree": {
+          "question": "Is the AI image generator free?",
+          "answer": "Yes. You get 5 free daily credits. For heavy use and premium features, upgrade to a paid plan."
+        },
+        "imageQuality": {
+          "question": "What image quality can I expect?",
+          "answer": "High-resolution output (up to 4K), great for social media, advertising and print."
+        },
+        "commercialUse": {
+          "question": "Can I use the images commercially?",
+          "answer": "Commercial use is included in paid plans. The free plan can have limits — see our Terms."
+        },
+        "bestPrompts": {
+          "question": "How do I write effective prompts?",
+          "answer": "Be specific: style, lighting, colors, composition, lens and environment. Example: “Photorealistic portrait, soft light, 85mm, bokeh background, cinematic quality”."
+        },
+        "supportedFormats": {
+          "question": "Which image formats are supported?",
+          "answer": "High-quality PNG export by default. Convert to JPG/WebP if needed."
+        },
+        "generationTime": {
+          "question": "How long does generation take?",
+          "answer": "Most prompts complete in 10–30 seconds. Higher resolutions may take longer."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to use the best free AI image generator?",
+      "subtitle": "Thousands of creators already generate images online with AI",
+      "description": "Start free today and create with artificial intelligence — fast, easy and professional.",
+      "startFree": "Start Free Now",
+      "viewPricing": "View Pricing",
+      "getStarted": "Get Started",
+      "exploreGallery": "View Examples",
+      "features": {
+        "freeDaily": "5 free credits daily",
+        "noWatermark": "No watermark",
+        "highQuality": "Professional quality",
+        "fastGeneration": "Generation in seconds"
+      }
+    }
   }
 }

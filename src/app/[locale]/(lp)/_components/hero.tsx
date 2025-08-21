@@ -7,9 +7,16 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { SupportedLocale } from "@/interfaces/shared.interface";
 
-const Hero = () => {
-  const t = useTranslations("landingPage.hero");
+interface HeroProps {
+  pageType?: string;
+  locale?: SupportedLocale;
+}
+
+const Hero = ({ pageType = "landingPage", locale }: HeroProps) => {
+  const namespace = pageType === "aiImageGenerator" ? "aiImageGenerator.hero" : "landingPage.hero";
+  const t = useTranslations(namespace);
   const router = useRouter();
 
   return (
@@ -24,7 +31,7 @@ const Hero = () => {
 
       <div className="flex items-center justify-center md:mt-6 relative z-10">
         <div className="max-w-2xl text-center">
-          <Badge className="text-md relative rounded-xl border-none bg-gradient-to-r from-pixoo-pink to-pixoo-magenta py-2 px-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Badge className="text-md cursor-pointer relative rounded-xl border-none bg-gradient-to-r from-pixoo-pink to-pixoo-magenta py-2 px-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <Sparkles className="w-8 h-8 mr-2 animate-pulse" />
             {t("badge")}
           </Badge>
@@ -33,14 +40,14 @@ const Hero = () => {
             {t("title")}
           </h1>
 
-          <p className="mt-2 max-w-[60ch] text-md xs:text-md text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+          <p className="mx-auto mt-2 max-w-[60ch] text-md xs:text-md text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
             {t("subtitle")}
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
             <Button
               size="lg"
-              className="group w-full rounded-xl text-base sm:w-auto bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-8 py-6"
+              className="group cursor-pointer w-full rounded-xl text-base sm:w-auto bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-8 py-6"
               onClick={() => router.push("/create-image")}
             >
               {t("ctaPrimary")}
@@ -50,7 +57,7 @@ const Hero = () => {
             <Button
               size="lg"
               variant="outline"
-              className="group w-full rounded-xl text-base sm:w-auto border-2 border-pixoo-magenta/30 bg-gradient-to-r from-pixoo-magenta/10 to-pixoo-pink/10 hover:from-pixoo-magenta/20 hover:to-pixoo-pink/20 text-foreground hover:text-pixoo-magenta transition-all duration-300 hover:scale-105 hover:border-pixoo-magenta/50 px-8 py-6"
+              className="group w-full cursor-pointer rounded-xl text-base sm:w-auto border-2 border-pixoo-magenta/30 bg-gradient-to-r from-pixoo-magenta/10 to-pixoo-pink/10 hover:from-pixoo-magenta/20 hover:to-pixoo-pink/20 text-foreground hover:text-pixoo-magenta transition-all duration-300 hover:scale-105 hover:border-pixoo-magenta/50 px-8 py-6"
               onClick={() => router.push("/edit-image")}
             >
               {t("ctaSecondary")}

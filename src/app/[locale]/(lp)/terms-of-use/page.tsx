@@ -21,14 +21,14 @@ export async function generateMetadata() {
 
 export default async function TermsOfUsePage({ params }: Props) {
   const { locale } = await params;
-  
+
   return (
     <TooltipProvider>
       <Fragment>
         <Navbar locale={locale} />
         <main>
           <PageContainer>
-            <div className="relative py-12 lg:py-24 overflow-hidden">
+            <div className="relative py-28 overflow-hidden">
               {/* Background elements */}
               <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-pixoo-pink/5 to-pixoo-magenta/10 -z-10" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent -z-10" />
@@ -60,15 +60,15 @@ export default async function TermsOfUsePage({ params }: Props) {
                   </p>
 
                   <h2>3. User Accounts and Eligibility</h2>
-                  
+
                   <h3>3.1 Account Creation</h3>
                   <p>To use certain features, you must create an account and provide accurate information. You are responsible for maintaining the confidentiality of your account credentials.</p>
-                  
+
                   <h3>3.2 Eligibility</h3>
                   <p>You must be at least 13 years old to use this Service. Users under 18 must have parental consent. By using the Service, you represent that you meet these requirements.</p>
 
                   <h2>4. Acceptable Use Policy</h2>
-                  
+
                   <h3>4.1 Permitted Uses</h3>
                   <p>You may use the Service for lawful purposes including:</p>
                   <ul>
@@ -93,7 +93,7 @@ export default async function TermsOfUsePage({ params }: Props) {
                   </ul>
 
                   <h2>5. Intellectual Property Rights</h2>
-                  
+
                   <h3>5.1 Service Ownership</h3>
                   <p>
                     The Service, including all software, algorithms, models, and related intellectual property, is owned by Pixoo and protected by copyright, trademark, and other laws.
@@ -116,7 +116,7 @@ export default async function TermsOfUsePage({ params }: Props) {
                   </p>
 
                   <h2>6. Content Moderation and Enforcement</h2>
-                  
+
                   <h3>6.1 Automated Filtering</h3>
                   <p>
                     We employ automated systems to detect and prevent generation of prohibited content. These systems may occasionally produce false positives or negatives.
@@ -133,7 +133,7 @@ export default async function TermsOfUsePage({ params }: Props) {
                   </p>
 
                   <h2>7. Subscription and Payment Terms</h2>
-                  
+
                   <h3>7.1 Subscription Plans</h3>
                   <p>
                     Access to certain features requires a paid subscription. Subscription terms, pricing, and features are described on our pricing page.
@@ -150,7 +150,7 @@ export default async function TermsOfUsePage({ params }: Props) {
                   </p>
 
                   <h2>8. Disclaimers and Limitations</h2>
-                  
+
                   <h3>8.1 Service Availability</h3>
                   <p>
                     The Service is provided &ldquo;as is&rdquo; without warranties. We do not guarantee uninterrupted availability or error-free operation.
@@ -194,7 +194,7 @@ export default async function TermsOfUsePage({ params }: Props) {
                   </p>
 
                   <h2>12. Dispute Resolution</h2>
-                  
+
                   <h3>12.1 Governing Law</h3>
                   <p>
                     These Terms are governed by the laws of [Jurisdiction], without regard to conflict of law principles.
