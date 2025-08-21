@@ -44,7 +44,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         )}
       >
         <Header className="sticky-header z-40" />
-        <main className={cn("flex-1 min-h-0 px-6 pb-6 relative", className)}>
+        <main className={cn("flex-1 min-h-0 p-6 relative", className)}>
           {children}
         </main>
       </div>
