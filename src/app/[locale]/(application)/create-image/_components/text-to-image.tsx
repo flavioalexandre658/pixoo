@@ -40,11 +40,12 @@ export default function TextToImage({ models }: TextToImage) {
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [currentReservation, setCurrentReservation] = useState<{
     reservationId: string;
     modelId: string;
   } | null>(null);
-  const { refundCredits, cancelReservation, fetchCredits } = useCredits();
+  const { cancelReservation, fetchCredits } = useCredits();
 
   const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
@@ -73,7 +74,16 @@ export default function TextToImage({ models }: TextToImage) {
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+      // Reset states
+      setIsGenerating(false);
+      setIsWaitingWebhook(false);
+      setCurrentTaskId(null);
     };
   }, []);
 
@@ -151,16 +161,28 @@ export default function TextToImage({ models }: TextToImage) {
     taskId: string,
     reservationData?: { reservationId: string; modelId: string }
   ) => {
-    console.log("Starting polling for task:", taskId);
+    console.log("🔄 Starting polling for task:", taskId);
+
+    // Verificar se já há um polling ativo para a mesma task
+    if (currentTaskId === taskId && pollingIntervalRef.current) {
+      console.log("⚠️ Polling already active for this task, skipping...");
+      return;
+    }
+
+    // Limpar qualquer polling e timeout anterior
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+
     setCurrentTaskId(taskId);
     setIsWaitingWebhook(true);
     if (reservationData) {
       setCurrentReservation(reservationData);
-    }
-
-    // Limpar polling anterior se existir
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
     }
 
     // Função para verificar o status
@@ -192,10 +214,14 @@ export default function TextToImage({ models }: TextToImage) {
               setCurrentReservation(null);
             }
 
-            // Parar polling
+            // Parar polling e timeout
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
+            }
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
             }
 
             // Parar de aguardar webhook
@@ -240,10 +266,14 @@ export default function TextToImage({ models }: TextToImage) {
               setCurrentReservation(null);
             }
 
-            // Parar polling
+            // Parar polling e timeout
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
+            }
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
             }
 
             // Parar de aguardar webhook
@@ -275,31 +305,35 @@ export default function TextToImage({ models }: TextToImage) {
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
-
-          // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
-          if (currentReservation?.reservationId) {
-            try {
-              await cancelReservation(
-                currentReservation.reservationId,
-                `Erro de rede na geração - ${currentReservation.modelId}`
-              );
-              console.log("✅ Reservation cancelled due to network error!");
-              // Atualizar saldo na UI
-              await fetchCredits();
-              console.log(
-                "✅ Credits balance updated in UI after network error refund!"
-              );
-            } catch (error) {
-              console.error("❌ Error refunding credits:", error);
-            }
-            setCurrentReservation(null);
-          }
-
-          toast.error("Network error during generation. Please try again.");
-          setIsGenerating(false);
-          setIsWaitingWebhook(false);
-          setCurrentTaskId(null);
         }
+        if (pollingTimeoutRef.current) {
+          clearTimeout(pollingTimeoutRef.current);
+          pollingTimeoutRef.current = null;
+        }
+
+        // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
+        if (currentReservation?.reservationId) {
+          try {
+            await cancelReservation(
+              currentReservation.reservationId,
+              `Erro de rede na geração - ${currentReservation.modelId}`
+            );
+            console.log("✅ Reservation cancelled due to network error!");
+            // Atualizar saldo na UI
+            await fetchCredits();
+            console.log(
+              "✅ Credits balance updated in UI after network error refund!"
+            );
+          } catch (error) {
+            console.error("❌ Error refunding credits:", error);
+          }
+          setCurrentReservation(null);
+        }
+
+        toast.error("Network error during generation. Please try again.");
+        setIsGenerating(false);
+        setIsWaitingWebhook(false);
+        setCurrentTaskId(null);
       }
     };
 
@@ -309,19 +343,23 @@ export default function TextToImage({ models }: TextToImage) {
     // Configurar polling a cada 2 segundos
     pollingIntervalRef.current = setInterval(checkStatus, 3000);
 
-    // Timeout de segurança (5 minutos)
-    setTimeout(() => {
+    // Timeout de segurança (30 segundos)
+    pollingTimeoutRef.current = setTimeout(() => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
-        if (currentTaskId === taskId) {
-          toast.error("Generation timeout. Please try again.");
-          setIsGenerating(false);
-          setIsWaitingWebhook(false);
-          setCurrentTaskId(null);
-        }
       }
-    }, 30000); // 5 minutos
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+      if (currentTaskId === taskId) {
+        toast.error("Generation timeout. Please try again.");
+        setIsGenerating(false);
+        setIsWaitingWebhook(false);
+        setCurrentTaskId(null);
+      }
+    }, 30000); // 30 segundos
   };
 
   return (
