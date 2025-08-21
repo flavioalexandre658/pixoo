@@ -3,7 +3,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
 import * as schemas from "../db/schema";
 export const auth = betterAuth({
-  trustedOrigins: ["http://localhost:3000", "http://localhost:3000"],
+  trustedOrigins: [
+    "http://localhost:3000", 
+    "https://pixooai.com",
+    process.env.NEXT_PUBLIC_APP_URL || "https://pixooai.com"
+  ],
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
