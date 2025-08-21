@@ -29,7 +29,7 @@ import {
   X,
   Image as ImageIcon
 } from "lucide-react";
-import { OptimizePromptButton } from "@/components/ui/optimize-prompt-button";
+
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/use-credits";
 
@@ -37,7 +37,7 @@ import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
 import Image from "next/image";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
-import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
+
 import { proxyImage } from "@/actions/proxy-image/proxy-image.action";
 
 import { useSession } from "@/lib/auth-client";
@@ -100,7 +100,7 @@ export function FormImageEditing({
   const [detectedAspectRatio, setDetectedAspectRatio] = useState<string | null>(
     null
   );
-  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
@@ -119,7 +119,7 @@ export function FormImageEditing({
   };
 
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
-  const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
+
   const { executeAsync: executeProxyImage } = useAction(proxyImage);
 
   // Reset startedGeneration when generation is complete
@@ -466,80 +466,7 @@ export function FormImageEditing({
     // Image data is now handled as base64, no external cleanup needed
   };
 
-  // Handle prompt optimization
-  const handleOptimizePrompt = async () => {
-    // Verificar se o usuário está logado
-    if (!session) {
-      setShowAuthModal(true);
-      return;
-    }
 
-    //TODO: adicionar alguma trava nessa consulta (ex: cobrar 1 credito por uso)
-
-    const currentPrompt = form.getValues("prompt");
-    const currentModel = form.getValues("model");
-    const currentInputImage = form.getValues("inputImage");
-
-    if (!currentPrompt.trim()) {
-      toast.error(t("enterPromptFirst"));
-      return;
-    }
-
-    if (!currentInputImage) {
-      toast.error(t("uploadImageFirst"));
-      return;
-    }
-
-    setIsOptimizingPrompt(true);
-    toast.info(t("optimizingPromptForImageEditing"));
-
-    try {
-      let imageForOptimization = currentInputImage;
-
-      // Se a imagem base64 for muito grande (> 1MB), comprimir ou usar URL
-      if (
-        currentInputImage.startsWith("data:") &&
-        currentInputImage.length > 1024 * 1024
-      ) {
-        try {
-          // Tentar comprimir a imagem
-          const compressedImage = await compressImage(
-            currentInputImage,
-            512,
-            0.7
-          );
-          imageForOptimization = compressedImage;
-          console.log("Imagem comprimida para otimização de prompt");
-        } catch (compressionError) {
-          console.error("Erro ao comprimir imagem:", compressionError);
-          // Se a compressão falhar, enviar sem imagem
-          imageForOptimization = "";
-          toast.warning(
-            "Imagem muito grande, otimizando prompt sem referência visual"
-          );
-        }
-      }
-
-      const result = await executeOptimizePrompt({
-        prompt: currentPrompt,
-        model: currentModel,
-        inputImage: imageForOptimization,
-        isImageEditing: true,
-      });
-
-      if (result?.data?.success && result.data.optimizedPrompt) {
-        form.setValue("prompt", result.data.optimizedPrompt);
-        toast.success(t("promptOptimizedSuccessfully"));
-      } else {
-        toast.error(result?.data?.error || t("errorOptimizingPrompt"));
-      }
-    } catch (error) {
-      console.error("Error optimizing prompt:", error);
-      toast.error(t("errorOptimizingPrompt"));
-    } finally {
-      setIsOptimizingPrompt(false);
-    }
-  };
 
   // Função para fazer scroll para o preview da imagem em mobile
   const scrollToImagePreview = () => {
@@ -1229,16 +1156,9 @@ export function FormImageEditing({
                   <Textarea
                     id="prompt"
                     placeholder={t("promptPlaceholder")}
-                    className="min-h-[100px] resize-none pr-12 border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
+                    className="min-h-[100px] resize-none border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
                     {...form.register("prompt")}
                   />
-                  {form.watch("prompt")?.trim() && (
-                    <OptimizePromptButton
-                      onClick={handleOptimizePrompt}
-                      isOptimizing={isOptimizingPrompt}
-                      className="absolute top-2 right-2"
-                    />
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-pixoo-purple" />

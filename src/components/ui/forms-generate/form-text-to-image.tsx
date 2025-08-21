@@ -26,14 +26,14 @@ import {
   WandSparkles,
   Coins
 } from "lucide-react";
-import { OptimizePromptButton } from "@/components/ui/optimize-prompt-button";
+
 import { toast } from "sonner";
 import { DimensionSelector, Dimension } from "./dimension-selector";
 import { useCredits } from "@/hooks/use-credits";
 import { ModelCost } from "@/db/schema";
 import { useAction } from "next-safe-action/hooks";
 import { generateImage } from "@/actions/images/generate/generate-image.action";
-import { optimizePrompt } from "@/actions/prompt/optimize-prompt.action";
+
 import { useSession } from "@/lib/auth-client";
 import { AuthRequiredModal } from "@/components/modals/auth-required-modal";
 import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
@@ -90,7 +90,7 @@ export function FormTextToImage({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [startedGeneration, setStartedGeneration] = useState(isGenerating);
-  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
@@ -99,7 +99,7 @@ export function FormTextToImage({
   const params = useParams();
   const locale = params.locale as string;
   const { executeAsync: executeGenerateImage } = useAction(generateImage);
-  const { executeAsync: executeOptimizePrompt } = useAction(optimizePrompt);
+
 
   const [generationStartTime, setGenerationStartTime] = useState<number | null>(
     null
@@ -152,46 +152,7 @@ export function FormTextToImage({
     }
   }, [promptValue, form]);
 
-  // Handle prompt optimization
-  const handleOptimizePrompt = async () => {
-    // Verificar se o usuário está logado
-    if (!session) {
-      setShowAuthModal(true);
-      return;
-    }
 
-    //TODO: adicionar alguma trava nessa consulta (ex: cobrar 1 credito por uso)
-
-    const currentPrompt = form.getValues("prompt");
-    const currentModel = form.getValues("model");
-
-    if (!currentPrompt.trim()) {
-      toast.error(t("enterPromptFirst"));
-      return;
-    }
-
-    setIsOptimizingPrompt(true);
-    toast.info(t("optimizingPrompt"));
-
-    try {
-      const result = await executeOptimizePrompt({
-        prompt: currentPrompt,
-        model: currentModel,
-      });
-
-      if (result?.data?.success && result.data.optimizedPrompt) {
-        form.setValue("prompt", result.data.optimizedPrompt);
-        toast.success(t("promptOptimizedSuccessfully"));
-      } else {
-        toast.error(result?.data?.error || t("errorOptimizingPrompt"));
-      }
-    } catch (error) {
-      console.error("Error optimizing prompt:", error);
-      toast.error(t("errorOptimizingPrompt"));
-    } finally {
-      setIsOptimizingPrompt(false);
-    }
-  };
 
   // Função para fazer scroll para o preview da imagem em mobile
   const scrollToImagePreview = () => {
@@ -692,16 +653,9 @@ export function FormTextToImage({
                   <Textarea
                     id="prompt"
                     placeholder={t("promptPlaceholder")}
-                    className="min-h-[100px] resize-none pr-12 border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
+                    className="min-h-[100px] resize-none border-pixoo-purple/30 focus:border-pixoo-magenta/50 focus:ring-pixoo-purple/20 transition-all duration-300"
                     {...form.register("prompt")}
                   />
-                  {form.watch("prompt")?.trim() && (
-                    <OptimizePromptButton
-                      onClick={handleOptimizePrompt}
-                      isOptimizing={isOptimizingPrompt}
-                      className="absolute top-2 right-2"
-                    />
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-pixoo-purple" />
