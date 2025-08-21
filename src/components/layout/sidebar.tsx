@@ -20,6 +20,8 @@ import { SubscriptionRequiredModal } from "@/components/modals/subscription-requ
 interface SidebarProps {
   className?: string;
   isMobile?: boolean;
+  isCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 interface NavItem {
@@ -82,8 +84,10 @@ const getNavigationSections = (t: any, currentPath: string): NavSection[] => [
   },
 ];
 
-export function Sidebar({ className, isMobile = false }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function Sidebar({ className, isMobile = false, isCollapsed, onCollapsedChange }: SidebarProps) {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const collapsed = typeof isCollapsed === "boolean" ? isCollapsed : internalCollapsed;
+  const setCollapsed = typeof onCollapsedChange === "function" ? onCollapsedChange : setInternalCollapsed;
   const [showPlansModal, setShowPlansModal] = useState(false);
   const t = useTranslations("navigation");
   const pathname = usePathname();
@@ -111,7 +115,7 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
       <div
         className={cn(
           "flex items-center border-b border-pixoo-purple/20 backdrop-blur-sm bg-card/80",
-          isCollapsed && !isMobile
+          collapsed && !isMobile
             ? "justify-center p-2"
             : "justify-between p-[12px]"
         )}
@@ -120,28 +124,28 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
           width={32}
           height={32}
           customLogo="../images/icon.svg"
-          showText={!isCollapsed || isMobile}
+          showText={!collapsed || isMobile}
           className={cn(
             "flex items-center",
-            isCollapsed && !isMobile ? "justify-center" : "gap-2"
+            collapsed && !isMobile ? "justify-center" : "gap-2"
           )}
         />
-        {!isMobile && !isCollapsed && (
+        {!isMobile && !collapsed && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => setCollapsed(!collapsed)}
             className="h-8 w-8 p-0 flex-shrink-0 hover:bg-pixoo-purple/10 transition-all duration-300"
           >
             <ChevronLeft className="h-4 w-4 text-pixoo-purple" />
           </Button>
         )}
-        {!isMobile && isCollapsed && (
+        {!isMobile && collapsed && (
           <div className="absolute top-2 right-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={() => setCollapsed(!collapsed)}
               className="h-8 w-8 p-0 hover:bg-pixoo-purple/10 transition-all duration-300"
             >
               <ChevronRight className="h-4 w-4 text-pixoo-purple" />
@@ -154,16 +158,16 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
       <nav
         className={cn(
           "flex-1 overflow-y-auto space-y-6 relative",
-          isCollapsed && !isMobile ? "p-2" : "p-4"
+          collapsed && !isMobile ? "p-2" : "p-4"
         )}
       >
         {navigationSections.map((section, sectionIndex) => (
           <div
             key={sectionIndex}
-            className={cn("space-y-2", isCollapsed && !isMobile && "space-y-1")}
+            className={cn("space-y-2", collapsed && !isMobile && "space-y-1")}
           >
-            {section.title && (!isCollapsed || isMobile) && (
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 bg-gradient-to-r from-foreground/60 to-pixoo-purple/60 bg-clip-text text-transparent">
+            {section.title && (!collapsed || isMobile) && (
+              <h3 className="text-xs font-medium uppercase tracking-wider px-2 bg-gradient-to-r from-foreground/60 to-pixoo-purple/60 bg-clip-text text-transparent">
                 {section.title}
               </h3>
             )}
@@ -176,14 +180,14 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
                     variant={item.isActive ? "default" : "ghost"}
                     className={cn(
                       "w-full h-10 transition-all duration-300",
-                      isCollapsed && !isMobile
+                      collapsed && !isMobile
                         ? "justify-center p-0 min-w-[2.5rem]"
                         : "justify-start gap-3 px-3",
                       item.isActive
                         ? "bg-gradient-to-r from-pixoo-purple to-pixoo-magenta text-white shadow-lg hover:shadow-xl hover:from-pixoo-magenta hover:to-pixoo-purple"
                         : "hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 hover:border-pixoo-purple/20"
                     )}
-                    title={isCollapsed && !isMobile ? item.label : undefined}
+                    title={collapsed && !isMobile ? item.label : undefined}
                     asChild
                     suppressHydrationWarning
                   >
@@ -196,10 +200,10 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
                       >
                         <Icon className="h-4 w-4 flex-shrink-0" />
                       </div>
-                      {(!isCollapsed || isMobile) && (
+                      {(!collapsed || isMobile) && (
                         <span className="truncate">{item.label}</span>
                       )}
-                      {item.badge && (!isCollapsed || isMobile) && (
+                      {item.badge && (!collapsed || isMobile) && (
                         <span className="ml-auto text-xs bg-gradient-to-r from-pixoo-pink to-pixoo-magenta text-white px-2 py-1 rounded-full">
                           {item.badge}
                         </span>
@@ -224,10 +228,10 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
           onClick={() => setShowPlansModal(true)}
           className={cn(
             "w-full bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105",
-            isCollapsed && !isMobile && "h-10 p-0 min-w-[2.5rem]"
+            collapsed && !isMobile && "h-10 p-0 min-w-[2.5rem]"
           )}
         >
-          {!isCollapsed || isMobile ? (
+          {!collapsed || isMobile ? (
             <div className="flex items-center gap-2">
               <div className="p-1 rounded-md bg-white/20">
                 <Sparkles className="h-4 w-4 animate-pulse" />
@@ -248,8 +252,7 @@ export function Sidebar({ className, isMobile = false }: SidebarProps) {
       {!isMobile && (
         <div
           className={cn(
-            "hidden md:flex h-screen bg-background/95 backdrop-blur-sm border-r border-pixoo-purple/20 transition-all duration-300 relative overflow-hidden",
-            isCollapsed ? "w-16" : "w-64"
+            "hidden md:flex h-screen bg-background/95 backdrop-blur-sm border-r border-pixoo-purple/20 transition-all duration-300 relative overflow-hidden w-full"
           )}
         >
           <SidebarContent />

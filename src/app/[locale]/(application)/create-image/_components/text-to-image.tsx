@@ -307,7 +307,7 @@ export default function TextToImage({ models }: TextToImage) {
     checkStatus();
 
     // Configurar polling a cada 2 segundos
-    pollingIntervalRef.current = setInterval(checkStatus, 6000);
+    pollingIntervalRef.current = setInterval(checkStatus, 3000);
 
     // Timeout de segurança (5 minutos)
     setTimeout(() => {
@@ -315,36 +315,6 @@ export default function TextToImage({ models }: TextToImage) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
         if (currentTaskId === taskId) {
-          // Reembolsar créditos em caso de timeout
-          if (currentReservation) {
-            const modelCosts = {
-              "flux-schnell": 1,
-              "flux-dev": 10,
-              "flux-pro": 25,
-              "flux-pro-1.1": 40,
-            };
-            const cost =
-              modelCosts[
-                currentReservation.modelId as keyof typeof modelCosts
-              ] || 10;
-            refundCredits(
-              cost,
-              `Timeout na geração - ${currentReservation.modelId}`,
-              taskId
-            )
-              .then(async () => {
-                console.log("✅ Credits refunded due to timeout!");
-                await fetchCredits();
-                console.log(
-                  "✅ Credits balance updated in UI after timeout refund!"
-                );
-              })
-              .catch((error) =>
-                console.error("❌ Error refunding credits:", error)
-              );
-            setCurrentReservation(null);
-          }
-
           toast.error("Generation timeout. Please try again.");
           setIsGenerating(false);
           setIsWaitingWebhook(false);
