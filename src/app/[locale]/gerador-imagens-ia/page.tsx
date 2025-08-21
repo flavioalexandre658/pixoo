@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "metadata.aiImageGenerator" });
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://pixoo.ai";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://pixooai.com";
     const pageUrl = `${baseUrl}/${locale}/gerador-imagens-ia`;
 
     return {

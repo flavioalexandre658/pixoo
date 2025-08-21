@@ -4,13 +4,13 @@ interface WebsiteSchemaProps {
 }
 
 export default function WebsiteSchema({ locale, pageType = 'landingPage' }: WebsiteSchemaProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://pixoo.ai';
-  
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://pixooai.com';
+
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Pixoo",
-    "description": pageType === 'aiImageGenerator' 
+    "description": pageType === 'aiImageGenerator'
       ? "Free AI Image Generator - Create Professional Digital Art with Artificial Intelligence"
       : "AI Image Generator, Photo Editing, Digital Art and More",
     "url": baseUrl,

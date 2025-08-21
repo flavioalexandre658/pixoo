@@ -18,7 +18,7 @@ module.exports = {
       }
     ],
     additionalSitemaps: [
-      'https://pixoo.ai/sitemap.xml'
+      'https://pixooai.com/sitemap.xml'
     ]
   },
   transform: async (config, path) => {

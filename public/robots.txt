@@ -10,4 +10,4 @@ Host: https://pixooai.com
 
 # Sitemaps
 Sitemap: https://pixooai.com/sitemap.xml
-Sitemap: https://pixoo.ai/sitemap.xml
+Sitemap: https://pixooai.com/sitemap.xml
