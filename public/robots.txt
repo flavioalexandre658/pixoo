@@ -1,0 +1,13 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Host
+Host: https://pixooai.com
+
+# Sitemaps
+Sitemap: https://pixooai.com/sitemap.xml
+Sitemap: https://pixoo.ai/sitemap.xml
