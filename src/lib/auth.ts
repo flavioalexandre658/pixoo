@@ -4,7 +4,7 @@ import { db } from "../db";
 import * as schemas from "../db/schema";
 export const auth = betterAuth({
   trustedOrigins: [
-    "http://localhost:3000", 
+    "http://localhost:3000",
     "https://pixooai.com",
     process.env.NEXT_PUBLIC_APP_URL || "https://pixooai.com"
   ],
@@ -34,8 +34,8 @@ export const auth = betterAuth({
             await db.insert(schemas.userCredits).values({
               id: crypto.randomUUID(),
               userId: user.id,
-              balance: 10, // Usar balance em vez de freeCreditsBalance
-              totalEarned: 10,
+              balance: 4, // Usar balance em vez de freeCreditsBalance
+              totalEarned: 4,
               totalSpent: 0,
             });
 
@@ -44,11 +44,11 @@ export const auth = betterAuth({
               id: crypto.randomUUID(),
               userId: user.id,
               type: "bonus",
-              amount: 10,
+              amount: 4,
               description: "Créditos gratuitos de boas-vindas - Pixoo Init",
-              balanceAfter: 10, // Balance após adição
+              balanceAfter: 4, // Balance após adição
               metadata: JSON.stringify({
-                balance: 10, // Usar balance no metadata
+                balance: 4, // Usar balance no metadata
                 initialCredits: true,
               }),
               createdAt: new Date(),

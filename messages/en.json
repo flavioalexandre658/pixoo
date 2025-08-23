@@ -425,6 +425,22 @@
       }
     }
   },
+  "firstImageGenerated": {
+    "title": "⚡ Did you like it?",
+    "description": "Buy extra credits and unlock HD images without limits",
+    "tabs": {
+      "packages": "Credit Packages",
+      "plans": "Monthly Plans"
+    },
+    "packagesSection": {
+      "title": "Credit Packages",
+      "description": "Buy credits to use whenever you need"
+    },
+    "plansSection": {
+      "title": "Monthly Plans",
+      "description": "Subscribe to a plan and get unlimited access"
+    }
+  },
   "credits": {
     "yourCredits": "Your Credits",
     "freeCredits": "Free Credits",

@@ -425,6 +425,22 @@
       }
     }
   },
+  "firstImageGenerated": {
+    "title": "⚡ ¿Te gustó?",
+    "description": "Compra créditos extra y desbloquea imágenes en HD sin límites",
+    "tabs": {
+      "packages": "Paquetes de Créditos",
+      "plans": "Planes Mensuales"
+    },
+    "packagesSection": {
+      "title": "Paquetes de Créditos",
+      "description": "Compra créditos para usar cuando los necesites"
+    },
+    "plansSection": {
+      "title": "Planes Mensuales",
+      "description": "Suscríbete a un plan y obtén acceso ilimitado"
+    }
+  },
   "credits": {
     "yourCredits": "Tus Créditos",
     "freeCredits": "Créditos Gratuitos",

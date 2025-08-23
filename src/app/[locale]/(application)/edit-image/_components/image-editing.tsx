@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { useAction } from "next-safe-action/hooks";
 import { getImageByTaskId } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 import { ModelCost } from "@/db/schema";
+import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
 
 interface ImageEditingProps {
   models: ModelCost[];
@@ -39,6 +40,15 @@ export default function ImageEditing({ models }: ImageEditingProps) {
       ? Date.now() - generationStartTimeRef.current
       : 0;
     handleGenerationComplete(timeMs);
+    
+    // Verificar se é a primeira imagem editada
+    if (!hasGeneratedFirstImage) {
+      setHasGeneratedFirstImage(true);
+      // Aguardar 3 segundos para o usuário ver o resultado antes de mostrar a modal
+      setTimeout(() => {
+        setShowFirstImageModal(true);
+      }, 3000);
+    }
   };
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -54,6 +64,8 @@ export default function ImageEditing({ models }: ImageEditingProps) {
     modelId: string;
   } | null>(null);
   const { refundCredits, cancelReservation, fetchCredits } = useCredits();
+  const [showFirstImageModal, setShowFirstImageModal] = useState(false);
+  const [hasGeneratedFirstImage, setHasGeneratedFirstImage] = useState(false);
 
   const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
@@ -464,6 +476,15 @@ export default function ImageEditing({ models }: ImageEditingProps) {
       <div>
         <ImageHistory refreshTrigger={historyRefreshTrigger} />
       </div>
+
+      {/* Modal de primeira imagem editada */}
+      <SubscriptionRequiredModal
+        isOpen={showFirstImageModal}
+        onClose={() => setShowFirstImageModal(false)}
+        variant="firstImageGenerated"
+        defaultTab="packages"
+        locale="pt"
+      />
     </PageContainer>
   );
 }
