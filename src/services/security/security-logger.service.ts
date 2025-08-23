@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/db";
 import { securityLogs, abuseReports, deviceFingerprints } from "@/db/schema";
 import { eq, and, gte, count, desc } from "drizzle-orm";

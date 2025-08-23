@@ -11,7 +11,7 @@ export const deviceFingerprints = pgTable("device_fingerprints", {
   language: text("language"), // Idioma do navegador
   platform: text("platform"), // Plataforma (Windows, Mac, etc.)
   hasReceivedCredits: boolean("has_received_credits").default(false).notNull(), // Se já recebeu créditos
-  firstUserId: uuid("first_user_id").references(() => users.id), // Primeiro usuário que usou este dispositivo
+  firstUserId: text("first_user_id").references(() => users.id), // Primeiro usuário que usou este dispositivo
   lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -19,7 +19,7 @@ export const deviceFingerprints = pgTable("device_fingerprints", {
 export const deviceFingerprintUsers = pgTable("device_fingerprint_users", {
   id: uuid("id").primaryKey().defaultRandom(),
   deviceFingerprintId: uuid("device_fingerprint_id").references(() => deviceFingerprints.id).notNull(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
