@@ -44,29 +44,77 @@ export function useConversionTracking() {
     
     if (typeof window !== "undefined" && window.gtag) {
       try {
-        // Enhanced Conversions para Google Ads
-        window.gtag("event", "conversion", {
-          send_to: `${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL}`,
-          value: data.amount,
-          currency: data.currency,
-          transaction_id: data.transactionId,
-          user_data: {
-            email_address: data.userEmail,
-            phone_number: undefined,
-            address: {
-              first_name: data.userName?.split(" ")[0],
-              last_name: data.userName?.split(" ").slice(1).join(" "),
+        // 1. Evento de conversão específico para Google Ads (se conversion_id estiver configurado)
+        if (process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID && process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL) {
+          window.gtag("event", "conversion", {
+            send_to: `${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL}`,
+            value: data.amount,
+            currency: data.currency,
+            transaction_id: data.transactionId,
+            user_data: {
+              email_address: data.userEmail,
+              phone_number: undefined,
+              address: {
+                first_name: data.userName?.split(" ")[0],
+                last_name: data.userName?.split(" ").slice(1).join(" "),
+              },
             },
-          },
-          custom_parameters: {
-            product_id: data.productId,
-            product_name: data.productName,
-            user_id: data.userId,
-            subscription_type: data.mode,
-          },
-        });
-
-        // Evento adicional para Purchase
+            custom_parameters: {
+              product_id: data.productId,
+              product_name: data.productName,
+              user_id: data.userId,
+              subscription_type: data.mode,
+            },
+          });
+          console.log("✅ Evento 'conversion' enviado para Google Ads Conversion ID");
+        }
+  
+        // 2. Evento de purchase para Google Ads ID principal
+        if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID) {
+          window.gtag("event", "purchase", {
+            send_to: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID,
+            transaction_id: data.transactionId,
+            value: data.amount,
+            currency: data.currency,
+            items: [
+              {
+                item_id: data.productId,
+                item_name: data.productName,
+                category: data.mode === "subscription" ? "Subscription" : "Credits",
+                quantity: 1,
+                price: data.amount,
+              },
+            ],
+          });
+          console.log("✅ Evento 'purchase' enviado para Google Ads ID principal");
+        }
+  
+        // 3. Evento de conversão genérico para Google Ads ID principal
+        if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID) {
+          window.gtag("event", "conversion", {
+            send_to: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID,
+            value: data.amount,
+            currency: data.currency,
+            transaction_id: data.transactionId,
+            user_data: {
+              email_address: data.userEmail,
+              phone_number: undefined,
+              address: {
+                first_name: data.userName?.split(" ")[0],
+                last_name: data.userName?.split(" ").slice(1).join(" "),
+              },
+            },
+            custom_parameters: {
+              product_id: data.productId,
+              product_name: data.productName,
+              user_id: data.userId,
+              subscription_type: data.mode,
+            },
+          });
+          console.log("✅ Evento 'conversion' enviado para Google Ads ID principal");
+        }
+  
+        // 4. Evento de purchase genérico (para Google Analytics se configurado)
         window.gtag("event", "purchase", {
           transaction_id: data.transactionId,
           value: data.amount,
@@ -75,14 +123,14 @@ export function useConversionTracking() {
             {
               item_id: data.productId,
               item_name: data.productName,
-              category:
-                data.mode === "subscription" ? "Subscription" : "Credits",
+              category: data.mode === "subscription" ? "Subscription" : "Credits",
               quantity: 1,
               price: data.amount,
             },
           ],
         });
-
+        console.log("✅ Evento 'purchase' genérico enviado");
+  
         console.log("✅ Google Ads conversion tracked:", data);
       } catch (error) {
         console.error("❌ Erro no tracking Google Ads:", error);
