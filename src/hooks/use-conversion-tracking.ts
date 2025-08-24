@@ -134,8 +134,47 @@ export function useConversionTracking() {
     }
   };
 
+  // Função para simular dados de teste
+  const createTestConversionData = (sessionId: string): ConversionData => {
+    const isSubscription = Math.random() > 0.5; // 50% chance de ser assinatura
+    const amount = isSubscription ? 29.99 : 19.99;
+    
+    return {
+      sessionId,
+      userId: "test_user_" + Date.now(),
+      userEmail: "test@pixoo.com",
+      userName: "Test User",
+      amount,
+      currency: "USD",
+      productName: isSubscription ? "Pro Subscription" : "Credit Package 100",
+      productId: isSubscription ? "sub_pro" : "pkg_100",
+      transactionId: "test_txn_" + Date.now(),
+      mode: isSubscription ? "subscription" : "payment",
+    };
+  };
+
   const processConversion = async (sessionId: string) => {
     try {
+      // Verificar se é um teste
+      if (sessionId === "teste" && process.env.NODE_ENV === "development") {
+        console.log("🧪 Modo de teste ativado - simulando conversão");
+        
+        const testData = createTestConversionData(sessionId);
+        
+        // Rastrear conversões com dados simulados
+        trackGoogleAdsConversion(testData);
+        trackMetaConversion(testData);
+        
+        // Limpar o session_id da URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete("session_id");
+        window.history.replaceState({}, "", url.toString());
+        
+        console.log("✅ Conversão de teste processada com sucesso:", testData);
+        return;
+      }
+      
+      // Processo normal para session_ids reais
       const result = await executeGetSessionData({ sessionId });
 
       if (result?.data?.success && result.data.data) {
@@ -176,5 +215,6 @@ export function useConversionTracking() {
   return {
     trackGoogleAdsConversion,
     trackMetaConversion,
+    createTestConversionData, // Exportar para uso externo se necessário
   };
 }
