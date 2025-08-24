@@ -38,16 +38,25 @@ export function useConversionTracking() {
     console.log("🔍 Tentando rastrear conversão Google Ads...");
     console.log("📊 Dados da conversão:", data);
     console.log("🏷️ Google Ads ID:", process.env.NEXT_PUBLIC_GOOGLE_ADS_ID);
-    console.log("🎯 Conversion ID:", process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID);
-    console.log("🏷️ Conversion Label:", process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL);
-    console.log("🌐 Window.gtag disponível:", typeof window !== "undefined" && !!window.gtag);
-    
+    console.log("🎯 Conversion ID:", process.env.NEXT_PUBLIC_GOOGLE_ADS_ID);
+    console.log(
+      "🏷️ Conversion Label:",
+      process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL
+    );
+    console.log(
+      "🌐 Window.gtag disponível:",
+      typeof window !== "undefined" && !!window.gtag
+    );
+
     if (typeof window !== "undefined" && window.gtag) {
       try {
         // 1. Evento de conversão específico para Google Ads (se conversion_id estiver configurado)
-        if (process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID && process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL) {
+        if (
+          process.env.NEXT_PUBLIC_GOOGLE_ADS_ID &&
+          process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL
+        ) {
           window.gtag("event", "conversion", {
-            send_to: `${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL}`,
+            send_to: `${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL}`,
             value: data.amount,
             currency: data.currency,
             transaction_id: data.transactionId,
@@ -66,9 +75,11 @@ export function useConversionTracking() {
               subscription_type: data.mode,
             },
           });
-          console.log("✅ Evento 'conversion' enviado para Google Ads Conversion ID");
+          console.log(
+            "✅ Evento 'conversion' enviado para Google Ads Conversion ID"
+          );
         }
-  
+
         // 2. Evento de purchase para Google Ads ID principal
         if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID) {
           window.gtag("event", "purchase", {
@@ -80,15 +91,18 @@ export function useConversionTracking() {
               {
                 item_id: data.productId,
                 item_name: data.productName,
-                category: data.mode === "subscription" ? "Subscription" : "Credits",
+                category:
+                  data.mode === "subscription" ? "Subscription" : "Credits",
                 quantity: 1,
                 price: data.amount,
               },
             ],
           });
-          console.log("✅ Evento 'purchase' enviado para Google Ads ID principal");
+          console.log(
+            "✅ Evento 'purchase' enviado para Google Ads ID principal"
+          );
         }
-  
+
         // 3. Evento de conversão genérico para Google Ads ID principal
         if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID) {
           window.gtag("event", "conversion", {
@@ -111,9 +125,11 @@ export function useConversionTracking() {
               subscription_type: data.mode,
             },
           });
-          console.log("✅ Evento 'conversion' enviado para Google Ads ID principal");
+          console.log(
+            "✅ Evento 'conversion' enviado para Google Ads ID principal"
+          );
         }
-  
+
         // 4. Evento de purchase genérico (para Google Analytics se configurado)
         window.gtag("event", "purchase", {
           transaction_id: data.transactionId,
@@ -123,20 +139,23 @@ export function useConversionTracking() {
             {
               item_id: data.productId,
               item_name: data.productName,
-              category: data.mode === "subscription" ? "Subscription" : "Credits",
+              category:
+                data.mode === "subscription" ? "Subscription" : "Credits",
               quantity: 1,
               price: data.amount,
             },
           ],
         });
         console.log("✅ Evento 'purchase' genérico enviado");
-  
+
         console.log("✅ Google Ads conversion tracked:", data);
       } catch (error) {
         console.error("❌ Erro no tracking Google Ads:", error);
       }
     } else {
-      console.warn("⚠️ Google Ads gtag não disponível. Verifique se o pixel está carregado.");
+      console.warn(
+        "⚠️ Google Ads gtag não disponível. Verifique se o pixel está carregado."
+      );
     }
   };
 
@@ -195,7 +214,7 @@ export function useConversionTracking() {
   const createTestConversionData = (sessionId: string): ConversionData => {
     const isSubscription = Math.random() > 0.5; // 50% chance de ser assinatura
     const amount = isSubscription ? 29.99 : 19.99;
-    
+
     return {
       sessionId,
       userId: "test_user_" + Date.now(),
@@ -211,45 +230,48 @@ export function useConversionTracking() {
   };
 
   const processConversion = async (sessionId: string) => {
-    console.log("🚀 Iniciando processamento de conversão para session_id:", sessionId);
+    console.log(
+      "🚀 Iniciando processamento de conversão para session_id:",
+      sessionId
+    );
     console.log("🔧 Ambiente:", process.env.NODE_ENV);
-    
+
     try {
       // Verificar se é um teste (removendo verificação de ambiente)
       if (sessionId === "teste") {
         console.log("🧪 Modo de teste ativado - simulando conversão");
-        
+
         const testData = createTestConversionData(sessionId);
         console.log("📋 Dados de teste gerados:", testData);
-        
+
         // Rastrear conversões com dados simulados
         trackGoogleAdsConversion(testData);
         trackMetaConversion(testData);
-        
+
         // Limpar o session_id da URL
         const url = new URL(window.location.href);
         url.searchParams.delete("session_id");
         window.history.replaceState({}, "", url.toString());
-        
+
         console.log("✅ Conversão de teste processada com sucesso:", testData);
         return;
       }
-      
+
       // Processo normal para session_ids reais
       const result = await executeGetSessionData({ sessionId });
-  
+
       if (result?.data?.success && result.data.data) {
         const conversionData = result.data.data;
-  
+
         // Rastrear conversões
         trackGoogleAdsConversion(conversionData);
         trackMetaConversion(conversionData);
-  
+
         // Limpar o session_id da URL para evitar re-tracking
         const url = new URL(window.location.href);
         url.searchParams.delete("session_id");
         window.history.replaceState({}, "", url.toString());
-  
+
         console.log("✅ Conversão processada com sucesso:", conversionData);
       } else {
         console.error("❌ Erro ao processar conversão:", result?.data?.errors);
