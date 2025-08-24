@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { eq, and, lt, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, desc } from "drizzle-orm";
 import { userCredits, creditTransactions, subscriptions } from "@/db/schema";
 
 export async function GET(request: NextRequest) {
@@ -88,8 +88,7 @@ export async function GET(request: NextRequest) {
           error
         );
         errors.push(
-          `Usuário ${user.userId}: ${
-            error instanceof Error ? error.message : "Erro desconhecido"
+          `Usuário ${user.userId}: ${error instanceof Error ? error.message : "Erro desconhecido"
           }`
         );
       }

@@ -11,7 +11,7 @@ export default async function ImageEditingPage() {
   }
 
   const allowedModels = models.filter((model: ModelCost) =>
-    ["flux-kontext-pro", "flux-kontext-max"].includes(model.modelId)
+    ["flux-kontext-pro"/*,"flux-kontext-max"*/].includes(model.modelId)
   );
 
 

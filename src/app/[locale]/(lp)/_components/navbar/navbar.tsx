@@ -30,14 +30,15 @@ const Navbar = ({ locale }: { locale: string }) => {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            className="hidden border-2 border-pixoo-magenta/30 bg-gradient-to-r from-background/90 to-background/70 text-foreground hover:from-pixoo-magenta/10 hover:to-pixoo-pink/10 hover:border-pixoo-magenta/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 sm:inline-flex rounded-xl"
+            className="cursor-pointer hidden border-2 border-pixoo-magenta/30 bg-gradient-to-r from-background/90 to-background/70 text-foreground hover:from-pixoo-magenta/10 hover:to-pixoo-pink/10 hover:border-pixoo-magenta/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 sm:inline-flex rounded-xl"
             onClick={() => router.push("/sign-in")}
           >
             {t("signIn")}
           </Button>
 
           <Button
-            className="group hidden bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 sm:inline-flex rounded-xl"
+            className="group cursor-pointer hidden bg-gradient-to-r from-pixoo-dark to-pixoo-purple hover:from-pixoo-purple hover:to-pixoo-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 sm:inline-flex rounded-xl"
+
             onClick={() => router.push("/sign-up")}
           >
             <Sparkles className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-300" />

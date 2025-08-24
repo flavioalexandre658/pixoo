@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useAction } from "next-safe-action/hooks";
 import { getImageByTaskId } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 import { ModelCost } from "@/db/schema";
+import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
 interface TextToImage {
   models: ModelCost[];
 }
@@ -32,6 +33,15 @@ export default function TextToImage({ models }: TextToImage) {
       ? Date.now() - generationStartTimeRef.current
       : 0;
     handleGenerationComplete(timeMs);
+    
+    // Verificar se é a primeira imagem gerada
+    if (!hasGeneratedFirstImage) {
+      setHasGeneratedFirstImage(true);
+      // Aguardar 3 segundos para o usuário ver o resultado antes de mostrar a modal
+      setTimeout(() => {
+        setShowFirstImageModal(true);
+      }, 3000);
+    }
   };
   const [isGenerating, setIsGenerating] = useState(false);
   const [isWaitingWebhook, setIsWaitingWebhook] = useState(false);
@@ -40,11 +50,14 @@ export default function TextToImage({ models }: TextToImage) {
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [currentReservation, setCurrentReservation] = useState<{
     reservationId: string;
     modelId: string;
   } | null>(null);
-  const { refundCredits, cancelReservation, fetchCredits } = useCredits();
+  const { cancelReservation, fetchCredits } = useCredits();
+  const [showFirstImageModal, setShowFirstImageModal] = useState(false);
+  const [hasGeneratedFirstImage, setHasGeneratedFirstImage] = useState(false);
 
   const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
@@ -73,7 +86,16 @@ export default function TextToImage({ models }: TextToImage) {
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+      // Reset states
+      setIsGenerating(false);
+      setIsWaitingWebhook(false);
+      setCurrentTaskId(null);
     };
   }, []);
 
@@ -151,16 +173,28 @@ export default function TextToImage({ models }: TextToImage) {
     taskId: string,
     reservationData?: { reservationId: string; modelId: string }
   ) => {
-    console.log("Starting polling for task:", taskId);
+    console.log("🔄 Starting polling for task:", taskId);
+
+    // Verificar se já há um polling ativo para a mesma task
+    if (currentTaskId === taskId && pollingIntervalRef.current) {
+      console.log("⚠️ Polling already active for this task, skipping...");
+      return;
+    }
+
+    // Limpar qualquer polling e timeout anterior
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+
     setCurrentTaskId(taskId);
     setIsWaitingWebhook(true);
     if (reservationData) {
       setCurrentReservation(reservationData);
-    }
-
-    // Limpar polling anterior se existir
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
     }
 
     // Função para verificar o status
@@ -192,10 +226,14 @@ export default function TextToImage({ models }: TextToImage) {
               setCurrentReservation(null);
             }
 
-            // Parar polling
+            // Parar polling e timeout
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
+            }
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
             }
 
             // Parar de aguardar webhook
@@ -240,10 +278,14 @@ export default function TextToImage({ models }: TextToImage) {
               setCurrentReservation(null);
             }
 
-            // Parar polling
+            // Parar polling e timeout
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
+            }
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
             }
 
             // Parar de aguardar webhook
@@ -275,31 +317,35 @@ export default function TextToImage({ models }: TextToImage) {
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
-
-          // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
-          if (currentReservation?.reservationId) {
-            try {
-              await cancelReservation(
-                currentReservation.reservationId,
-                `Erro de rede na geração - ${currentReservation.modelId}`
-              );
-              console.log("✅ Reservation cancelled due to network error!");
-              // Atualizar saldo na UI
-              await fetchCredits();
-              console.log(
-                "✅ Credits balance updated in UI after network error refund!"
-              );
-            } catch (error) {
-              console.error("❌ Error refunding credits:", error);
-            }
-            setCurrentReservation(null);
-          }
-
-          toast.error("Network error during generation. Please try again.");
-          setIsGenerating(false);
-          setIsWaitingWebhook(false);
-          setCurrentTaskId(null);
         }
+        if (pollingTimeoutRef.current) {
+          clearTimeout(pollingTimeoutRef.current);
+          pollingTimeoutRef.current = null;
+        }
+
+        // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
+        if (currentReservation?.reservationId) {
+          try {
+            await cancelReservation(
+              currentReservation.reservationId,
+              `Erro de rede na geração - ${currentReservation.modelId}`
+            );
+            console.log("✅ Reservation cancelled due to network error!");
+            // Atualizar saldo na UI
+            await fetchCredits();
+            console.log(
+              "✅ Credits balance updated in UI after network error refund!"
+            );
+          } catch (error) {
+            console.error("❌ Error refunding credits:", error);
+          }
+          setCurrentReservation(null);
+        }
+
+        toast.error("Network error during generation. Please try again.");
+        setIsGenerating(false);
+        setIsWaitingWebhook(false);
+        setCurrentTaskId(null);
       }
     };
 
@@ -307,51 +353,25 @@ export default function TextToImage({ models }: TextToImage) {
     checkStatus();
 
     // Configurar polling a cada 2 segundos
-    pollingIntervalRef.current = setInterval(checkStatus, 6000);
+    pollingIntervalRef.current = setInterval(checkStatus, 3000);
 
-    // Timeout de segurança (5 minutos)
-    setTimeout(() => {
+    // Timeout de segurança (30 segundos)
+    pollingTimeoutRef.current = setTimeout(() => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
-        if (currentTaskId === taskId) {
-          // Reembolsar créditos em caso de timeout
-          if (currentReservation) {
-            const modelCosts = {
-              "flux-schnell": 1,
-              "flux-dev": 10,
-              "flux-pro": 25,
-              "flux-pro-1.1": 40,
-            };
-            const cost =
-              modelCosts[
-                currentReservation.modelId as keyof typeof modelCosts
-              ] || 10;
-            refundCredits(
-              cost,
-              `Timeout na geração - ${currentReservation.modelId}`,
-              taskId
-            )
-              .then(async () => {
-                console.log("✅ Credits refunded due to timeout!");
-                await fetchCredits();
-                console.log(
-                  "✅ Credits balance updated in UI after timeout refund!"
-                );
-              })
-              .catch((error) =>
-                console.error("❌ Error refunding credits:", error)
-              );
-            setCurrentReservation(null);
-          }
-
-          toast.error("Generation timeout. Please try again.");
-          setIsGenerating(false);
-          setIsWaitingWebhook(false);
-          setCurrentTaskId(null);
-        }
       }
-    }, 30000); // 5 minutos
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+      if (currentTaskId === taskId) {
+        toast.error("Generation timeout. Please try again.");
+        setIsGenerating(false);
+        setIsWaitingWebhook(false);
+        setCurrentTaskId(null);
+      }
+    }, 30000); // 30 segundos
   };
 
   return (
@@ -414,6 +434,15 @@ export default function TextToImage({ models }: TextToImage) {
           }}
         />
       </div>
+
+      {/* Modal de primeira imagem gerada */}
+      <SubscriptionRequiredModal
+        isOpen={showFirstImageModal}
+        onClose={() => setShowFirstImageModal(false)}
+        variant="firstImageGenerated"
+        defaultTab="packages"
+        locale="pt"
+      />
     </PageContainer>
   );
 }

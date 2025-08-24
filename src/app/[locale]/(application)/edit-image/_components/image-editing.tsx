@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { useAction } from "next-safe-action/hooks";
 import { getImageByTaskId } from "@/actions/images/get-by-task-id/get-image-by-task-id.action";
 import { ModelCost } from "@/db/schema";
+import { SubscriptionRequiredModal } from "@/components/modals/subscription-required-modal";
 
 interface ImageEditingProps {
   models: ModelCost[];
@@ -39,6 +40,15 @@ export default function ImageEditing({ models }: ImageEditingProps) {
       ? Date.now() - generationStartTimeRef.current
       : 0;
     handleGenerationComplete(timeMs);
+    
+    // Verificar se é a primeira imagem editada
+    if (!hasGeneratedFirstImage) {
+      setHasGeneratedFirstImage(true);
+      // Aguardar 3 segundos para o usuário ver o resultado antes de mostrar a modal
+      setTimeout(() => {
+        setShowFirstImageModal(true);
+      }, 3000);
+    }
   };
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -48,11 +58,14 @@ export default function ImageEditing({ models }: ImageEditingProps) {
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [currentReservation, setCurrentReservation] = useState<{
     reservationId: string;
     modelId: string;
   } | null>(null);
   const { refundCredits, cancelReservation, fetchCredits } = useCredits();
+  const [showFirstImageModal, setShowFirstImageModal] = useState(false);
+  const [hasGeneratedFirstImage, setHasGeneratedFirstImage] = useState(false);
 
   const { executeAsync: executeGetImageByTaskId } = useAction(getImageByTaskId);
 
@@ -79,9 +92,19 @@ export default function ImageEditing({ models }: ImageEditingProps) {
   // Cleanup das conexões quando o componente for desmontado
   useEffect(() => {
     return () => {
+      // Cleanup polling on unmount
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+      // Reset states
+      setIsGenerating(false);
+      setIsWaitingWebhook(false);
+      setCurrentTaskId(null);
     };
   }, []);
 
@@ -157,16 +180,28 @@ export default function ImageEditing({ models }: ImageEditingProps) {
     taskId: string,
     reservationData?: { reservationId: string; modelId: string }
   ) => {
-    console.log("Starting polling for task:", taskId);
+    console.log("🔄 Starting polling for task:", taskId);
+    
+    // Verificar se já há um polling ativo para a mesma task
+    if (currentTaskId === taskId && pollingIntervalRef.current) {
+      console.log("⚠️ Polling already active for this task, skipping...");
+      return;
+    }
+    
+    // Limpar qualquer polling e timeout anterior
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+    
     setCurrentTaskId(taskId);
     setIsWaitingWebhook(true);
     if (reservationData) {
       setCurrentReservation(reservationData);
-    }
-
-    // Limpar polling anterior se existir
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
     }
 
     // Função para verificar o status
@@ -198,10 +233,14 @@ export default function ImageEditing({ models }: ImageEditingProps) {
               setCurrentReservation(null);
             }
 
-            // Parar polling
+            // Parar polling e timeout
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
+            }
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
             }
 
             // Parar de aguardar webhook
@@ -246,10 +285,14 @@ export default function ImageEditing({ models }: ImageEditingProps) {
               setCurrentReservation(null);
             }
 
-            // Parar polling
+            // Parar polling e timeout
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
+            }
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
             }
 
             // Parar de aguardar webhook
@@ -281,31 +324,35 @@ export default function ImageEditing({ models }: ImageEditingProps) {
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
-
-          // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
-          if (currentReservation?.reservationId) {
-            try {
-              await cancelReservation(
-                currentReservation.reservationId,
-                `Erro de rede na edição - ${currentReservation.modelId}`
-              );
-              console.log("✅ Reservation cancelled due to network error!");
-              // Atualizar saldo na UI
-              await fetchCredits();
-              console.log(
-                "✅ Credits balance updated in UI after network error refund!"
-              );
-            } catch (error) {
-              console.error("❌ Error refunding credits:", error);
-            }
-            setCurrentReservation(null);
-          }
-
-          toast.error("Network error during editing. Please try again.");
-          setIsGenerating(false);
-          setIsWaitingWebhook(false);
-          setCurrentTaskId(null);
         }
+        if (pollingTimeoutRef.current) {
+          clearTimeout(pollingTimeoutRef.current);
+          pollingTimeoutRef.current = null;
+        }
+
+        // Cancelar reserva se houver uma ativa (usuário não foi cobrado ainda)
+        if (currentReservation?.reservationId) {
+          try {
+            await cancelReservation(
+              currentReservation.reservationId,
+              `Erro de rede na edição - ${currentReservation.modelId}`
+            );
+            console.log("✅ Reservation cancelled due to network error!");
+            // Atualizar saldo na UI
+            await fetchCredits();
+            console.log(
+              "✅ Credits balance updated in UI after network error refund!"
+            );
+          } catch (error) {
+            console.error("❌ Error refunding credits:", error);
+          }
+          setCurrentReservation(null);
+        }
+
+        toast.error("Network error during editing. Please try again.");
+        setIsGenerating(false);
+        setIsWaitingWebhook(false);
+        setCurrentTaskId(null);
       }
     };
 
@@ -316,42 +363,46 @@ export default function ImageEditing({ models }: ImageEditingProps) {
     pollingIntervalRef.current = setInterval(checkStatus, 6000);
 
     // Timeout de segurança (5 minutos)
-    setTimeout(() => {
+    pollingTimeoutRef.current = setTimeout(() => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
-        if (currentTaskId === taskId) {
-          // Reembolsar créditos em caso de timeout
-          if (currentReservation) {
-            // Buscar o custo do modelo dinamicamente do banco de dados
-            const modelCost = models.find(
-              (model) => model.modelId === currentReservation.modelId
-            );
-            const cost = modelCost?.credits || 10; // Fallback para 10 créditos se não encontrar
+      }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+      if (currentTaskId === taskId) {
+        // Reembolsar créditos em caso de timeout
+        if (currentReservation) {
+          // Buscar o custo do modelo dinamicamente do banco de dados
+          const modelCost = models.find(
+            (model) => model.modelId === currentReservation.modelId
+          );
+          const cost = modelCost?.credits || 10; // Fallback para 10 créditos se não encontrar
 
-            refundCredits(
-              cost,
-              `Timeout na edição - ${currentReservation.modelId}`,
-              taskId
-            )
-              .then(async () => {
-                console.log("✅ Credits refunded due to timeout!");
-                await fetchCredits();
-                console.log(
-                  "✅ Credits balance updated in UI after timeout refund!"
-                );
-              })
-              .catch((error) =>
-                console.error("❌ Error refunding credits:", error)
+          refundCredits(
+            cost,
+            `Timeout na edição - ${currentReservation.modelId}`,
+            taskId
+          )
+            .then(async () => {
+              console.log("✅ Credits refunded due to timeout!");
+              await fetchCredits();
+              console.log(
+                "✅ Credits balance updated in UI after timeout refund!"
               );
-            setCurrentReservation(null);
-          }
-
-          toast.error("Editing timeout. Please try again.");
-          setIsGenerating(false);
-          setIsWaitingWebhook(false);
-          setCurrentTaskId(null);
+            })
+            .catch((error) =>
+              console.error("❌ Error refunding credits:", error)
+            );
+          setCurrentReservation(null);
         }
+
+        toast.error("Editing timeout. Please try again.");
+        setIsGenerating(false);
+        setIsWaitingWebhook(false);
+        setCurrentTaskId(null);
       }
     }, 300000); // 5 minutos
   };
@@ -425,6 +476,15 @@ export default function ImageEditing({ models }: ImageEditingProps) {
       <div>
         <ImageHistory refreshTrigger={historyRefreshTrigger} />
       </div>
+
+      {/* Modal de primeira imagem editada */}
+      <SubscriptionRequiredModal
+        isOpen={showFirstImageModal}
+        onClose={() => setShowFirstImageModal(false)}
+        variant="firstImageGenerated"
+        defaultTab="packages"
+        locale="pt"
+      />
     </PageContainer>
   );
 }

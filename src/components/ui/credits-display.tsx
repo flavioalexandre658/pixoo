@@ -1,7 +1,7 @@
 "use client";
 
 import { useCredits } from "@/hooks/use-credits";
-import { Coins, Loader2, Plus, Sparkles } from "lucide-react";
+import { Coins, Plus, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useState, useEffect } from "react";
-import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
+import { getUserMonthlyCredits } from "@/actions/credits/get/get-user-monthly-credits.action";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
@@ -53,7 +53,7 @@ export function CreditsDisplay({
 
     setLoadingFreeCredits(true);
     try {
-      const result = await getUserFreeCredits({});
+      const result = await getUserMonthlyCredits({});
       if (result?.data?.success && result?.data?.data) {
         setFreeCredits(result.data.data);
       }
@@ -177,7 +177,7 @@ export function CreditsDisplay({
             </div>
           </TooltipTrigger>
           <TooltipContent className="bg-gradient-to-br from-background to-background/95 border-pixoo-purple/20 backdrop-blur-sm">
-            <div className="space-y-1 relative">
+            <div className="space-y-1 relative p-2">
               {/* Background gradient */}
               <div className="absolute inset-0 bg-gradient-to-br from-pixoo-purple/5 via-pixoo-pink/5 to-pixoo-magenta/10 rounded-md -z-10" />
 
@@ -214,8 +214,8 @@ export function CreditsDisplay({
                     {freeCredits.canRenew
                       ? t("renewalAvailable")
                       : t("nextRenewalIn", {
-                          hours: Math.floor(freeCredits.hoursUntilRenewal),
-                        })}
+                        hours: Math.floor(freeCredits.hoursUntilRenewal),
+                      })}
                   </p>
                 </>
               ) : (
@@ -306,11 +306,10 @@ export function CreditsDisplay({
                         {transaction.description}
                       </span>
                       <span
-                        className={`font-mono ${
-                          transaction.amount > 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                        className={`font-mono ${transaction.amount > 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                          }`}
                       >
                         {transaction.amount > 0 ? "+" : ""}
                         {transaction.amount}
@@ -360,8 +359,8 @@ export function CreditsDisplay({
                     {freeCredits.canRenew
                       ? t("renewalAvailableNow")
                       : t("nextRenewalInHours", {
-                          hours: freeCredits.hoursUntilRenewal,
-                        })}
+                        hours: freeCredits.hoursUntilRenewal,
+                      })}
                   </li>
                 </ul>
               </div>

@@ -22,3 +22,7 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 
     return next({ ctx: { userId: session.user.id, userEmail: session.user.email } });
 });
+
+// Deprecated: Use actionClient.inputSchema(schema).action() directly
+// This function is kept for backward compatibility but will be removed
+export const createSafeAction = actionClient.inputSchema;

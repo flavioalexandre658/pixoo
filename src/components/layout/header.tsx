@@ -20,7 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
-import { Settings, User, LogOut, CreditCard, Globe, Menu, Coins } from "lucide-react";
+import { LogOut, Globe, Menu, Coins } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { CreditsDisplay } from "@/components/ui/credits-display";
@@ -63,8 +63,9 @@ export function Header({ className }: HeaderProps) {
     <>
       <header
         className={cn(
-          "fixed top-0 z-40 w-full border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 relative overflow-hidden",
-          "mobile-header-fix", // Nova classe para fix do mobile
+          // 🔧 Mudança principal: sticky + safe area + z-index alto
+          "mobile-header-fix border-b border-pixoo-purple/20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60",
+          // Removido overflow-hidden do header (pode interferir no sticky)
           className
         )}
       >
@@ -75,7 +76,7 @@ export function Header({ className }: HeaderProps) {
         <div className="absolute top-2 left-20 w-8 h-8 bg-gradient-to-br from-pixoo-pink/20 to-pixoo-magenta/20 rounded-full blur-lg animate-pulse" />
         <div className="absolute top-1 right-32 w-6 h-6 bg-gradient-to-br from-pixoo-purple/15 to-pixoo-pink/15 rounded-full blur-md animate-pulse delay-500" />
 
-        <div className="flex h-14 items-center justify-between px-4 relative">
+        <div className="relative flex h-14 items-center justify-between px-4">
           {/* Left side - Mobile menu button, logo and page title */}
           <div className="flex items-center gap-3">
             {/* Mobile Sidebar */}
@@ -91,7 +92,7 @@ export function Header({ className }: HeaderProps) {
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="w-64 p-0 bg-background/95 backdrop-blur-sm border-pixoo-purple/20"
+                className="w-64 p-0 bg-background/95 backdrop-blur-sm border-pixoo-purple/20 z-[60]" // garante acima do header
               >
                 <VisuallyHidden>
                   <SheetTitle>Menu de Navegação</SheetTitle>
@@ -141,28 +142,19 @@ export function Header({ className }: HeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="backdrop-blur-sm bg-card/95 border-pixoo-purple/20"
+                className="backdrop-blur-sm bg-card/95 border-pixoo-purple/20 z-[70]" // menus acima de tudo
               >
                 <DropdownMenuLabel className="bg-gradient-to-r from-foreground to-pixoo-purple bg-clip-text text-transparent">
                   {t("language")}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-pixoo-purple/20" />
-                <DropdownMenuItem
-                  onClick={() => handleLanguageChange("en")}
-                  className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
-                >
+                <DropdownMenuItem onClick={() => handleLanguageChange("en")}>
                   <span className="flex items-center gap-2">🇺🇸 English</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleLanguageChange("pt")}
-                  className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
-                >
+                <DropdownMenuItem onClick={() => handleLanguageChange("pt")}>
                   <span className="flex items-center gap-2">🇧🇷 Português</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleLanguageChange("es")}
-                  className="hover:bg-gradient-to-r hover:from-pixoo-purple/10 hover:to-pixoo-magenta/10 transition-all duration-300"
-                >
+                <DropdownMenuItem onClick={() => handleLanguageChange("es")}>
                   <span className="flex items-center gap-2">🇪🇸 Español</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -184,7 +176,7 @@ export function Header({ className }: HeaderProps) {
             {/* Credits Display */}
             {session?.user && <CreditsDisplay variant="compact" />}
 
-            {/* User Menu */}
+            {/* User Menu / Sign-in */}
             {session?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -204,7 +196,7 @@ export function Header({ className }: HeaderProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-56 backdrop-blur-sm bg-card/95 border-pixoo-purple/20"
+                  className="w-56 backdrop-blur-sm bg-card/95 border-pixoo-purple/20 z-[70]"
                   align="end"
                   forceMount
                 >

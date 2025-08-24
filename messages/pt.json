@@ -4,6 +4,29 @@
       "title": "Pixoo – Crie e Edite Imagens com Inteligência Artificial",
       "description": "Gere imagens profissionais a partir de texto ou edite com comandos simples usando IA avançada. Crie, transforme e personalize em segundos — direto do navegador."
     },
+    "aiImageGenerator": {
+      "title": "Gerador de Imagens IA Grátis Online | Pixoo",
+      "description": "Gerador de imagens IA gratuito e online. Crie arte digital, ilustrações e fotos realistas com inteligência artificial (Flux, Stable Diffusion). Resultados em segundos e alta resolução. Experimente grátis!",
+      "keywords": "gerador de imagens ia, ia gerador de imagens, ia geradora de imagens, ia gerador de imagem, ia geradora de imagem, gerador imagem ia, gerador de imagens ia gratis, gerador de imagem ia gratis, gerador de fotos ia, ia gerador de imagens gratis, gerador de foto ia, gerador de imagem por ia, gerador de imagens por ia, gerador de imagem com ia, gerador de imagens com ia, gerador imagens ia, gerador de imagens inteligência artificial, gerador de imagens ia online, gerador de imagem ia online, ia gerador de imagens gratuitos, criar imagens com ia, text to image português, Pixoo",
+      "openGraph": {
+        "title": "Gerador de Imagens IA Grátis Online — Pixoo",
+        "description": "Transforme suas ideias em imagens incríveis com nosso gerador de imagens por IA. Modelos avançados, qualidade profissional e resultados em segundos.",
+        "siteName": "Pixoo — Gerador de Imagens IA",
+        "imageAlt": "Gerador de Imagens IA Online — Crie Arte com Inteligência Artificial"
+      },
+      "twitter": {
+        "title": "Gerador de Imagens IA Grátis Online — Pixoo",
+        "description": "Crie arte digital profissional com inteligência artificial. Comece grátis e gere imagens em segundos.",
+        "creator": "@pixoo_ai"
+      },
+      "authors": {
+        "name": "Equipe Pixoo"
+      },
+      "creator": "Pixoo",
+      "publisher": "Pixoo",
+      "category": "Tecnologia e Arte Digital",
+      "classification": "Gerador de Imagens com Inteligência Artificial"
+    },
     "seo": {
       "title": "Pixoo - Gerador de Imagens IA, Edição de Fotos, Arte Digital e Muito mais.",
       "description": "Crie imagens incríveis com IA, edite fotos e gere arte digital com os modelos avançados do Pixoo. Ferramenta completa para designers, artistas e criadores de conteúdo. Geração de imagens, edição, prompts e muito mais.",
@@ -41,7 +64,8 @@
     "next": "Próximo",
     "previous": "Anterior",
     "submit": "Enviar",
-    "close": "Fechar"
+    "close": "Fechar",
+    "optimize": "Otimizar"
   },
   "navigation": {
     "home": "Início",
@@ -401,6 +425,22 @@
       }
     }
   },
+  "firstImageGenerated": {
+    "title": "⚡ Gostou?",
+    "description": "Compre créditos extras e desbloqueie imagens em HD sem limites",
+    "tabs": {
+      "packages": "Pacotes de Créditos",
+      "plans": "Planos Mensais"
+    },
+    "packagesSection": {
+      "title": "Pacotes de Créditos",
+      "description": "Compre créditos avulsos para usar quando precisar"
+    },
+    "plansSection": {
+      "title": "Planos Mensais",
+      "description": "Assine um plano e tenha acesso ilimitado"
+    }
+  },
   "credits": {
     "yourCredits": "Seus Créditos",
     "freeCredits": "Créditos Gratuitos",
@@ -565,7 +605,7 @@
     "promptPlaceholder": "Descreva como você quer editar a imagem...",
     "optimizePromptWithAI": "Otimizar prompt com IA",
     "promptDescription": "Descreva as mudanças que você quer fazer na imagem",
-    "englishPromptsWork": "Prompts em inglês geram melhores resultados.",
+    "englishPromptsWork": "Use a função de otimizar prompt para obter melhores resultados.",
     "cost": "Custo:",
     "editing": "Editando...",
     "insufficientCreditsButton": "Créditos insuficientes",
@@ -611,7 +651,7 @@
     "promptPlaceholder": "Descreva a imagem que você quer gerar...",
     "optimizePromptWithAI": "Otimizar prompt com IA",
     "promptTip": "💡 Prompts em inglês tendem a produzir melhores resultados",
-    "englishPromptsWork": "Prompts em inglês tendem a produzir melhores resultados",
+    "englishPromptsWork": "Use a função de otimizar prompt para obter melhores resultados.",
     "cost": "Custo:",
     "generating": "Gerando...",
     "insufficientCreditsButton": "Créditos insuficientes",
@@ -749,5 +789,101 @@
     "goHome": "Voltar ao Início",
     "exploreGallery": "Explorar Galeria",
     "contactSupport": "Se você acredita que isso é um erro, entre em contato conosco."
+  },
+  "aiImageGenerator": {
+    "hero": {
+      "title": "Gerador de Imagens com IA Online Grátis",
+      "subtitle": "Transforme ideias em fotos e artes com inteligência artificial",
+      "description": "Use o melhor gerador de imagens IA online para criar fotos e artes em segundos. Nosso ia gerador de imagens trabalha com Flux e Stable Diffusion, oferecendo geração rápida, alta resolução e exemplos reais. Perfeito para quem busca um gerador de imagem com IA, gerador de fotos IA e gerador de imagens por IA gratuito.",
+      "badge": "Gerador de Imagens IA Grátis",
+      "ctaPrimary": "Começar a Criar",
+      "ctaSecondary": "Ver Exemplos",
+      "startCreating": "Começar a Criar",
+      "viewExamples": "Ver Exemplos",
+      "freeCredits": "5 créditos grátis diários",
+      "noSignup": "Cadastro rápido ao gerar",
+      "professionalQuality": "Qualidade profissional"
+    },
+    "features": {
+      "title": "Por Que Escolher Nosso Gerador de Imagens IA?",
+      "subtitle": "Tecnologia online e gratuita para criadores exigentes",
+      "advancedModels": {
+        "title": "Modelos IA Avançados",
+        "description": "Acesso aos melhores modelos como Flux Pro e Stable Diffusion para resultados consistentes no seu gerador de imagens com IA."
+      },
+      "fastGeneration": {
+        "title": "Geração Ultra-Rápida",
+        "description": "Crie imagens com IA em segundos. Pipeline otimizado para prompts longos, variação de imagem (image-to-image) e upscaling."
+      },
+      "highResolution": {
+        "title": "Alta Resolução 4K",
+        "description": "Imagens nítidas para social, anúncios, e-commerce e impressão — ideal para quem procura um gerador de fotos IA profissional."
+      },
+      "easyToUse": {
+        "title": "Fácil de Usar",
+        "description": "Interface intuitiva em PT/EN/ES. Descreva, escolha o modelo e gere sua imagem com IA sem complicação."
+      },
+      "commercialLicense": {
+        "title": "Licença Comercial",
+        "description": "Planos com uso comercial liberado. O plano gratuito possui limitações — confira os Termos."
+      },
+      "multipleStyles": {
+        "title": "Múltiplos Estilos",
+        "description": "Fotorrealismo, arte digital, anime, pintura e mockups. Explore estilos no seu gerador de imagens inteligência artificial."
+      }
+    },
+    "faq": {
+      "title": "Perguntas Frequentes sobre Gerador de Imagens IA",
+      "subtitle": "Tudo que você precisa saber sobre nosso gerador de imagens com IA",
+      "questions": {
+        "whatIsAiImageGenerator": {
+          "question": "O que é um gerador de imagens IA?",
+          "answer": "É uma ferramenta que usa inteligência artificial para criar imagens a partir de texto ou de uma imagem. Nosso gerador de imagens por IA utiliza modelos como Flux e Stable Diffusion para qualidade profissional."
+        },
+        "howToUse": {
+          "question": "Como usar o gerador de imagens com IA?",
+          "answer": "Escreva um prompt detalhado, escolha o modelo, defina tamanho/proporção e clique em gerar. Sua imagem IA fica pronta em segundos."
+        },
+        "isFree": {
+          "question": "O gerador de imagem IA é grátis?",
+          "answer": "Sim. Você recebe 5 créditos grátis diários. Para uso intensivo e recursos premium, há planos pagos."
+        },
+        "imageQuality": {
+          "question": "Qual a qualidade das imagens geradas?",
+          "answer": "Alta resolução (até 4K) com nitidez e cores fiéis — ideal para redes sociais, anúncios e impressão."
+        },
+        "commercialUse": {
+          "question": "Posso usar as imagens comercialmente?",
+          "answer": "Sim nos planos pagos. O plano gratuito pode ter restrições de uso — consulte os Termos."
+        },
+        "bestPrompts": {
+          "question": "Como criar prompts eficazes?",
+          "answer": "Seja específico: estilo, iluminação, cores, composição, lente e ambiente. Ex.: “Retrato fotorrealista, luz suave, 85mm, fundo desfocado, qualidade cinematográfica”."
+        },
+        "supportedFormats": {
+          "question": "Quais formatos de imagem são suportados?",
+          "answer": "Exportação padrão em PNG de alta qualidade. Converta para JPG/WebP quando necessário."
+        },
+        "generationTime": {
+          "question": "Quanto tempo leva para gerar uma imagem?",
+          "answer": "A maioria dos prompts finaliza entre 10 e 30 segundos. Resoluções maiores podem levar um pouco mais."
+        }
+      }
+    },
+    "cta": {
+      "title": "Pronto para usar o melhor gerador de imagens IA online?",
+      "subtitle": "Milhares de criadores já geram imagens com IA",
+      "description": "Comece grátis hoje mesmo e crie com inteligência artificial: rápido, simples e com qualidade profissional.",
+      "startFree": "Começar Grátis Agora",
+      "viewPricing": "Ver Planos",
+      "getStarted": "Começar Agora",
+      "exploreGallery": "Ver Exemplos",
+      "features": {
+        "freeDaily": "5 créditos grátis diários",
+        "noWatermark": "Sem marca d'água",
+        "highQuality": "Qualidade profissional",
+        "fastGeneration": "Geração em segundos"
+      }
+    }
   }
 }

@@ -3,7 +3,6 @@ import {
   text,
   timestamp,
   integer,
-  decimal,
   varchar,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";

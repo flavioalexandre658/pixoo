@@ -20,6 +20,7 @@ interface SubscriptionRequiredModalProps {
   onClose: () => void;
   defaultTab?: "packages" | "plans";
   locale?: string;
+  variant?: "default" | "firstImageGenerated";
 }
 
 export function SubscriptionRequiredModal({
@@ -27,10 +28,12 @@ export function SubscriptionRequiredModal({
   onClose,
   defaultTab = "packages",
   locale = "pt",
+  variant = "default",
 }: SubscriptionRequiredModalProps) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const t = useTranslations("subscriptionRequired");
+  const translationKey = variant === "firstImageGenerated" ? "firstImageGenerated" : "subscriptionRequired";
+  const t = useTranslations(translationKey);
 
   // Detectar moeda baseado na localização ou preferência do usuário
   const currency: "USD" | "BRL" = "BRL"; // Você pode implementar lógica para detectar automaticamente

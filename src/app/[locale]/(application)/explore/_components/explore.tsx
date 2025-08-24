@@ -24,6 +24,8 @@ interface ExploreImage {
   likes: number;
   category: string | null;
   createdAt: Date;
+  visible: boolean;
+  isPublic: boolean;
   user?: {
     name: string;
     email: string;
@@ -150,6 +152,8 @@ function ExplorePage({ images: initialImages }: ExplorePageProps) {
     likes: image.likes,
     category: image.category || "general",
     createdAt: image.createdAt,
+    visible: image.visible,
+    isPublic: image.isPublic,
     user: image.user
       ? {
           name: image.user.name,

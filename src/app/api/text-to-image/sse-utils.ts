@@ -1,1 +1,0 @@
-// Este arquivo não é mais necessário pois a aplicação agora utiliza polling ao invés de SSE para atualização de status das tarefas.

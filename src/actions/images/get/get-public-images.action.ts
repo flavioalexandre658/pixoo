@@ -12,11 +12,15 @@ export const getPublicImages = action
   .schema(getPublicImagesSchema)
   .action(async ({ parsedInput: { limit = 10, offset = 0, category } }) => {
     try {
-      let whereCondition: SQL<unknown> = eq(generatedImages.isPublic, true);
+      let whereCondition: SQL<unknown> | undefined = and(
+        eq(generatedImages.isPublic, true),
+        eq(generatedImages.visible, true)
+      );
 
       if (category && category !== "all") {
         const categoryCondition = and(
           eq(generatedImages.isPublic, true),
+          eq(generatedImages.visible, true),
           eq(generatedImages.category, category)
         );
         if (categoryCondition) {
@@ -35,6 +39,8 @@ export const getPublicImages = action
           likes: generatedImages.likes,
           category: generatedImages.category,
           createdAt: generatedImages.createdAt,
+          visible: generatedImages.visible,
+          isPublic: generatedImages.isPublic,
           user: {
             name: users.name,
             email: users.email,

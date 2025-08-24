@@ -13,14 +13,22 @@ import { Label } from "@/components/ui/label";
 import { toast } from "react-hot-toast";
 import { Loader2, User, Mail, Lock, UserPlus } from "lucide-react";
 import { z } from "zod";
+import { useDeviceFingerprint } from "@/utils/device-fingerprint.util";
+import { useAction } from "next-safe-action/hooks";
+import { checkFingerprint } from "@/actions/device-fingerprints/check-fingerprint/check-fingerprint.action";
+import { checkRateLimit } from "@/actions/rate-limiting/check-rate-limit/check-rate-limit.action";
 
 export function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [fingerprintId, setFingerprintId] = useState<string | null>(null);
   const t = useTranslations("auth");
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const { generateFingerprint, getFingerprintData } = useDeviceFingerprint();
+  const { executeAsync: executeCheckFingerprint } = useAction(checkFingerprint);
+  const { executeAsync: executeCheckRateLimit } = useAction(checkRateLimit);
 
   // Create schema with translations using useMemo to prevent recreation on every render
   const formSchema = createSignUpSchema(t);
@@ -44,10 +52,55 @@ export function SignUpForm() {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
+      // Gerar fingerprint do dispositivo
+      const fingerprint = await generateFingerprint();
+      const fingerprintData = getFingerprintData();
+      
+      if (!fingerprint || !fingerprintData) {
+        toast.error("Erro ao verificar dispositivo. Tente novamente.");
+        return;
+      }
+
+      // Verificar rate limiting primeiro
+      const rateLimitResult = await executeCheckRateLimit({
+        ipAddress: "unknown", // Será obtido no servidor
+        userAgent: fingerprintData.userAgent,
+        fingerprint,
+        email: data.email,
+      });
+
+      if (!rateLimitResult?.data?.allowed) {
+        toast.error(rateLimitResult?.data?.reason || 'Limite de criação de contas excedido.');
+        return;
+      }
+
+      // Verificar se o dispositivo pode receber créditos
+      const fingerprintResult = await executeCheckFingerprint({
+        fingerprint,
+        ipAddress: "unknown", // Será obtido no servidor
+        userAgent: fingerprintData.userAgent,
+        screenResolution: fingerprintData.screenResolution,
+        timezone: fingerprintData.timezone,
+        language: fingerprintData.language,
+        platform: fingerprintData.platform,
+      });
+
+      if (fingerprintResult?.data?.fingerprintId) {
+          setFingerprintId(fingerprintResult.data.fingerprintId);
+        }
+
+        // Criar conta com header do fingerprint
+        const headers: Record<string, string> = {};
+        if (fingerprintResult?.data?.fingerprintId) {
+          headers['x-device-fingerprint-id'] = fingerprintResult.data.fingerprintId;
+        }
+
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
         name: data.name,
+      }, {
+        headers,
       });
 
       if (result.error) {
@@ -55,9 +108,17 @@ export function SignUpForm() {
         return;
       }
 
-      toast.success(t("signUpSuccess"));
+      // Mostrar mensagem baseada se recebeu créditos ou não
+      if (fingerprintResult?.data?.canReceiveCredits) {
+        toast.success(t("signUpSuccess") + " Você recebeu 4 créditos gratuitos!");
+      } else {
+        toast.success(t("signUpSuccess"));
+        toast("Este dispositivo já foi usado para receber créditos gratuitos.");
+      }
+      
       router.push(`/${locale}/create-image`);
-    } catch {
+    } catch (error) {
+      console.error("Erro no sign up:", error);
       toast.error(t("signUpError"));
     } finally {
       setIsLoading(false);
@@ -67,11 +128,51 @@ export function SignUpForm() {
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
     try {
+      // Gerar fingerprint do dispositivo antes do login social
+      const fingerprint = await generateFingerprint();
+      const fingerprintData = getFingerprintData();
+      
+      if (fingerprint && fingerprintData) {
+        // Verificar rate limiting primeiro (sem email para login social)
+        const rateLimitResult = await executeCheckRateLimit({
+          ipAddress: "unknown", // Será obtido no servidor
+          userAgent: fingerprintData.userAgent,
+          fingerprint,
+        });
+
+        if (!rateLimitResult?.data?.allowed) {
+          toast.error(rateLimitResult?.data?.reason || 'Limite de criação de contas excedido.');
+          setIsGoogleLoading(false);
+          return;
+        }
+
+        // Verificar se o dispositivo pode receber créditos
+        const fingerprintResult = await executeCheckFingerprint({
+          fingerprint,
+          ipAddress: "unknown", // Será obtido no servidor
+          userAgent: fingerprintData.userAgent,
+          screenResolution: fingerprintData.screenResolution,
+          timezone: fingerprintData.timezone,
+          language: fingerprintData.language,
+          platform: fingerprintData.platform,
+        });
+
+        if (fingerprintResult?.data?.fingerprintId) {
+            setFingerprintId(fingerprintResult.data.fingerprintId);
+            // Armazenar temporariamente no localStorage para usar após o redirect
+            localStorage.setItem('temp-fingerprint-id', fingerprintResult.data.fingerprintId);
+            if (fingerprintResult.data.canReceiveCredits !== undefined) {
+              localStorage.setItem('temp-can-receive-credits', fingerprintResult.data.canReceiveCredits.toString());
+            }
+          }
+      }
+
       await authClient.signIn.social({
         provider: "google",
         callbackURL: `/${locale}/create-image`,
       });
-    } catch {
+    } catch (error) {
+      console.error("Erro no Google sign up:", error);
       toast.error(t("signUpError"));
       setIsGoogleLoading(false);
     }

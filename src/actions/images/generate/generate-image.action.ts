@@ -8,7 +8,6 @@ import { reserveCredits } from "@/actions/credits/reserve/reserve-credits.action
 import { confirmCredits } from "@/actions/credits/confirm/confirm-credits.action";
 import { cancelReservation } from "@/actions/credits";
 import { spendFreeCredits } from "@/actions/credits/spend/spend-free-credits.action";
-import { getUserFreeCredits } from "@/actions/credits/get/get-user-free-credits.action";
 import { eq, and } from "drizzle-orm";
 import { subscriptions } from "@/db/schema";
 import { randomUUID } from "crypto";
@@ -18,6 +17,120 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { validateBFLDimensions } from "@/lib/utils";
 import Together from "together-ai";
+
+// Importar função de otimização de prompt
+async function optimizePromptInternal(
+  prompt: string,
+  model: string,
+  inputImage?: string,
+  isImageEditing?: boolean
+): Promise<{ success: boolean; optimizedPrompt?: string; error?: string }> {
+  try {
+    // Verificar se a API key do OpenAI está configurada
+    if (!process.env.OPENAI_API_KEY) {
+      return {
+        success: false,
+        error: "OpenAI API key not configured",
+      };
+    }
+
+    // Preparar o conteúdo da mensagem do usuário
+    let userContent = `${isImageEditing ? "Image editing task" : "Image generation task"
+      }:
+Original prompt: "${prompt}"
+Model: ${model}`;
+
+    // Adicionar informação sobre imagem apenas se não for muito grande
+    if (inputImage) {
+      // Verificar tamanho da imagem base64 (aproximadamente)
+      const imageSizeKB = (inputImage.length * 3) / 4 / 1024; // Conversão base64 para KB
+
+      if (imageSizeKB > 1024) {
+        // Se maior que 1MB
+        userContent +=
+          "\n\nNote: User has uploaded a large image for editing (image details omitted due to size).";
+      } else {
+        userContent += "\n\nNote: User has uploaded an image for editing.";
+      }
+    }
+
+    userContent += `\n\nOptimize this prompt for the best ${isImageEditing ? "image editing" : "image generation"
+      } results:`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert AI prompt engineer specializing in image generation. Your task is to optimize prompts for the ${model} model to achieve the best possible results. 
+
+${isImageEditing
+                ? "IMPORTANT: This is for IMAGE EDITING, not generation from scratch. The user has uploaded an existing image and wants to edit/modify it. Focus on editing instructions that work well with the uploaded image."
+                : "This is for image generation from scratch."
+              }
+
+Guidelines:
+- Transform the user's prompt into a detailed, descriptive English prompt
+- ${isImageEditing
+                ? "Focus on editing instructions (add, remove, change, modify elements)"
+                : "Include specific details about lighting, composition, style, and quality"
+              }
+- Use artistic and technical terms that work well with AI image ${isImageEditing ? "editing" : "generation"
+              }
+- Keep the essence and intent of the original prompt
+- Make it concise but descriptive
+- Focus on visual elements that will produce high-quality results
+
+Respond ONLY with the optimized prompt in English, nothing else.`,
+          },
+          {
+            role: "user",
+            content: userContent,
+          },
+        ],
+        max_tokens: 200,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("OpenAI API error:", errorData);
+      return {
+        success: false,
+        error: `OpenAI API error: ${response.status} ${response.statusText}`,
+      };
+    }
+
+    const data_response = await response.json();
+    const optimizedPrompt =
+      data_response.choices?.[0]?.message?.content?.trim();
+
+    if (!optimizedPrompt) {
+      return {
+        success: false,
+        error: "No optimized prompt received from OpenAI",
+      };
+    }
+
+    return {
+      success: true,
+      optimizedPrompt,
+    };
+  } catch (error) {
+    console.error("Error optimizing prompt:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
 
 // Função para fazer requisição usando curl (que sabemos que funciona)
 async function makeCurlRequest(
@@ -138,7 +251,6 @@ async function generateImageWithTogether(
 
     console.log("Gerando imagem com Together.ai:", {
       model: "black-forest-labs/FLUX.1-schnell-Free",
-      prompt,
       steps,
       n,
       apiKeyConfigured: !!process.env.TOGETHER_API_KEY,
@@ -254,6 +366,30 @@ export const generateImage = authActionClient
 
       const { userId } = ctx as { userId: string };
 
+      // Otimização automática do prompt
+      let finalPrompt = prompt;
+      console.log("Prompt original:", prompt);
+
+      try {
+        const optimizationResult = await optimizePromptInternal(
+          prompt,
+          model,
+          inputImage,
+          !!inputImage // isImageEditing = true se inputImage existe
+        );
+
+        if (optimizationResult.success && optimizationResult.optimizedPrompt) {
+          finalPrompt = optimizationResult.optimizedPrompt;
+          console.log("Prompt otimizado:", finalPrompt);
+        } else {
+          console.log("Falha na otimização do prompt, usando prompt original:", optimizationResult.error);
+          // Continua com o prompt original se a otimização falhar
+        }
+      } catch (error) {
+        console.error("Erro durante otimização do prompt:", error);
+        // Continua com o prompt original se houver erro
+      }
+
       // Verificar se o modelo é suportado
       const endpoint = MODEL_ENDPOINTS[model as keyof typeof MODEL_ENDPOINTS];
       if (!endpoint) {
@@ -292,77 +428,34 @@ export const generateImage = authActionClient
         // Se tem assinatura ativa, flux-schnell é ilimitado (não cobra créditos)
         if (hasActiveSubscription) {
           usesFreeCredits = false; // Não usa créditos gratuitos nem pagos
-        } else {
-          // Para usuários sem assinatura, verificar créditos gratuitos
-          const freeCreditsResult = await getUserFreeCredits({});
-
-          if (
-            freeCreditsResult.serverError ||
-            !freeCreditsResult.data?.success
-          ) {
-            return {
-              error: "Erro ao verificar créditos gratuitos",
-            };
-          }
-
-          const freeCreditsData = freeCreditsResult.data.data;
-          if (!freeCreditsData || freeCreditsData.balance <= 0) {
-            return {
-              error: "Créditos gratuitos insuficientes para usar este modelo",
-            };
-          }
-
-          usesFreeCredits = true;
         }
       } else {
-        // Para outros modelos, verificar se tem assinatura primeiro
-        if (!hasActiveSubscription) {
-          // Usuário sem assinatura: tentar usar créditos gratuitos
-          const freeCreditsResult = await getUserFreeCredits({});
 
-          if (
-            freeCreditsResult.serverError ||
-            !freeCreditsResult.data?.success
-          ) {
-            return {
-              error: "Erro ao verificar créditos gratuitos",
-            };
-          }
+        // Usuário com assinatura: usar sistema de reserva normal
+        const reserveResult = await reserveCredits({
+          modelId: model,
+          description: `Reserva para geração de imagem - ${model}`,
+        });
 
-          const freeCreditsData = freeCreditsResult.data.data;
-          if (!freeCreditsData || freeCreditsData.balance <= 0) {
-            return {
-              error: "Créditos gratuitos insuficientes para usar este modelo",
-            };
-          }
-
-          usesFreeCredits = true;
-        } else {
-          // Usuário com assinatura: usar sistema de reserva normal
-          const reserveResult = await reserveCredits({
-            modelId: model,
-            description: `Reserva para geração de imagem - ${model}`,
-          });
-
-          if (reserveResult.serverError || !reserveResult.data?.success) {
-            return {
-              error:
-                reserveResult.data?.errors?._form?.[0] ||
-                reserveResult.serverError ||
-                "Erro ao reservar créditos",
-            };
-          }
-
-          reservationId = reserveResult.data?.data?.reservationId || null;
+        if (reserveResult.serverError || !reserveResult.data?.success) {
+          return {
+            error:
+              reserveResult.data?.errors?._form?.[0] ||
+              reserveResult.serverError ||
+              "Erro ao reservar créditos",
+          };
         }
+
+        reservationId = reserveResult.data?.data?.reservationId || null;
       }
+
 
       // Se for flux-schnell, usar Together.ai
       if (model === "flux-schnell") {
         console.log("Usando Together.ai para flux-schnell");
 
         const togetherResult = await generateImageWithTogether(
-          prompt,
+          finalPrompt,
           Math.min(steps || 4, 4), // Together.ai aceita apenas steps entre 1 e 4
           1
         );
@@ -417,7 +510,7 @@ export const generateImage = authActionClient
               id: imageId,
               userId,
               taskId: taskId,
-              prompt,
+              prompt: finalPrompt,
               model,
               aspectRatio,
               seed: seed || null,
@@ -462,7 +555,7 @@ export const generateImage = authActionClient
       // Para outros modelos, continuar com BFL API
       // Preparar parâmetros da requisição
       const requestBody: any = {
-        prompt,
+        prompt: finalPrompt,
         aspect_ratio: convertAspectRatio(aspectRatio),
         output_format: "jpeg",
         safety_tolerance: 2,
@@ -602,8 +695,7 @@ export const generateImage = authActionClient
               }
 
               throw new Error(
-                `Falha ao criar requisição: ${createResponse.statusText} (${
-                  createResponse.status
+                `Falha ao criar requisição: ${createResponse.statusText} (${createResponse.status
                 }). Resposta: ${JSON.stringify(createResponse.data)}`
               );
             }
@@ -689,7 +781,7 @@ export const generateImage = authActionClient
             id: randomUUID(),
             userId,
             taskId: createData.id,
-            prompt,
+            prompt: finalPrompt,
             model,
             aspectRatio,
             seed: seed || null,
