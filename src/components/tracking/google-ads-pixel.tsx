@@ -33,3 +33,6 @@ export function GoogleAdsPixel() {
     </>
   );
 }
+
+// Adicionar export default
+export default GoogleAdsPixel;

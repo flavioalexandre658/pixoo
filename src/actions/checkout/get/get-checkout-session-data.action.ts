@@ -57,7 +57,7 @@ export const getCheckoutSessionData = authActionClient
         userName = user?.name || "";
       }
 
-      let conversionData = {
+      const conversionData = {
         sessionId: session.id,
         userId: userId,
         userEmail: session.customer_details?.email || "",
