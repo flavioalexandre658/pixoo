@@ -167,8 +167,8 @@ export function useConversionTracking() {
     console.log("🔧 Ambiente:", process.env.NODE_ENV);
     
     try {
-      // Verificar se é um teste
-      if (sessionId === "teste" && process.env.NODE_ENV === "development") {
+      // Verificar se é um teste (removendo verificação de ambiente)
+      if (sessionId === "teste") {
         console.log("🧪 Modo de teste ativado - simulando conversão");
         
         const testData = createTestConversionData(sessionId);
@@ -189,19 +189,19 @@ export function useConversionTracking() {
       
       // Processo normal para session_ids reais
       const result = await executeGetSessionData({ sessionId });
-
+  
       if (result?.data?.success && result.data.data) {
         const conversionData = result.data.data;
-
+  
         // Rastrear conversões
         trackGoogleAdsConversion(conversionData);
         trackMetaConversion(conversionData);
-
+  
         // Limpar o session_id da URL para evitar re-tracking
         const url = new URL(window.location.href);
         url.searchParams.delete("session_id");
         window.history.replaceState({}, "", url.toString());
-
+  
         console.log("✅ Conversão processada com sucesso:", conversionData);
       } else {
         console.error("❌ Erro ao processar conversão:", result?.data?.errors);
