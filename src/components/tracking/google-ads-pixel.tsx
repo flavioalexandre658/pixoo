@@ -1,28 +1,35 @@
 "use client";
-import Script from 'next/script';
+import Script from "next/script";
 
-const GoogleAdsPixel = ({ GOOGLE_ADS_ID }: { GOOGLE_ADS_ID: string }) => {
-  if (!GOOGLE_ADS_ID) return null;
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+
+export function GoogleAdsPixel() {
+  if (!GOOGLE_ADS_ID) {
+    return null;
+  }
 
   return (
     <>
-
       <Script
-        strategy="afterInteractive"
+        id="google-ads-gtag"
         src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+        strategy="afterInteractive"
       />
-
-      <Script id="google-ads-gtag" strategy="beforeInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-
-          gtag('config', '${GOOGLE_ADS_ID}');
-        `}
-      </Script>
+      <Script
+        id="google-ads-config"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ADS_ID}', {
+              allow_enhanced_conversions: true,
+              send_page_view: false
+            });
+          `,
+        }}
+      />
     </>
   );
-};
-
-export default GoogleAdsPixel;
+}

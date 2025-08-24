@@ -4,6 +4,7 @@ import { ReactNode, useRef, useState } from "react";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 import { cn } from "@/lib/utils";
+import { useConversionTracking } from "@/hooks/use-conversion-tracking";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -13,6 +14,9 @@ interface AppLayoutProps {
 export function AppLayout({ children, className }: AppLayoutProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Inicializar rastreamento de conversão
+  useConversionTracking();
 
   return (
     // guarda a var; default expandido (16rem)
