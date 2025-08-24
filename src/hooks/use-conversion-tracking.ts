@@ -35,6 +35,13 @@ export function useConversionTracking() {
   );
 
   const trackGoogleAdsConversion = (data: ConversionData) => {
+    console.log("🔍 Tentando rastrear conversão Google Ads...");
+    console.log("📊 Dados da conversão:", data);
+    console.log("🏷️ Google Ads ID:", process.env.NEXT_PUBLIC_GOOGLE_ADS_ID);
+    console.log("🎯 Conversion ID:", process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID);
+    console.log("🏷️ Conversion Label:", process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL);
+    console.log("🌐 Window.gtag disponível:", typeof window !== "undefined" && !!window.gtag);
+    
     if (typeof window !== "undefined" && window.gtag) {
       try {
         // Enhanced Conversions para Google Ads
@@ -45,7 +52,7 @@ export function useConversionTracking() {
           transaction_id: data.transactionId,
           user_data: {
             email_address: data.userEmail,
-            phone_number: undefined, // Adicionar se disponível
+            phone_number: undefined,
             address: {
               first_name: data.userName?.split(" ")[0],
               last_name: data.userName?.split(" ").slice(1).join(" "),
@@ -80,6 +87,8 @@ export function useConversionTracking() {
       } catch (error) {
         console.error("❌ Erro no tracking Google Ads:", error);
       }
+    } else {
+      console.warn("⚠️ Google Ads gtag não disponível. Verifique se o pixel está carregado.");
     }
   };
 
@@ -154,12 +163,16 @@ export function useConversionTracking() {
   };
 
   const processConversion = async (sessionId: string) => {
+    console.log("🚀 Iniciando processamento de conversão para session_id:", sessionId);
+    console.log("🔧 Ambiente:", process.env.NODE_ENV);
+    
     try {
       // Verificar se é um teste
       if (sessionId === "teste" && process.env.NODE_ENV === "development") {
         console.log("🧪 Modo de teste ativado - simulando conversão");
         
         const testData = createTestConversionData(sessionId);
+        console.log("📋 Dados de teste gerados:", testData);
         
         // Rastrear conversões com dados simulados
         trackGoogleAdsConversion(testData);
@@ -200,15 +213,21 @@ export function useConversionTracking() {
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
+    console.log("🔍 Hook useConversionTracking executado");
+    console.log("📋 Session ID encontrado:", sessionId);
+    console.log("🔄 Já foi rastreado:", hasTracked.current);
 
     // Verificar se há session_id e se ainda não foi rastreado
     if (sessionId && !hasTracked.current) {
+      console.log("✅ Condições atendidas, iniciando rastreamento...");
       hasTracked.current = true;
 
       // Aguardar um pouco para garantir que os pixels estejam carregados
       setTimeout(() => {
         processConversion(sessionId);
       }, 1000);
+    } else {
+      console.log("❌ Condições não atendidas para rastreamento");
     }
   }, [searchParams]);
 
