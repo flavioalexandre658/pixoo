@@ -1,10 +1,15 @@
 "use client";
 import Script from "next/script";
 
-const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+interface GoogleAdsPixelProps {
+  GOOGLE_ADS_ID?: string;
+}
 
-export function GoogleAdsPixel() {
-  if (!GOOGLE_ADS_ID) {
+export function GoogleAdsPixel({ GOOGLE_ADS_ID }: GoogleAdsPixelProps) {
+  // Usar a prop passada ou fallback para a variável de ambiente
+  const googleAdsId = GOOGLE_ADS_ID || process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+
+  if (!googleAdsId) {
     return null;
   }
 
@@ -12,7 +17,7 @@ export function GoogleAdsPixel() {
     <>
       <Script
         id="google-ads-gtag"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${googleAdsId}`}
         strategy="afterInteractive"
       />
       <Script
@@ -23,7 +28,7 @@ export function GoogleAdsPixel() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GOOGLE_ADS_ID}', {
+            gtag('config', '${googleAdsId}', {
               allow_enhanced_conversions: true,
               send_page_view: false
             });
@@ -34,5 +39,4 @@ export function GoogleAdsPixel() {
   );
 }
 
-// Adicionar export default
 export default GoogleAdsPixel;
